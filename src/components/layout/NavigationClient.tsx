@@ -57,25 +57,25 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
 
   return (
     <nav className="bg-gray-900/80 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           <Link
             href="/"
             prefetch={true}
-            className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent flex-shrink-0"
             onClick={closeMobileMenu}
           >
             Ruutulian
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-6">
+          <div className="hidden md:flex space-x-4 lg:space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 prefetch={link.prefetch}
-                className="text-gray-300 hover:text-purple-400 transition-colors font-medium"
+                className="text-gray-300 hover:text-purple-400 transition-colors font-medium text-sm lg:text-base"
               >
                 {link.label}
               </Link>
@@ -85,14 +85,14 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 text-gray-300 hover:text-purple-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg"
+            className="md:hidden p-2 -mr-2 text-gray-300 hover:text-purple-400 active:text-purple-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg touch-manipulation"
             aria-label="Toggle mobile menu"
             aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? (
-              <i className="fas fa-times text-2xl" aria-hidden="true"></i>
+              <i className="fas fa-times text-xl sm:text-2xl" aria-hidden="true"></i>
             ) : (
-              <i className="fas fa-bars text-2xl" aria-hidden="true"></i>
+              <i className="fas fa-bars text-xl sm:text-2xl" aria-hidden="true"></i>
             )}
           </button>
         </div>
@@ -102,23 +102,23 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
       {isMobileMenuOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            className="fixed inset-0 bg-black/60 z-40 md:hidden"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
           <div
-            className={`fixed top-16 left-0 right-0 bottom-0 bg-gray-900/95 backdrop-blur-md z-40 md:hidden transform transition-transform duration-300 ease-in-out ${
+            className={`fixed top-14 sm:top-16 left-0 right-0 bottom-0 bg-gray-900/98 backdrop-blur-md z-40 md:hidden transform transition-transform duration-300 ease-in-out overflow-y-auto ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
-            <div className="flex flex-col p-6 space-y-4">
+            <div className="flex flex-col p-4 sm:p-6 space-y-2 sm:space-y-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   prefetch={link.prefetch}
                   onClick={closeMobileMenu}
-                  className="text-gray-300 hover:text-purple-400 transition-colors font-medium text-lg py-3 px-4 rounded-lg hover:bg-gray-800/50"
+                  className="text-gray-300 hover:text-purple-400 active:text-purple-400 active:bg-gray-800/70 transition-colors font-medium text-base sm:text-lg py-3 sm:py-4 px-4 sm:px-5 rounded-lg hover:bg-gray-800/50 touch-manipulation min-h-[44px] flex items-center"
                 >
                   {link.label}
                 </Link>

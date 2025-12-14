@@ -177,17 +177,19 @@ function ArrayFieldInput({
       </FormLabel>
       <div className="space-y-2">
         {fields.map((item, index) => (
-          <div key={item.id} className="flex gap-2">
+          <div key={item.id} className="flex flex-col sm:flex-row gap-2">
             <FormInput
               {...register(`${fieldPath}.${index}`)}
               placeholder={`${field.label} item`}
               disabled={isSubmitting}
+              className="flex-1"
             />
             <FormButton
               type="button"
               variant="secondary"
               onClick={() => remove(index)}
               disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Remove
             </FormButton>
@@ -435,9 +437,9 @@ function RelationshipEntryInput({
       </FormLabel>
       <div className="space-y-4">
         {fields.map((item, index) => (
-          <div key={item.id} className="p-4 border border-gray-600/60 rounded-lg bg-gray-800/30 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div key={item.id} className="p-3 sm:p-4 border border-gray-600/60 rounded-lg bg-gray-800/30 space-y-3">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-2">
+              <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <FormLabel htmlFor={`${fieldPath}.${index}.name`} required>
                     Name {enableOCAutocomplete && <span className="text-xs text-gray-400">(search existing OCs)</span>}
@@ -481,7 +483,7 @@ function RelationshipEntryInput({
                 variant="secondary"
                 onClick={() => remove(index)}
                 disabled={isSubmitting}
-                className="mt-6"
+                className="mt-0 sm:mt-6 w-full sm:w-auto"
               >
                 <i className="fas fa-trash"></i>
               </FormButton>
@@ -1680,7 +1682,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   return (
     <>
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6 max-w-5xl">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4 md:space-y-6 w-full max-w-5xl">
       {error && <FormMessage type="error" message={error} />}
       {success && <FormMessage type="success" message="Character saved successfully!" />}
       {Object.keys(errors).length > 0 && (
@@ -1702,7 +1704,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       )}
 
       <FormSection title="Core Identity" icon="core-identity" accentColor="core-identity" defaultOpen={true}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="first_name" required>
               First Name
@@ -1750,7 +1752,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="slug" required>
               Slug
@@ -1785,7 +1787,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Controller
               name="story_alias_id"
@@ -1824,7 +1826,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       </FormSection>
 
       <FormSection title="Overview" icon="overview" accentColor="overview" defaultOpen={true}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="age">
               Age
@@ -1855,7 +1857,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="pronouns">
               Pronouns
@@ -1893,7 +1895,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="date_of_birth">
               Date of Birth
@@ -1922,7 +1924,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="sex">
               Sex
@@ -1971,7 +1973,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="romantic_orientation">
               Romantic Orientation
@@ -2039,7 +2041,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="place_of_origin">
               Place of Origin
@@ -2068,17 +2070,19 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </FormLabel>
           <div className="space-y-2">
             {languageFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
+              <div key={field.id} className="flex flex-col sm:flex-row gap-2">
                 <FormInput
                   {...register(`languages.${index}`)}
                   placeholder="Language"
                   disabled={isSubmitting}
+                  className="flex-1"
                 />
                 <FormButton
                   type="button"
                   variant="secondary"
                   onClick={() => removeLanguage(index)}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   Remove
                 </FormButton>
@@ -2157,7 +2161,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="height">
               Height
@@ -2180,7 +2184,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <FormLabel htmlFor="eye_color">
               Eye Color
@@ -2291,7 +2295,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
       <FormSection title="Personality Metrics" icon="personality-metrics" accentColor="personality-metrics" defaultOpen={false}>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <FormLabel htmlFor="sociability">
                 Sociability (Friendly ↔ Reserved)
@@ -2427,7 +2431,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       </FormSection>
 
       <FormSection title="Personality Traits" icon="personality-traits" accentColor="personality-traits" defaultOpen={false}>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <FormLabel htmlFor="positive_traits">
               Positive Traits
@@ -2648,7 +2652,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       </FormSection>
 
       <FormSection title="Preferences & Habits" icon="preferences-habits" accentColor="preferences-habits" defaultOpen={false}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="likes">
               Likes
@@ -2681,18 +2685,20 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </FormLabel>
           <div className="space-y-2">
             {galleryFields.map((field, index) => (
-              <div key={field.id} className="flex gap-2">
+              <div key={field.id} className="flex flex-col sm:flex-row gap-2">
                 <FormInput
                   {...register(`gallery.${index}`)}
                   type="url"
                   placeholder="Image URL"
                   disabled={isSubmitting}
+                  className="flex-1"
                 />
                 <FormButton
                   type="button"
                   variant="secondary"
                   onClick={() => removeGallery(index)}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   Remove
                 </FormButton>
@@ -2733,7 +2739,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FormLabel htmlFor="seiyuu">
               Seiyuu
@@ -2888,8 +2894,8 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       )}
 
       {/* Form Actions */}
-      <div className="flex items-center justify-between pt-6 mt-6 border-t-2 border-gray-600/50 bg-gray-800/30 rounded-lg p-5">
-        <div className="text-sm text-gray-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mt-6 border-t-2 border-gray-600/50 bg-gray-800/30 rounded-lg p-4 md:p-5">
+        <div className="text-sm text-gray-200 w-full sm:w-auto">
           {isDirty && !isSubmitting && (
             <span className="flex items-center text-amber-400">
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -2928,12 +2934,13 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             </span>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
           <FormButton
             type="button"
             variant="secondary"
             onClick={handleCancel}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
             Cancel
           </FormButton>
@@ -2942,6 +2949,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             variant="primary"
             isLoading={isSubmitting}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
             onClick={(e) => {
               console.log('=== SUBMIT BUTTON CLICKED ===');
               console.log('Form errors:', errors);
@@ -2967,7 +2975,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
               behavior: 'smooth',
             });
           }}
-          className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-br from-pink-600/90 to-pink-700/90 hover:from-pink-500/90 hover:to-pink-600/90 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-pink-400/50 backdrop-blur-sm"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 p-3 sm:p-4 bg-gradient-to-br from-pink-600/90 to-pink-700/90 hover:from-pink-500/90 hover:to-pink-600/90 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-pink-400/50 backdrop-blur-sm"
           aria-label="Scroll to top"
         >
           <i className="fas fa-arrow-up text-xl"></i>
