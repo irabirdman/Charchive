@@ -364,7 +364,7 @@ export interface WorldLore {
   lore_type: LoreType;
   description?: string | null;
   description_markdown?: string | null;
-  imagge_url?: string | null;
+  image_url?: string | null;
   icon_url?: string | null;
   world_fields?: WorldFieldDefinitions | null;
   modular_fields?: WorldFieldValues | null;
