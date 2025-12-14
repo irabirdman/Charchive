@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import type { StoryAlias } from '@/types/oc';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { WorldHeader } from '@/components/world/WorldHeader';
 import { WorldDetails } from '@/components/world/WorldDetails';
@@ -75,7 +76,7 @@ export default async function WorldDetailPage({
   
   if (storySlug && world.series_type === 'canon') {
     // Find story alias by slug
-    selectedStoryAlias = world.story_aliases?.find(sa => sa.slug === storySlug);
+    selectedStoryAlias = world.story_aliases?.find((sa: StoryAlias) => sa.slug === storySlug);
     
     if (selectedStoryAlias) {
       const { data: storyDataResult } = await supabase
