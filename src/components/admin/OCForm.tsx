@@ -230,10 +230,53 @@ function OCAutocompleteInput({
   const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; slug: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [isMounted, setIsMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLUListElement>(null);
   const nameValue = watch(`${fieldPath}.${index}.name`);
   const ocIdValue = watch(`${fieldPath}.${index}.oc_id`);
+
+  // Handle mounted state for portal (SSR safety)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Update dropdown position when suggestions are shown
+  useEffect(() => {
+    if (showSuggestions && inputRef.current) {
+      const updatePosition = () => {
+        if (inputRef.current) {
+          const rect = inputRef.current.getBoundingClientRect();
+          setDropdownPosition({
+            top: rect.bottom + window.scrollY + 4,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+          });
+        }
+      };
+      
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [showSuggestions, suggestions.length]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && suggestionsRef.current) {
+      const highlightedElement = suggestionsRef.current.children[highlightedIndex] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
 
   // Sync input value with form value
   useEffect(() => {
@@ -361,8 +404,16 @@ function OCAutocompleteInput({
           Linked to existing OC
         </p>
       )}
-      {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg">
+      {isMounted && showSuggestions && suggestions.length > 0 && createPortal(
+        <ul
+          ref={suggestionsRef}
+          className="fixed z-[9999] max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-xl"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`,
+          }}
+        >
           {suggestions.map((oc, idx) => (
             <li
               key={oc.id}
@@ -377,7 +428,8 @@ function OCAutocompleteInput({
               {oc.name}
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   );

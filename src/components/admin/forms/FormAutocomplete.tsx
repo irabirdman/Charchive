@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { UseFormRegisterReturn, ControllerRenderProps } from 'react-hook-form';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 
@@ -57,6 +58,8 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const [inputValue, setInputValue] = useState(value || '');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [isMounted, setIsMounted] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLUListElement>(null);
@@ -82,6 +85,36 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
         .filter(option => option.toLowerCase().includes(lowerInput))
         .slice(0, 10); // Limit to 10 suggestions
     }, [inputValue, availableOptions]);
+
+    // Handle mounted state for portal (SSR safety)
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
+    // Update dropdown position when input is focused or suggestions change
+    useEffect(() => {
+      if (showSuggestions && inputRef.current) {
+        const updatePosition = () => {
+          if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setDropdownPosition({
+              top: rect.bottom + window.scrollY + 4,
+              left: rect.left + window.scrollX,
+              width: rect.width,
+            });
+          }
+        };
+        
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+        
+        return () => {
+          window.removeEventListener('scroll', updatePosition, true);
+          window.removeEventListener('resize', updatePosition);
+        };
+      }
+    }, [showSuggestions, filteredSuggestions.length]);
 
     // Sync with external value prop (from Controller field)
     useEffect(() => {
@@ -208,10 +241,15 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
           autoComplete="off"
         />
         
-        {showSuggestions && filteredSuggestions.length > 0 && (
+        {isMounted && showSuggestions && filteredSuggestions.length > 0 && createPortal(
           <ul
             ref={suggestionsRef}
-            className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg"
+            className="fixed z-[9999] max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-xl"
+            style={{
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+            }}
           >
             {filteredSuggestions.map((suggestion, index) => (
               <li
@@ -227,7 +265,8 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
                 {suggestion}
               </li>
             ))}
-          </ul>
+          </ul>,
+          document.body
         )}
         
         {error && (
