@@ -6,6 +6,11 @@ interface InfoRowProps {
 }
 
 export function InfoRow({ label, value, children, icon }: InfoRowProps) {
+  // Don't render if value is empty and no children provided
+  if (!children && (value === null || value === undefined || value === '')) {
+    return null;
+  }
+
   // Check if icon already has a color class, if not add default gray
   const iconClasses = icon 
     ? (icon.includes('text-') ? icon : `${icon} text-gray-400`)
