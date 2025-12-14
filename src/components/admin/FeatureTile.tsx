@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 interface FeatureTileProps {
@@ -35,24 +37,24 @@ export function FeatureTile({
     <Link
       href={href}
       prefetch={true}
-      className="bg-gray-700/90 rounded-lg shadow-lg p-6 border border-gray-600/70 hover:scale-105 transition-all group"
+      className="bg-gray-700/90 rounded-lg shadow-lg p-4 sm:p-6 border border-gray-600/70 hover:scale-105 transition-all group touch-manipulation min-h-[120px] sm:min-h-0"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <i className={`${icon} text-2xl ${textColorClass}`}></i>
-          <h3 className="text-lg font-semibold text-gray-100 group-hover:text-white transition-colors">
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <i className={`${icon} text-xl sm:text-2xl ${textColorClass} flex-shrink-0`}></i>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-100 group-hover:text-white transition-colors truncate">
             {title}
           </h3>
         </div>
         {count !== undefined && (
-          <span className={`text-sm font-bold ${textColorClass}`}>
+          <span className={`text-xs sm:text-sm font-bold ${textColorClass} flex-shrink-0 ml-2`}>
             {count}
           </span>
         )}
       </div>
-      <p className="text-sm text-gray-400 mb-4">{description}</p>
+      <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 line-clamp-2">{description}</p>
       <div className="flex items-center justify-between">
-        <span className={`text-sm font-medium ${textColorClass} group-hover:underline`}>
+        <span className={`text-xs sm:text-sm font-medium ${textColorClass} group-hover:underline`}>
           {actionLabel}
         </span>
       </div>

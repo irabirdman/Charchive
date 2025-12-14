@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
+import { AdminLink } from '@/components/admin/AdminLink';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { FeatureTile } from '@/components/admin/FeatureTile';
 import { RecentActivity } from '@/components/admin/RecentActivity';
@@ -9,6 +9,10 @@ import { OCProgress } from '@/components/admin/OCProgress';
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
 };
+
+// Force dynamic rendering to ensure middleware runs
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -116,23 +120,23 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-100">Admin Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-100">Admin Dashboard</h1>
           <p className="text-gray-400 mt-2 text-sm md:text-base">Control center for managing all content and settings</p>
         </div>
-        <Link
+        <AdminLink
           href="/"
-          className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors text-sm md:text-base w-fit"
+          className="w-full sm:w-fit px-4 py-3 sm:py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors text-sm md:text-base text-center sm:text-left touch-manipulation min-h-[44px] flex items-center justify-center sm:justify-start"
         >
           ← Website Home
-        </Link>
+        </AdminLink>
       </div>
 
       {/* Enhanced Stats Section */}
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Overview</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <StatsCard
             title="Worlds"
             count={worldCount}
@@ -188,42 +192,42 @@ export default async function AdminDashboard() {
       {/* Quick Actions Bar */}
       <div className="bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-700">
         <h2 className="text-lg md:text-xl font-semibold text-gray-100 mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-2 md:gap-3">
-          <Link
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2 md:gap-3">
+          <AdminLink
             href="/admin/ocs/new"
-            className="px-4 py-2 md:px-5 md:py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
+            className="px-4 py-3 md:py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm md:text-base touch-manipulation min-h-[44px]"
           >
             <i className="fas fa-plus"></i>
             New OC
-          </Link>
-          <Link
+          </AdminLink>
+          <AdminLink
             href="/admin/worlds/new"
-            className="px-4 py-2 md:px-5 md:py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
+            className="px-4 py-3 md:py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm md:text-base touch-manipulation min-h-[44px]"
           >
             <i className="fas fa-plus"></i>
             New World
-          </Link>
-          <Link
+          </AdminLink>
+          <AdminLink
             href="/admin/world-lore/new"
-            className="px-4 py-2 md:px-5 md:py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
+            className="px-4 py-3 md:py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm md:text-base touch-manipulation min-h-[44px]"
           >
             <i className="fas fa-plus"></i>
             New Lore Entry
-          </Link>
-          <Link
+          </AdminLink>
+          <AdminLink
             href="/admin/timelines/new"
-            className="px-4 py-2 md:px-5 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
+            className="px-4 py-3 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm md:text-base touch-manipulation min-h-[44px]"
           >
             <i className="fas fa-plus"></i>
             New Timeline
-          </Link>
-          <Link
+          </AdminLink>
+          <AdminLink
             href="/admin/timeline-events/new"
-            className="px-4 py-2 md:px-5 md:py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
+            className="px-4 py-3 md:py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm md:text-base touch-manipulation min-h-[44px]"
           >
             <i className="fas fa-plus"></i>
             New Timeline Event
-          </Link>
+          </AdminLink>
         </div>
       </div>
 

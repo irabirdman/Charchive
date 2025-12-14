@@ -1,28 +1,18 @@
 import { AdminLayoutWrapper } from '@/components/admin/AdminLayoutWrapper';
-import { requireAuth } from '@/lib/auth/require-auth';
-import { headers } from 'next/headers';
+import { checkAuth } from '@/lib/auth/require-auth';
+
+// Force dynamic rendering to ensure middleware and auth checks run
+export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Get pathname from header set by middleware
-  const headersList = await headers();
-  const pathname = headersList.get('x-pathname') || '';
-  const isLoginPage = pathname === '/admin/login';
-
-  // Only get user email if not on login page (to avoid requireAuth redirect loop)
-  let userEmail: string | null = null;
-  if (!isLoginPage) {
-    try {
-      const user = await requireAuth();
-      userEmail = user.email;
-    } catch {
-      // If auth fails, userEmail will be null (will be handled by requireAuth redirect)
-      userEmail = null;
-    }
-  }
+  // Use checkAuth (doesn't redirect) - middleware handles auth redirects
+  // Client-side AdminLayoutWrapper will handle login page detection and rendering
+  const user = await checkAuth();
+  const userEmail = user?.email || null;
 
   return <AdminLayoutWrapper userEmail={userEmail}>{children}</AdminLayoutWrapper>;
 }

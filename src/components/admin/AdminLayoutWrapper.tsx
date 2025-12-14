@@ -11,12 +11,19 @@ export function AdminLayoutWrapper({
   userEmail: string | null;
 }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === '/admin/login';
+  
+  // Normalize pathname - remove trailing slash for comparison
+  const normalized = pathname.replace(/\/$/, '');
+  const isLoginPage = normalized === '/admin/login';
 
+  // For login page, render children directly without nav/wrapper
   if (isLoginPage) {
     return <>{children}</>;
   }
 
+  // For all other admin pages, require authentication
+  // If no userEmail, middleware should have redirected, but render anyway
+  // The page itself might show an error or the middleware will handle it
   return (
     <div className="min-h-screen bg-gray-900">
       {userEmail && <AdminNav userEmail={userEmail} />}
@@ -26,5 +33,3 @@ export function AdminLayoutWrapper({
     </div>
   );
 }
-
-

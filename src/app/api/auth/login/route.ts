@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     response.cookies.set('admin-session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Stricter than 'lax' for better CSRF protection
+      sameSite: 'lax', // Allows cookie to be sent with top-level navigations
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });

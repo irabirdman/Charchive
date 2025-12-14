@@ -17,6 +17,8 @@ const nextConfig = {
   experimental: {
     // This helps with slow external image fetches
   },
+  // Disable automatic trailing slash redirects to prevent redirect loops
+  trailingSlash: false,
 }
 
 module.exports = nextConfig

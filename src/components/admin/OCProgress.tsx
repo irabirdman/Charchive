@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { OC } from '@/types/oc';
 
@@ -171,24 +173,24 @@ export function OCProgress({ ocs }: OCProgressProps) {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
-      <div className="flex items-center gap-3 mb-4">
-        <i className="fas fa-chart-line text-xl text-pink-400"></i>
-        <h2 className="text-xl font-bold text-gray-100">OCs Progress</h2>
-        <span className="text-sm text-gray-400">(Top 10 lowest completion)</span>
+    <div className="bg-gray-800 rounded-lg shadow p-4 sm:p-6 border border-gray-700">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+        <i className="fas fa-chart-line text-lg sm:text-xl text-pink-400"></i>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-100">OCs Progress</h2>
+        <span className="text-xs sm:text-sm text-gray-400">(Top 10 lowest completion)</span>
       </div>
       
       {sortedItems.length === 0 ? (
-        <p className="text-gray-400">No OCs found.</p>
+        <p className="text-gray-400 text-sm sm:text-base">No OCs found.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {sortedItems.map((item) => {
             const worldName = item.oc.world?.name || item.oc.world_name || 'Unknown';
             return (
               <Link
                 key={item.oc.id}
                 href={`/admin/ocs/${item.oc.slug}`}
-                className="block p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors"
+                className="block p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"
               >
                 <div className="mb-2">
                   <h3 className="text-sm font-semibold text-gray-100 truncate" title={item.oc.name}>
@@ -199,7 +201,7 @@ export function OCProgress({ ocs }: OCProgressProps) {
                   </p>
                 </div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <div className={`text-lg font-bold ${getProgressTextColor(item.percentage)}`}>
+                  <div className={`text-base sm:text-lg font-bold ${getProgressTextColor(item.percentage)}`}>
                     {item.percentage}%
                   </div>
                   <div className="text-xs text-gray-400">

@@ -1,10 +1,9 @@
 /**
- * Persistent file-based session store
- * Sessions are saved to disk so they persist across server restarts
+ * Database-backed session store using Supabase
+ * Sessions are stored in the database so they persist across server restarts
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { createAdminClient } from '@/lib/supabase/server';
 
 interface SessionData {
   token: string;
@@ -15,125 +14,81 @@ interface SessionData {
 // Session duration: 7 days
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Path to store sessions file
-const DATA_DIR = join(process.cwd(), '.data');
-const SESSIONS_FILE = join(DATA_DIR, 'sessions.json');
-
-// In-memory cache for fast access
-const sessions = new Map<string, SessionData>();
-
-// Track if sessions have been loaded
-let sessionsLoaded = false;
-let loadPromise: Promise<void> | null = null;
-
-// Ensure data directory exists
-async function ensureDataDir(): Promise<void> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch (error) {
-    // Directory might already exist, that's fine
-  }
-}
-
-// Load sessions from disk
-async function loadSessions(): Promise<void> {
-  if (sessionsLoaded) {
-    return;
-  }
-  
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(SESSIONS_FILE, 'utf-8');
-    const sessionsData: Record<string, SessionData> = JSON.parse(data);
-    
-    // Load into memory and filter out expired sessions
-    const now = Date.now();
-    for (const [token, session] of Object.entries(sessionsData)) {
-      if (session.expiresAt > now) {
-        sessions.set(token, session);
-      }
-    }
-    
-    // Save cleaned up sessions back to disk
-    await saveSessions();
-    sessionsLoaded = true;
-  } catch (error) {
-    // File doesn't exist yet, that's fine - start with empty sessions
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-      console.error('Error loading sessions:', error);
-    }
-    sessionsLoaded = true; // Mark as loaded even if file doesn't exist
-  }
-}
-
-// Save sessions to disk
-async function saveSessions(): Promise<void> {
-  try {
-    await ensureDataDir();
-    const sessionsData: Record<string, SessionData> = {};
-    for (const [token, session] of sessions.entries()) {
-      sessionsData[token] = session;
-    }
-    await fs.writeFile(SESSIONS_FILE, JSON.stringify(sessionsData, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error saving sessions:', error);
-  }
-}
-
-// Initialize: load sessions from disk on startup
-if (typeof window === 'undefined') {
-  loadPromise = loadSessions();
-  loadPromise.catch(console.error);
-}
+// Note: The admin_sessions table must be created in Supabase.
+// Run the SQL migration file to create it if it doesn't exist.
 
 /**
  * Create a new session
  */
 export async function createSession(token: string): Promise<void> {
   const expiresAt = Date.now() + SESSION_DURATION_MS;
-  sessions.set(token, {
-    token,
-    expiresAt,
-    createdAt: Date.now(),
-  });
-  await saveSessions();
+  const createdAt = Date.now();
+  
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('admin_sessions')
+    .insert({
+      token,
+      expires_at: expiresAt,
+      created_at: createdAt,
+    });
+  
+  if (error) {
+    console.error('Error creating session:', error);
+    // If table doesn't exist, log a helpful message
+    if (error.code === '42P01') {
+      console.error('admin_sessions table does not exist. Please run the SQL migration to create it.');
+    }
+    throw error;
+  }
 }
 
 /**
  * Verify and get session data
- * This function will wait for sessions to load if they haven't loaded yet
  */
 export async function getSession(token: string): Promise<SessionData | null> {
-  // Wait for sessions to load if they haven't loaded yet
-  if (!sessionsLoaded && loadPromise) {
-    await loadPromise;
-  } else if (!sessionsLoaded) {
-    // If loadPromise doesn't exist, start loading now
-    await loadSessions();
-  }
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('admin_sessions')
+    .select('token, expires_at, created_at')
+    .eq('token', token)
+    .single();
   
-  const session = sessions.get(token);
-  
-  if (!session) {
+  if (error || !data) {
+    // If table doesn't exist, log a helpful message
+    if (error?.code === '42P01') {
+      console.error('admin_sessions table does not exist. Please run the SQL migration to create it.');
+    }
     return null;
   }
   
   // Check if expired
-  if (session.expiresAt < Date.now()) {
-    sessions.delete(token);
-    saveSessions().catch(console.error); // Save async, don't block
+  const now = Date.now();
+  if (data.expires_at < now) {
+    // Delete expired session
+    await supabase
+      .from('admin_sessions')
+      .delete()
+      .eq('token', token);
     return null;
   }
   
-  return session;
+  return {
+    token: data.token,
+    expiresAt: data.expires_at,
+    createdAt: data.created_at,
+  };
 }
 
 /**
  * Delete a session
  */
 export async function deleteSession(token: string): Promise<void> {
-  sessions.delete(token);
-  await saveSessions();
+  const supabase = createAdminClient();
+  await supabase
+    .from('admin_sessions')
+    .delete()
+    .eq('token', token);
 }
 
 /**
@@ -141,16 +96,11 @@ export async function deleteSession(token: string): Promise<void> {
  */
 export async function cleanupSessions(): Promise<void> {
   const now = Date.now();
-  let cleaned = false;
-  for (const [token, session] of sessions.entries()) {
-    if (session.expiresAt < now) {
-      sessions.delete(token);
-      cleaned = true;
-    }
-  }
-  if (cleaned) {
-    await saveSessions();
-  }
+  const supabase = createAdminClient();
+  await supabase
+    .from('admin_sessions')
+    .delete()
+    .lt('expires_at', now);
 }
 
 // Clean up expired sessions every hour
