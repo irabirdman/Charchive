@@ -1080,6 +1080,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
     watch,
     control,
     reset,
+    getValues,
   } = methods;
 
   const templateType = watch('template_type');
@@ -1654,7 +1655,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   const onError = (errors: any) => {
     console.error('=== FORM VALIDATION ERRORS ===');
     console.error('Validation errors:', errors);
-    console.error('Full error details:', JSON.stringify(errors, null, 2));
+    // Avoid JSON.stringify on errors object as it may contain circular references
     
     // Build a detailed error message
     const errorMessages: string[] = [];
@@ -2955,7 +2956,8 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
               console.log('Form errors:', errors);
               console.log('Is dirty:', isDirty);
               console.log('Is submitting:', isSubmitting);
-              console.log('Form values:', watch());
+              // Use getValues() instead of watch() to avoid circular reference issues
+              console.log('Form values:', getValues());
               // Don't prevent default - let the form submit normally
             }}
           >
