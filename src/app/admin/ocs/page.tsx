@@ -32,11 +32,11 @@ export default async function AdminOCsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-100">Characters</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Characters</h1>
         <Link
           href="/admin/ocs/new"
-          className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-500"
+          className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-500 transition-colors text-sm sm:text-base w-fit"
         >
           Create Character
         </Link>

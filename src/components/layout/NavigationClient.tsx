@@ -84,8 +84,20 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
 
           {/* Mobile Menu Button */}
           <button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 -mr-2 text-gray-300 hover:text-purple-400 active:text-purple-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg touch-manipulation"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
+                e.nativeEvent.stopImmediatePropagation();
+              }
+              toggleMobileMenu();
+            }}
+            onMouseDown={(e) => {
+              // Ensure button gets focus and click works
+              e.stopPropagation();
+            }}
+            className="md:hidden p-2 -mr-2 text-gray-300 hover:text-purple-400 active:text-purple-400 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg touch-manipulation relative z-[60] pointer-events-auto"
             aria-label="Toggle mobile menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -107,9 +119,7 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
             aria-hidden="true"
           />
           <div
-            className={`fixed top-14 sm:top-16 left-0 right-0 bottom-0 bg-gray-900/98 backdrop-blur-md z-40 md:hidden transform transition-transform duration-300 ease-in-out overflow-y-auto ${
-              isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
+            className="fixed top-14 sm:top-16 left-0 right-0 bottom-0 bg-gray-900/98 backdrop-blur-md z-40 md:hidden transform transition-transform duration-300 ease-in-out overflow-y-auto translate-x-0"
           >
             <div className="flex flex-col p-4 sm:p-6 space-y-2 sm:space-y-3">
               {navLinks.map((link) => (

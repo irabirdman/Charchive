@@ -1,5 +1,5 @@
 import { AdminLayoutWrapper } from '@/components/admin/AdminLayoutWrapper';
-import { AdminNav } from '@/components/admin/AdminNav';
+import { requireAuth } from '@/lib/auth/require-auth';
 import { headers } from 'next/headers';
 
 export default async function AdminLayout({
@@ -12,9 +12,17 @@ export default async function AdminLayout({
   const pathname = headersList.get('x-pathname') || '';
   const isLoginPage = pathname === '/admin/login';
 
-  // Only render AdminNav if not on login page (to avoid requireAuth redirect loop)
-  // AdminNav will handle its own auth check
-  const adminNav = !isLoginPage ? <AdminNav /> : null;
+  // Only get user email if not on login page (to avoid requireAuth redirect loop)
+  let userEmail: string | null = null;
+  if (!isLoginPage) {
+    try {
+      const user = await requireAuth();
+      userEmail = user.email;
+    } catch {
+      // If auth fails, userEmail will be null (will be handled by requireAuth redirect)
+      userEmail = null;
+    }
+  }
 
-  return <AdminLayoutWrapper adminNav={adminNav}>{children}</AdminLayoutWrapper>;
+  return <AdminLayoutWrapper userEmail={userEmail}>{children}</AdminLayoutWrapper>;
 }

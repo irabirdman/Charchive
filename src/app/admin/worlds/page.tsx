@@ -16,11 +16,11 @@ export default async function AdminWorldsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-100">Worlds</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">Worlds</h1>
         <Link
           href="/admin/worlds/new"
-          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-500"
+          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-500 transition-colors text-sm sm:text-base w-fit"
         >
           Create World
         </Link>

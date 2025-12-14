@@ -572,7 +572,7 @@ const ocSchema = z.object({
   
   // Overview
   first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  last_name: z.string().optional(),
   aliases: z.string().optional(),
   species: z.string().optional(),
   sex: z.string().optional(),
@@ -1718,7 +1718,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             />
           </div>
           <div>
-            <FormLabel htmlFor="last_name" required>
+            <FormLabel htmlFor="last_name">
               Last Name
             </FormLabel>
             <FormInput

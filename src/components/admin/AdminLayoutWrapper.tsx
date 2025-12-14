@@ -1,13 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { AdminNav } from './AdminNav';
 
 export function AdminLayoutWrapper({ 
   children,
-  adminNav 
+  userEmail 
 }: { 
   children: React.ReactNode;
-  adminNav: React.ReactNode;
+  userEmail: string | null;
 }) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/admin/login';
@@ -18,8 +19,8 @@ export function AdminLayoutWrapper({
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {adminNav}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {userEmail && <AdminNav userEmail={userEmail} />}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {children}
       </main>
     </div>

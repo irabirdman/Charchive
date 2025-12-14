@@ -16,6 +16,12 @@ export function NavigationProgress() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
+      
+      // Ignore clicks on buttons (like mobile menu hamburger)
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        return
+      }
+      
       const link = target.closest('a[href]')
       
       if (link) {
