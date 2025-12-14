@@ -548,6 +548,7 @@ export function WorldForm({ world }: WorldFormProps) {
           <FormInput
             {...register('name')}
             error={errors.name?.message}
+            placeholder="The name of your world (e.g., 'Naruto Universe', 'My Original Fantasy World')"
             disabled={isSubmitting}
           />
         </div>
@@ -559,8 +560,8 @@ export function WorldForm({ world }: WorldFormProps) {
           <FormInput
             {...register('slug')}
             error={errors.slug?.message}
+            placeholder="URL-friendly version of the name (auto-generated from name, cannot be changed after creation)"
             disabled={isSubmitting || !!world}
-            helpText={world ? 'Slug cannot be changed after creation' : undefined}
           />
         </div>
 
@@ -905,8 +906,7 @@ export function WorldForm({ world }: WorldFormProps) {
           <FormTextarea
             {...register('central_conflicts')}
             rows={3}
-            placeholder="Ongoing wars, political tensions, cosmic threats, cultural clashes"
-            helpText="Major ongoing conflicts, tensions, or threats in the world. What drives the narrative tension? What are the stakes?"
+            placeholder="Major ongoing conflicts, tensions, or threats. Ongoing wars, political tensions, cosmic threats, cultural clashes. What drives the narrative tension? What are the stakes?"
             disabled={isSubmitting}
           />
         </div>
@@ -918,8 +918,7 @@ export function WorldForm({ world }: WorldFormProps) {
           <FormTextarea
             {...register('world_rules_limitations')}
             rows={3}
-            placeholder="What can't be done, costs of power, taboos, hard limits"
-            helpText="Hard rules and limitations of the world. What can't be done? What are the costs, taboos, or absolute limits? Essential for roleplay consistency."
+            placeholder="Hard rules and limitations. What can't be done? What are the costs, taboos, or absolute limits? Essential for roleplay consistency."
             disabled={isSubmitting}
           />
         </div>
@@ -931,8 +930,7 @@ export function WorldForm({ world }: WorldFormProps) {
           <FormTextarea
             {...register('oc_integration_notes')}
             rows={3}
-            placeholder="How OCs typically enter this world, power scaling expectations, common roles for OCs"
-            helpText="Guidance for creating OCs in this world. How do OCs typically enter? What are power scaling expectations? What are common roles? Prevents future confusion."
+            placeholder="Guidance for creating OCs. How do OCs typically enter this world? What are power scaling expectations? What are common roles? Prevents future confusion."
             disabled={isSubmitting}
           />
         </div>
