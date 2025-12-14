@@ -1,0 +1,21 @@
+// Map world slugs to template types
+export function getTemplateTypeFromWorldSlug(slug: string): string {
+  const templateMap: Record<string, string> = {
+    'naruto': 'naruto',
+    'final-fantasy-vii': 'ff7',
+    'inuyasha': 'inuyasha',
+    'shaman-king': 'shaman-king',
+    'zelda': 'zelda',
+    'dragon-ball-z': 'dragonball',
+    'pokemon': 'pokemon',
+    'nier': 'nier',
+    'kismet': 'original',
+    'moirai': 'original',
+    'pluviophile': 'original',
+    'tiderift': 'original',
+    'vieulx': 'original',
+    'none': 'none',
+    'not-accessible': 'none',
+  };
+  return templateMap[slug] || 'none';
+}

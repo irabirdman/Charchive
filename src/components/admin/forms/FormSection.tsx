@@ -1,0 +1,62 @@
+'use client';
+
+import React, { useState } from 'react';
+import { getSectionIcon, type SectionIconName } from '@/lib/utils/formIcons';
+import { getSectionAccent } from '@/lib/styles/formStyles';
+
+interface FormSectionProps {
+  title: string;
+  icon?: SectionIconName | string;
+  accentColor?: 'core-identity' | 'visual-identity' | 'basic-information' | 'appearance' | 'relationships' | 'personality-traits' | 'content' | 'metadata' | 'settings' | 'timeline' | 'lore' | string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function FormSection({
+  title,
+  icon,
+  accentColor,
+  defaultOpen = true,
+  children,
+  className = '',
+}: FormSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  // Determine icon to use
+  const iconName = icon || title.toLowerCase().replace(/\s+/g, '-');
+  const faIcon = getSectionIcon(iconName);
+
+  // Get accent colors
+  const accent = accentColor ? getSectionAccent(accentColor) : getSectionAccent(title);
+
+  return (
+    <div className={`border ${accent.border} rounded-lg overflow-hidden bg-gray-800/30 shadow-sm ${className}`}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-5 py-3.5 bg-gradient-to-r ${accent.from} ${accent.to} ${accent.hoverFrom} ${accent.hoverTo} transition-all flex items-center justify-between text-left border-b border-gray-600/50`}
+      >
+        <h3 className="text-lg font-semibold text-gray-50 flex items-center gap-3">
+          <i className={`fas ${faIcon} text-gray-300`} aria-hidden="true"></i>
+          {title}
+        </h3>
+        <svg
+          className={`w-5 h-5 text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="p-5 space-y-5 bg-gray-800/20">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+

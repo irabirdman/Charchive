@@ -1,0 +1,177 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+
+interface OC {
+  id: string;
+  name: string;
+  slug: string;
+  template_type: string | null;
+  is_public: boolean;
+  world: { name: string } | null | any;
+  identity_id: string | null;
+  identity: {
+    id: string;
+    name: string;
+    versions: { id: string }[];
+  } | null | any;
+}
+
+interface Templates {
+  [key: string]: { name: string };
+}
+
+interface OCListProps {
+  ocs: OC[];
+  templates: Templates;
+}
+
+export function OCList({ ocs, templates }: OCListProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOCs = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return ocs;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return ocs.filter((oc) => {
+      const name = oc.name?.toLowerCase() || '';
+      const slug = oc.slug?.toLowerCase() || '';
+      const worldName = (oc.world as any)?.name?.toLowerCase() || '';
+      const templateName = templates[oc.template_type || '']?.name?.toLowerCase() || '';
+      const templateType = oc.template_type?.toLowerCase() || '';
+
+      return (
+        name.includes(query) ||
+        slug.includes(query) ||
+        worldName.includes(query) ||
+        templateName.includes(query) ||
+        templateType.includes(query)
+      );
+    });
+  }, [ocs, templates, searchQuery]);
+
+  return (
+    <>
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, slug, world, or template..."
+          className="w-full px-4 py-2 bg-gray-700/90 border border-gray-600/70 rounded-md text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+        />
+      </div>
+
+      {filteredOCs.length > 0 ? (
+        <div className="bg-gray-700/90 rounded-lg shadow-lg overflow-hidden border border-gray-600/70">
+          <table className="min-w-full divide-y divide-gray-700">
+            <thead className="bg-gray-600/80">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
+                  World
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
+                  Template
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
+                  Versions
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
+                  Public
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-gray-700/50 divide-y divide-gray-600/50">
+              {filteredOCs.map((oc) => {
+                const identity = oc.identity as any;
+                const versions = identity?.versions || [];
+                const versionCount = versions.length || 1;
+                const hasMultipleVersions = versionCount > 1;
+
+                return (
+                  <tr key={oc.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-100">{oc.name}</div>
+                      <div className="text-sm text-gray-400">{oc.slug}</div>
+                      {hasMultipleVersions && (
+                        <div className="text-xs text-blue-400 mt-1">
+                          Part of multi-fandom identity
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      {oc.world ? (oc.world as any).name : '—'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900/50 text-pink-300 border border-pink-700">
+                        {templates[oc.template_type || '']?.name || oc.template_type || 'None'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {identity?.id ? (
+                        <Link
+                          href={`/admin/oc-identities/${identity.id}`}
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          {versionCount} version{versionCount !== 1 ? 's' : ''}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-500">1 version</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {oc.is_public ? (
+                        <span className="text-green-400">Yes</span>
+                      ) : (
+                        <span className="text-gray-500">No</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Link
+                        href={`/admin/ocs/${oc.id}`}
+                        className="text-pink-400 hover:text-pink-300 mr-4"
+                      >
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : searchQuery ? (
+        <div className="bg-gray-700/90 rounded-lg shadow-lg p-12 text-center border border-gray-600/70">
+          <p className="text-gray-400 mb-4">No characters found matching "{searchQuery}".</p>
+          <button
+            onClick={() => setSearchQuery('')}
+            className="text-pink-400 hover:text-pink-300"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <div className="bg-gray-700/90 rounded-lg shadow-lg p-12 text-center border border-gray-600/70">
+          <p className="text-gray-400 mb-4">No characters yet.</p>
+          <Link
+            href="/admin/ocs/new"
+            className="text-pink-400 hover:text-pink-300"
+          >
+            Create your first character →
+          </Link>
+        </div>
+      )}
+    </>
+  );
+}
+
+

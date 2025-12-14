@@ -1,0 +1,245 @@
+'use client';
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { UseFormRegisterReturn, ControllerRenderProps } from 'react-hook-form';
+import { csvOptions } from '@/lib/utils/csvOptionsData';
+
+interface FormAutocompleteProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'onBlur' | 'onKeyDown'> {
+  register?: UseFormRegisterReturn;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  error?: string;
+  helpText?: string;
+  options?: string[];
+  optionsSource?: keyof typeof csvOptions;
+  placeholder?: string;
+}
+
+export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompleteProps>(
+  ({
+    register,
+    error,
+    helpText,
+    options,
+    optionsSource,
+    placeholder = 'Type to search...',
+    className = '',
+    disabled,
+    value,
+    onChange,
+    onBlur,
+    ...props
+  }, ref) => {
+    // Handle both register and Controller field props
+    let registerOnChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | undefined;
+    let registerOnBlur: ((e: React.FocusEvent<HTMLInputElement>) => void) | undefined;
+    let registerRef: React.Ref<HTMLInputElement> | undefined;
+    let fieldName: string | undefined;
+    let finalRef: React.Ref<HTMLInputElement>;
+    let otherRegisterProps: any = {};
+    
+    if (register) {
+      const { ref: regRef, onChange: regOnChange, onBlur: regOnBlur, name: regName, ...regProps } = register;
+      registerOnChange = regOnChange;
+      registerOnBlur = regOnBlur;
+      registerRef = regRef;
+      fieldName = regName;
+      otherRegisterProps = regProps;
+      finalRef = registerRef || ref;
+    } else {
+      // Using Controller field props
+      registerOnChange = onChange;
+      registerOnBlur = onBlur;
+      finalRef = ref;
+    }
+    
+    const [inputValue, setInputValue] = useState(value || '');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const suggestionsRef = useRef<HTMLUListElement>(null);
+
+    // Get options from csvOptionsData if optionsSource is provided
+    const availableOptions = useMemo(() => {
+      if (options) {
+        return options;
+      }
+      if (optionsSource && csvOptions[optionsSource]) {
+        return csvOptions[optionsSource];
+      }
+      return [];
+    }, [options, optionsSource]);
+
+    // Filter suggestions based on input
+    const filteredSuggestions = useMemo(() => {
+      if (!inputValue.trim()) {
+        return availableOptions.slice(0, 10); // Show first 10 when empty
+      }
+      const lowerInput = inputValue.toLowerCase();
+      return availableOptions
+        .filter(option => option.toLowerCase().includes(lowerInput))
+        .slice(0, 10); // Limit to 10 suggestions
+    }, [inputValue, availableOptions]);
+
+    // Sync with external value prop (from Controller field)
+    useEffect(() => {
+      if (value !== undefined && value !== inputValue) {
+        setInputValue(value);
+      }
+    }, [value, inputValue]);
+
+    // Handle input change
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setInputValue(newValue);
+      setShowSuggestions(true);
+      setHighlightedIndex(-1);
+      
+      // Call register's onChange if it exists
+      if (registerOnChange) {
+        registerOnChange(e);
+      }
+    };
+
+    // Handle suggestion selection
+    const handleSelectSuggestion = (suggestion: string) => {
+      setInputValue(suggestion);
+      setShowSuggestions(false);
+      setHighlightedIndex(-1);
+      
+      // Create a synthetic event for react-hook-form
+      const syntheticEvent = {
+        target: { value: suggestion, name: fieldName || '' },
+        type: 'change',
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      if (registerOnChange) {
+        registerOnChange(syntheticEvent);
+      }
+      
+      inputRef.current?.focus();
+    };
+
+    // Handle keyboard navigation
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showSuggestions || filteredSuggestions.length === 0) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setHighlightedIndex(prev => 
+            prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < filteredSuggestions.length) {
+            handleSelectSuggestion(filteredSuggestions[highlightedIndex]);
+          }
+          break;
+        case 'Escape':
+          setShowSuggestions(false);
+          setHighlightedIndex(-1);
+          break;
+      }
+    };
+    
+    // Handle blur
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      // Delay to allow click on suggestion to register
+      setTimeout(() => {
+        setShowSuggestions(false);
+        if (registerOnBlur) {
+          registerOnBlur(e);
+        }
+      }, 200);
+    };
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+          setShowSuggestions(false);
+          setHighlightedIndex(-1);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, []);
+
+    // Scroll highlighted item into view
+    useEffect(() => {
+      if (highlightedIndex >= 0 && suggestionsRef.current) {
+        const highlightedElement = suggestionsRef.current.children[highlightedIndex] as HTMLElement;
+        if (highlightedElement) {
+          highlightedElement.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }, [highlightedIndex]);
+
+    const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
+
+    return (
+      <div ref={containerRef} className="relative">
+        <input
+          {...otherRegisterProps}
+          {...props}
+          ref={finalRef}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onFocus={() => setShowSuggestions(true)}
+          disabled={disabled}
+          placeholder={placeholder}
+          className={`${baseClasses} ${className}`}
+          autoComplete="off"
+        />
+        
+        {showSuggestions && filteredSuggestions.length > 0 && (
+          <ul
+            ref={suggestionsRef}
+            className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg"
+          >
+            {filteredSuggestions.map((suggestion, index) => (
+              <li
+                key={suggestion}
+                onClick={() => handleSelectSuggestion(suggestion)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={`px-4 py-2 cursor-pointer transition-colors ${
+                  index === highlightedIndex
+                    ? 'bg-purple-600/50 text-white'
+                    : 'text-gray-200 hover:bg-gray-700'
+                }`}
+              >
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        )}
+        
+        {error && (
+          <p className="mt-1.5 text-sm text-red-400 font-medium">{error}</p>
+        )}
+        {helpText && !error && (
+          <p className="mt-1.5 text-xs text-gray-400/80">{helpText}</p>
+        )}
+      </div>
+    );
+  }
+);
+
+FormAutocomplete.displayName = 'FormAutocomplete';
+

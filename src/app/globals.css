@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --world-primary: #64748b;
+  --world-accent: #94a3b8;
+}
+
+html {
+  background: #0a0a0a;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Anime Wiki Aesthetic Styles */
+@layer components {
+  /* Soft shadows and rounded corners */
+  .wiki-card {
+    @apply bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-md border border-gray-600/60;
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .wiki-card-hover {
+    @apply hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 hover:border-gray-500/80;
+  }
+
+  /* Infobox styling */
+  .wiki-infobox {
+    @apply bg-gradient-to-br rounded-xl;
+    @apply border-2 border-gray-600/80 shadow-xl;
+    @apply p-5 md:p-6;
+    @apply backdrop-blur-sm;
+    background: linear-gradient(to bottom right, rgb(31 41 55 / 0.98), rgb(55 65 81 / 0.98));
+  }
+
+  .wiki-infobox dl {
+    @apply space-y-0;
+  }
+
+  .wiki-infobox dt {
+    @apply text-gray-200;
+  }
+
+  .wiki-infobox dd {
+    @apply text-gray-100;
+    @apply break-words;
+  }
+
+  /* Character card styling */
+  .character-card {
+    @apply relative overflow-hidden rounded-xl;
+    @apply bg-gradient-to-br from-gray-800 to-gray-700;
+    @apply border border-gray-600/60 shadow-md;
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .character-card:hover {
+    @apply shadow-xl scale-[1.03] -translate-y-2 border-gray-500/80;
+  }
+
+  /* Tag badges */
+  .wiki-tag {
+    @apply inline-flex items-center px-2.5 py-1 rounded-md;
+    @apply text-xs font-medium;
+    @apply bg-gray-700/80 border border-gray-600/60;
+    @apply text-gray-200;
+    @apply transition-colors duration-200;
+    @apply shadow-sm;
+  }
+
+  .wiki-tag:hover {
+    @apply bg-gray-600/80 border-gray-500/80;
+  }
+
+  /* Soft gradients */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-blue-900/20;
+  }
+
+  /* Smooth animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  .slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  /* World-themed borders */
+  .world-border {
+    border-color: var(--world-primary);
+  }
+
+  .world-accent {
+    color: var(--world-accent);
+  }
+
+  .world-primary {
+    color: var(--world-primary);
+  }
+
+  .world-bg-primary {
+    background-color: var(--world-primary);
+  }
+
+  .world-bg-accent {
+    background-color: var(--world-accent);
+  }
+}
+
+/* Custom scrollbar for anime wiki feel */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #475569, #334155);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #334155, #1e293b);
+}
+
+/* Typography improvements */
+.prose {
+  @apply text-gray-300 leading-relaxed;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  @apply text-gray-100 font-bold;
+  @apply border-b border-gray-700/50 pb-2 mb-4;
+}
+
+.prose h2 {
+  @apply text-2xl mt-8 mb-4;
+}
+
+.prose h3 {
+  @apply text-xl mt-6 mb-3;
+}
+
+.prose p {
+  @apply mb-4 whitespace-pre-wrap;
+}
+
+.prose ul,
+.prose ol {
+  @apply mb-4 pl-6 space-y-2;
+}
+
+.prose li {
+  @apply text-gray-300;
+}
+
+.prose a {
+  @apply text-blue-400 hover:text-blue-300 transition-colors underline;
+}
+
+.prose code {
+  @apply bg-gray-800 px-1.5 py-0.5 rounded text-sm text-gray-200 font-mono;
+}
+
+.prose pre {
+  @apply bg-gray-800 rounded-lg p-4 overflow-x-auto mb-4;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-gray-600 pl-4 italic text-gray-400 my-4;
+}
+
+.prose img {
+  @apply rounded-lg my-4;
+}
+
+/* Image styling */
+.wiki-image {
+  @apply rounded-lg shadow-lg border-2 border-gray-700/50;
+  @apply transition-transform duration-300;
+  @apply bg-gray-900/50;
+  @apply object-contain;
+  aspect-ratio: 1 / 2;
+}
+
+.wiki-image:hover {
+  @apply scale-[1.02] shadow-xl border-gray-600/70;
+}
+
+/* Wiki section headers */
+.wiki-section-header {
+  @apply text-2xl font-bold text-gray-100 mb-4 flex items-center gap-3;
+  @apply pb-2 border-b-2 border-gray-700/50;
+}
+
+.wiki-section-header i {
+  @apply text-xl;
+}
+
+/* Next.js Image component dark background */
+img {
+  background-color: #374151;
+}
+
+/* Ensure Next.js Image containers have dark backgrounds */
+span[style*="position: relative"] img,
+div[style*="position: relative"] img,
+span[style*="position:relative"] img,
+div[style*="position:relative"] img {
+  background-color: #374151;
+}
+
+/* Next.js Image wrapper backgrounds */
+span[style*="position: relative"],
+span[style*="position:relative"] {
+  background-color: #374151;
+}
