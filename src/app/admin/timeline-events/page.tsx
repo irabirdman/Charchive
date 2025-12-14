@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { TimelineEventsList } from '@/components/admin/TimelineEventsList';
+import type { TimelineEventCharacter } from '@/types/oc';
 
 export default async function AdminTimelineEventsPage({
   searchParams,
@@ -46,7 +47,7 @@ export default async function AdminTimelineEventsPage({
   let filteredEvents = events || [];
   if (characterId) {
     filteredEvents = filteredEvents.filter((event) =>
-      event.characters?.some((char) => char.oc_id === characterId)
+      event.characters?.some((char: TimelineEventCharacter) => char.oc_id === characterId)
     );
   }
   if (search) {
