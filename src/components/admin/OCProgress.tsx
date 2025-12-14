@@ -153,10 +153,9 @@ export function OCProgress({ ocs }: OCProgressProps) {
   const progressItems = ocs.map(calculateOCProgress);
   
   // Sort by percentage (lowest first) so profiles that need work appear at the top
-  // Only show top 10 lowest percentage OCs
+  // Show all OCs
   const sortedItems = [...progressItems]
-    .sort((a, b) => a.percentage - b.percentage)
-    .slice(0, 10);
+    .sort((a, b) => a.percentage - b.percentage);
 
   const getProgressColor = (percentage: number): string => {
     if (percentage >= 80) return 'bg-green-500';
@@ -177,20 +176,21 @@ export function OCProgress({ ocs }: OCProgressProps) {
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
         <i className="fas fa-chart-line text-lg sm:text-xl text-pink-400"></i>
         <h2 className="text-lg sm:text-xl font-bold text-gray-100">OCs Progress</h2>
-        <span className="text-xs sm:text-sm text-gray-400">(Top 10 lowest completion)</span>
+        <span className="text-xs sm:text-sm text-gray-400">(All OCs)</span>
       </div>
       
       {sortedItems.length === 0 ? (
         <p className="text-gray-400 text-sm sm:text-base">No OCs found.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 min-w-max pb-2">
           {sortedItems.map((item) => {
             const worldName = item.oc.world?.name || item.oc.world_name || 'Unknown';
             return (
               <Link
                 key={item.oc.id}
                 href={`/admin/ocs/${item.oc.slug}`}
-                className="block p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors touch-manipulation"
+                className="block p-3 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors touch-manipulation min-w-[180px] sm:min-w-[200px]"
               >
                 <div className="mb-2">
                   <h3 className="text-sm font-semibold text-gray-100 truncate" title={item.oc.name}>
@@ -217,6 +217,7 @@ export function OCProgress({ ocs }: OCProgressProps) {
               </Link>
             );
           })}
+          </div>
         </div>
       )}
     </div>

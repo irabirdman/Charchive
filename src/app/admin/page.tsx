@@ -5,6 +5,7 @@ import { StatsCard } from '@/components/admin/StatsCard';
 import { FeatureTile } from '@/components/admin/FeatureTile';
 import { RecentActivity } from '@/components/admin/RecentActivity';
 import { OCProgress } from '@/components/admin/OCProgress';
+import { RandomOCOfTheDay } from '@/components/admin/RandomOCOfTheDay';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
@@ -181,6 +182,13 @@ export default async function AdminDashboard() {
           />
         </div>
       </div>
+
+      {/* Random OC of the Day */}
+      {(allOCs && allOCs.length > 0) && (
+        <div>
+          <RandomOCOfTheDay ocs={allOCs as any} />
+        </div>
+      )}
 
       {/* OCs Progress Section */}
       {(allOCs && allOCs.length > 0) && (

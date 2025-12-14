@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { UseFormRegisterReturn, ControllerRenderProps } from 'react-hook-form';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 
@@ -58,8 +57,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const [inputValue, setInputValue] = useState(value || '');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
-    const [isMounted, setIsMounted] = useState(false);
+    const [showAbove, setShowAbove] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLUListElement>(null);
@@ -86,26 +84,32 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
         .slice(0, 10); // Limit to 10 suggestions
     }, [inputValue, availableOptions]);
 
-    // Handle mounted state for portal (SSR safety)
-    useEffect(() => {
-      setIsMounted(true);
-    }, []);
-
-    // Update dropdown position when input is focused or suggestions change
+    // Calculate dropdown position (above or below)
     useEffect(() => {
       if (showSuggestions && inputRef.current) {
         const updatePosition = () => {
           if (inputRef.current) {
-            const rect = inputRef.current.getBoundingClientRect();
-            setDropdownPosition({
-              top: rect.bottom + window.scrollY + 4,
-              left: rect.left + window.scrollX,
-              width: rect.width,
-            });
+            const inputRect = inputRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - inputRect.bottom;
+            const spaceAbove = inputRect.top;
+            const dropdownHeight = 240; // max-h-60 = 240px
+            
+            // Show above if:
+            // 1. Not enough space below (< dropdownHeight) AND more space above than below, OR
+            // 2. Space above is significantly more than space below (even if both are adequate)
+            if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+              setShowAbove(true);
+            } else if (spaceAbove > spaceBelow + 100) {
+              // If there's significantly more space above, prefer showing above
+              setShowAbove(true);
+            } else {
+              setShowAbove(false);
+            }
           }
         };
         
         updatePosition();
+        // Update on scroll and resize
         window.addEventListener('scroll', updatePosition, true);
         window.addEventListener('resize', updatePosition);
         
@@ -151,8 +155,6 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
       if (registerOnChange) {
         registerOnChange(syntheticEvent);
       }
-      
-      inputRef.current?.focus();
     };
 
     // Handle keyboard navigation
@@ -223,12 +225,24 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
 
     const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
 
+    // Merge refs to track input element for positioning
+    const setInputRefs = (node: HTMLInputElement | null) => {
+      if (inputRef) {
+        (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
+      }
+      if (typeof finalRef === 'function') {
+        finalRef(node);
+      } else if (finalRef && 'current' in finalRef) {
+        (finalRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
+      }
+    };
+
     return (
       <div ref={containerRef} className="relative">
         <input
           {...otherRegisterProps}
           {...props}
-          ref={finalRef}
+          ref={setInputRefs}
           type="text"
           value={inputValue}
           onChange={handleInputChange}
@@ -241,15 +255,12 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
           autoComplete="off"
         />
         
-        {isMounted && showSuggestions && filteredSuggestions.length > 0 && createPortal(
+        {showSuggestions && filteredSuggestions.length > 0 && (
           <ul
             ref={suggestionsRef}
-            className="fixed z-[9999] max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-xl"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`,
-              width: `${dropdownPosition.width}px`,
-            }}
+            className={`absolute z-[99999] w-full max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg ${
+              showAbove ? 'bottom-full mb-1' : 'top-full mt-1'
+            }`}
           >
             {filteredSuggestions.map((suggestion, index) => (
               <li
@@ -265,8 +276,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
                 {suggestion}
               </li>
             ))}
-          </ul>,
-          document.body
+          </ul>
         )}
         
         {error && (

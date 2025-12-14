@@ -230,34 +230,39 @@ function OCAutocompleteInput({
   const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; slug: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
-  const [isMounted, setIsMounted] = useState(false);
+  const [showAbove, setShowAbove] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
   const nameValue = watch(`${fieldPath}.${index}.name`);
   const ocIdValue = watch(`${fieldPath}.${index}.oc_id`);
 
-  // Handle mounted state for portal (SSR safety)
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Update dropdown position when suggestions are shown
+  // Calculate dropdown position (above or below)
   useEffect(() => {
     if (showSuggestions && inputRef.current) {
       const updatePosition = () => {
         if (inputRef.current) {
-          const rect = inputRef.current.getBoundingClientRect();
-          setDropdownPosition({
-            top: rect.bottom + window.scrollY + 4,
-            left: rect.left + window.scrollX,
-            width: rect.width,
-          });
+          const inputRect = inputRef.current.getBoundingClientRect();
+          const spaceBelow = window.innerHeight - inputRect.bottom;
+          const spaceAbove = inputRect.top;
+          const dropdownHeight = 240; // max-h-60 = 240px
+          
+          // Show above if:
+          // 1. Not enough space below (< dropdownHeight) AND more space above than below, OR
+          // 2. Space above is significantly more than space below (even if both are adequate)
+          if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+            setShowAbove(true);
+          } else if (spaceAbove > spaceBelow + 100) {
+            // If there's significantly more space above, prefer showing above
+            setShowAbove(true);
+          } else {
+            setShowAbove(false);
+          }
         }
       };
       
       updatePosition();
+      // Update on scroll and resize
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
       
@@ -404,15 +409,12 @@ function OCAutocompleteInput({
           Linked to existing OC
         </p>
       )}
-      {isMounted && showSuggestions && suggestions.length > 0 && createPortal(
+      {showSuggestions && suggestions.length > 0 && (
         <ul
           ref={suggestionsRef}
-          className="fixed z-[9999] max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-xl"
-          style={{
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            width: `${dropdownPosition.width}px`,
-          }}
+          className={`absolute z-[99999] w-full max-h-60 overflow-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg ${
+            showAbove ? 'bottom-full mb-1' : 'top-full mt-1'
+          }`}
         >
           {suggestions.map((oc, idx) => (
             <li
@@ -428,8 +430,7 @@ function OCAutocompleteInput({
               {oc.name}
             </li>
           ))}
-        </ul>,
-        document.body
+        </ul>
       )}
     </div>
   );
@@ -1324,24 +1325,25 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
   // Auto-calculate star sign from date of birth
   useEffect(() => {
-    if (dateOfBirth && !oc) {
-      // Parse date of birth (format: YYYY-MM-DD or MM/DD/YYYY)
+    if (dateOfBirth && dateOfBirth.trim()) {
+      // Parse date of birth (format: MM/DD or MM-DD - only month and day, no year)
       let month = 0;
       let day = 0;
       
-      if (dateOfBirth.includes('/')) {
-        // MM/DD/YYYY format
-        const parts = dateOfBirth.split('/');
+      const trimmed = dateOfBirth.trim();
+      if (trimmed.includes('/')) {
+        // MM/DD format
+        const parts = trimmed.split('/').map(p => p.trim());
         month = parseInt(parts[0], 10);
         day = parseInt(parts[1], 10);
-      } else if (dateOfBirth.includes('-')) {
-        // YYYY-MM-DD format
-        const parts = dateOfBirth.split('-');
-        month = parseInt(parts[1], 10);
-        day = parseInt(parts[2], 10);
+      } else if (trimmed.includes('-')) {
+        // MM-DD format
+        const parts = trimmed.split('-').map(p => p.trim());
+        month = parseInt(parts[0], 10);
+        day = parseInt(parts[1], 10);
       }
       
-      if (month && day) {
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
         let starSign = '';
         
         // Calculate zodiac sign
@@ -1376,7 +1378,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         }
       }
     }
-  }, [dateOfBirth, oc, setValue]);
+  }, [dateOfBirth, setValue]);
 
   // Unsaved changes protection
   useEffect(() => {
@@ -1955,9 +1957,9 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             </FormLabel>
             <FormInput
               {...register('date_of_birth')}
-              placeholder="YYYY-MM-DD or MM/DD/YYYY"
+              placeholder="MM/DD or MM-DD"
               disabled={isSubmitting}
-              helpText="Format: YYYY-MM-DD (e.g., 2000-01-15) or MM/DD/YYYY (e.g., 01/15/2000). Star sign will be auto-calculated."
+              helpText="Format: MM/DD (e.g., 01/15) or MM-DD (e.g., 01-15). Only month and day required. Star sign will be auto-calculated."
             />
           </div>
           <div>
