@@ -1903,7 +1903,9 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             </FormLabel>
             <FormInput
               {...register('date_of_birth')}
+              placeholder="YYYY-MM-DD or MM/DD/YYYY"
               disabled={isSubmitting}
+              helpText="Format: YYYY-MM-DD (e.g., 2000-01-15) or MM/DD/YYYY (e.g., 01/15/2000). Star sign will be auto-calculated."
             />
           </div>
           <div>
