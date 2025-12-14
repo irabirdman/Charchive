@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { validateRequiredFields, checkSlugUniquenessExcluding, errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
@@ -13,7 +13,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS for admin operations
+    const supabase = createAdminClient();
     const { id } = await params;
 
     const { data, error } = await supabase
@@ -48,7 +49,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS for admin operations
+    const supabase = createAdminClient();
     const { id } = await params;
 
     const body = await request.json();
@@ -132,7 +134,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS for admin operations
+    const supabase = createAdminClient();
     const { id } = await params;
 
     // Delete story alias (cascade will set related story_alias_id to NULL)

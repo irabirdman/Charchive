@@ -75,8 +75,6 @@ const worldSchema = z.object({
   notes: optionalString,
   // World field system (definitions - read-only in this form)
   world_fields: z.any().optional(),
-  // World field values (for filling out fields)
-  modular_fields: z.record(z.any()).optional(),
 });
 
 type WorldFormData = z.infer<typeof worldSchema>;
@@ -134,7 +132,6 @@ export function WorldForm({ world }: WorldFormProps) {
         current_era_status: data.current_era_status || null,
         notes: data.notes || null,
         world_fields: world?.world_fields || null,
-        modular_fields: data.modular_fields || null,
       };
     },
   });
@@ -182,7 +179,6 @@ export function WorldForm({ world }: WorldFormProps) {
       current_era_status: getDefaultValue(world.current_era_status),
       notes: getDefaultValue(world.notes),
       world_fields: world.world_fields || undefined,
-      modular_fields: world.modular_fields || {},
     } : {
       name: '',
       slug: '',
@@ -219,7 +215,6 @@ export function WorldForm({ world }: WorldFormProps) {
       current_era_status: '',
       notes: '',
       world_fields: undefined,
-      modular_fields: {},
     },
   });
 

@@ -250,8 +250,11 @@ export async function PUT(
 
     // Clean the body - remove undefined values but keep null values
     // Supabase will ignore undefined but will set null values
+    // Also remove modular_fields as it doesn't exist in the worlds table
     const cleanedBody = Object.fromEntries(
-      Object.entries(body).filter(([_, value]) => value !== undefined)
+      Object.entries(body).filter(([key, value]) => 
+        value !== undefined && key !== 'modular_fields'
+      )
     );
     
     logger.debug('World', `Fields being updated: ${Object.keys(cleanedBody).join(', ')}`);

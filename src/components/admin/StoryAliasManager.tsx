@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { StoryAlias } from '@/types/oc';
 import { FormButton } from './forms/FormButton';
@@ -16,7 +16,10 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
   const [storyAliases, setStoryAliases] = useState<StoryAlias[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -27,51 +30,48 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
     description: '',
   });
 
+  // Track if slug was manually edited (so we don't auto-update it)
+  const slugManuallyEdited = useRef(false);
+  const originalSlug = useRef('');
+
+  // Clear success message after 3 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  const fetchStoryAliases = useCallback(async () => {
+    if (!worldId) return;
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/admin/story-aliases?world_id=${worldId}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch story aliases');
+      }
+
+      // API returns data directly (array), not wrapped in { data: ... }
+      setStoryAliases(Array.isArray(result) ? result : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load story aliases');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [worldId]);
+
   useEffect(() => {
     if (worldId && worldIsCanon) {
       fetchStoryAliases();
     } else {
       setIsLoading(false);
     }
-  }, [worldId, worldIsCanon]);
-
-  async function fetchStoryAliases() {
-    if (!worldId) return;
-
-    setIsLoading(true);
-    setError(null);
-    const supabase = createClient();
-
-    const { data, error: fetchError } = await supabase
-      .from('story_aliases')
-      .select('*')
-      .eq('world_id', worldId)
-      .order('name', { ascending: true });
-
-    if (fetchError) {
-      setError(`Failed to load story aliases: ${fetchError.message}`);
-    } else {
-      setStoryAliases(data || []);
-    }
-
-    setIsLoading(false);
-  }
-
-  async function getUsageCounts(aliasId: string) {
-    const supabase = createClient();
-    const [ocsResult, loreResult, eventsResult] = await Promise.all([
-      supabase.from('ocs').select('id', { count: 'exact', head: true }).eq('story_alias_id', aliasId),
-      supabase.from('world_lore').select('id', { count: 'exact', head: true }).eq('story_alias_id', aliasId),
-      supabase.from('timeline_events').select('id', { count: 'exact', head: true }).eq('story_alias_id', aliasId),
-    ]);
-
-    return {
-      ocs: ocsResult.count || 0,
-      lore: loreResult.count || 0,
-      events: eventsResult.count || 0,
-      total: (ocsResult.count || 0) + (loreResult.count || 0) + (eventsResult.count || 0),
-    };
-  }
+  }, [worldId, worldIsCanon, fetchStoryAliases]);
 
   async function handleCreate() {
     if (!formData.name.trim()) {
@@ -81,30 +81,39 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
 
     setIsCreating(true);
     setError(null);
-    const supabase = createClient();
+    setSuccess(null);
 
     const slug = formData.slug.trim() || slugify(formData.name);
 
-    const { data, error: createError } = await supabase
-      .from('story_aliases')
-      .insert({
-        world_id: worldId,
-        name: formData.name.trim(),
-        slug,
-        description: formData.description.trim() || null,
-      })
-      .select()
-      .single();
+    try {
+      const response = await fetch('/api/admin/story-aliases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          world_id: worldId,
+          name: formData.name.trim(),
+          slug,
+          description: formData.description.trim() || null,
+        }),
+      });
 
-    if (createError) {
-      setError(`Failed to create story alias: ${createError.message}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create story alias');
+      }
+
+      setFormData({ name: '', slug: '', description: '' });
+      slugManuallyEdited.current = false;
+      setSuccess('Story alias created successfully!');
+      await fetchStoryAliases();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create story alias');
+    } finally {
       setIsCreating(false);
-      return;
     }
-
-    setFormData({ name: '', slug: '', description: '' });
-    await fetchStoryAliases();
-    setIsCreating(false);
   }
 
   async function handleUpdate(id: string) {
@@ -113,46 +122,67 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
       return;
     }
 
+    setIsUpdating(true);
     setError(null);
-    const supabase = createClient();
+    setSuccess(null);
 
     const slug = formData.slug.trim() || slugify(formData.name);
 
-    const { error: updateError } = await supabase
-      .from('story_aliases')
-      .update({
-        name: formData.name.trim(),
-        slug,
-        description: formData.description.trim() || null,
-      })
-      .eq('id', id);
+    try {
+      const response = await fetch(`/api/admin/story-aliases/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          slug,
+          description: formData.description.trim() || null,
+        }),
+      });
 
-    if (updateError) {
-      setError(`Failed to update story alias: ${updateError.message}`);
-      return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update story alias');
+      }
+
+      setEditingId(null);
+      setFormData({ name: '', slug: '', description: '' });
+      slugManuallyEdited.current = false;
+      setSuccess('Story alias updated successfully!');
+      await fetchStoryAliases();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update story alias');
+    } finally {
+      setIsUpdating(false);
     }
-
-    setEditingId(null);
-    setFormData({ name: '', slug: '', description: '' });
-    await fetchStoryAliases();
   }
 
   async function handleDelete(id: string) {
+    setIsDeleting(id);
     setError(null);
-    const supabase = createClient();
+    setSuccess(null);
 
-    const { error: deleteError } = await supabase
-      .from('story_aliases')
-      .delete()
-      .eq('id', id);
+    try {
+      const response = await fetch(`/api/admin/story-aliases/${id}`, {
+        method: 'DELETE',
+      });
 
-    if (deleteError) {
-      setError(`Failed to delete story alias: ${deleteError.message}`);
-      return;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete story alias');
+      }
+
+      setDeleteConfirmId(null);
+      setSuccess('Story alias deleted successfully!');
+      await fetchStoryAliases();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete story alias');
+    } finally {
+      setIsDeleting(null);
     }
-
-    setDeleteConfirmId(null);
-    await fetchStoryAliases();
   }
 
   function startEdit(alias: StoryAlias) {
@@ -162,11 +192,28 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
       slug: alias.slug,
       description: alias.description || '',
     });
+    slugManuallyEdited.current = false;
+    originalSlug.current = alias.slug;
   }
 
   function cancelEdit() {
     setEditingId(null);
     setFormData({ name: '', slug: '', description: '' });
+    slugManuallyEdited.current = false;
+  }
+
+  function handleNameChange(newName: string) {
+    setFormData((prev) => {
+      const newSlug = slugManuallyEdited.current 
+        ? prev.slug 
+        : slugify(newName);
+      return { ...prev, name: newName, slug: newSlug };
+    });
+  }
+
+  function handleSlugChange(newSlug: string) {
+    slugManuallyEdited.current = true;
+    setFormData((prev) => ({ ...prev, slug: slugify(newSlug) }));
   }
 
   if (!worldIsCanon) {
@@ -184,6 +231,7 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
   return (
     <div className="space-y-4">
       {error && <FormMessage type="error" message={error} />}
+      {success && <FormMessage type="success" message={success} />}
 
       <div>
         <h3 className="text-lg font-semibold text-gray-200 mb-2">Story Aliases</h3>
@@ -204,14 +252,10 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (!formData.slug) {
-                    setFormData({ ...formData, name: e.target.value, slug: slugify(e.target.value) });
-                  }
-                }}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
-                placeholder="e.g., Red Thread"
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="e.g., Roots of The Wild"
+                disabled={isCreating}
               />
             </div>
             <div>
@@ -219,19 +263,22 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
               <input
                 type="text"
                 value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
+                onChange={(e) => handleSlugChange(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="Auto-generated from name"
+                disabled={isCreating}
               />
+              <p className="text-xs text-gray-500 mt-1">Slug will be auto-generated from name if left empty</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Description (Optional)</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 rows={2}
                 placeholder="Brief description of this storyline/continuity"
+                disabled={isCreating}
               />
             </div>
             <FormButton
@@ -259,13 +306,9 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (!formData.slug) {
-                    setFormData({ ...formData, name: e.target.value, slug: slugify(e.target.value) });
-                  }
-                }}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={isUpdating}
               />
             </div>
             <div>
@@ -273,17 +316,20 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
               <input
                 type="text"
                 value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: slugify(e.target.value) })}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
+                onChange={(e) => handleSlugChange(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={isUpdating}
               />
+              <p className="text-xs text-gray-500 mt-1">Slug will be auto-generated from name if you haven't manually edited it</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Description (Optional)</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100"
+                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-700 rounded text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 rows={2}
+                disabled={isUpdating}
               />
             </div>
             <div className="flex gap-2">
@@ -291,11 +337,17 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
                 type="button"
                 variant="primary"
                 onClick={() => handleUpdate(editingId)}
-                disabled={!formData.name.trim()}
+                isLoading={isUpdating}
+                disabled={isUpdating || !formData.name.trim()}
               >
                 Save Changes
               </FormButton>
-              <FormButton type="button" variant="secondary" onClick={cancelEdit}>
+              <FormButton 
+                type="button" 
+                variant="secondary" 
+                onClick={cancelEdit}
+                disabled={isUpdating}
+              >
                 Cancel
               </FormButton>
             </div>
@@ -312,9 +364,9 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
               key={alias.id}
               alias={alias}
               isEditing={editingId === alias.id}
+              isDeleting={isDeleting === alias.id}
               onEdit={() => startEdit(alias)}
               onDelete={() => setDeleteConfirmId(alias.id)}
-              onCancelEdit={cancelEdit}
               deleteConfirmId={deleteConfirmId}
               onConfirmDelete={() => handleDelete(alias.id)}
               onCancelDelete={() => setDeleteConfirmId(null)}
@@ -333,9 +385,9 @@ export function StoryAliasManager({ worldId, worldIsCanon }: StoryAliasManagerPr
 interface StoryAliasItemProps {
   alias: StoryAlias;
   isEditing: boolean;
+  isDeleting: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onCancelEdit: () => void;
   deleteConfirmId: string | null;
   onConfirmDelete: () => void;
   onCancelDelete: () => void;
@@ -344,9 +396,9 @@ interface StoryAliasItemProps {
 function StoryAliasItem({
   alias,
   isEditing,
+  isDeleting,
   onEdit,
   onDelete,
-  onCancelEdit,
   deleteConfirmId,
   onConfirmDelete,
   onCancelDelete,
@@ -380,7 +432,7 @@ function StoryAliasItem({
     return null; // Edit form is shown separately
   }
 
-  const isDeleting = deleteConfirmId === alias.id;
+  const showDeleteConfirm = deleteConfirmId === alias.id;
 
   return (
     <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
@@ -402,19 +454,21 @@ function StoryAliasItem({
           ) : null}
         </div>
         <div className="flex gap-2 ml-4">
-          {!isDeleting ? (
+          {!showDeleteConfirm ? (
             <>
               <button
                 type="button"
                 onClick={onEdit}
-                className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+                className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={onDelete}
-                className="px-3 py-1 text-sm bg-red-700 text-white rounded hover:bg-red-600"
+                className="px-3 py-1 text-sm bg-red-700 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
               >
                 Delete
               </button>
@@ -424,14 +478,16 @@ function StoryAliasItem({
               <button
                 type="button"
                 onClick={onConfirmDelete}
-                className="px-3 py-1 text-sm bg-red-700 text-white rounded hover:bg-red-600"
+                className="px-3 py-1 text-sm bg-red-700 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
               >
-                Confirm Delete
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
               </button>
               <button
                 type="button"
                 onClick={onCancelDelete}
-                className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+                className="px-3 py-1 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
               >
                 Cancel
               </button>
