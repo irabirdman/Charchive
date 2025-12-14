@@ -224,15 +224,15 @@ export default async function WorldDetailPage({
         <section className="mt-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="wiki-section-header">
-              <i className="fas fa-book text-green-400"></i>
-              Lore
+              <i className="fas fa-book-open text-green-400"></i>
+              Lore Entries
             </h2>
             <Link
               href={`/worlds/${world.slug}/lore`}
               prefetch={true}
-              className="text-purple-400 hover:text-purple-300 text-sm font-medium"
+              className="px-4 py-2 text-sm font-medium text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-lg transition-colors border border-purple-400/30 hover:border-purple-400/50"
             >
-              View All →
+              View All <i className="fas fa-arrow-right ml-1"></i>
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -240,6 +240,18 @@ export default async function WorldDetailPage({
               <LoreCard key={lore.id} lore={lore} />
             ))}
           </div>
+          {loreEntries.length >= 6 && (
+            <div className="mt-6 text-center">
+              <Link
+                href={`/worlds/${world.slug}/lore`}
+                prefetch={true}
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-lg transition-colors border border-purple-400/30 hover:border-purple-400/50"
+              >
+                View All Lore Entries
+                <i className="fas fa-arrow-right"></i>
+              </Link>
+            </div>
+          )}
         </section>
       )}
     </div>

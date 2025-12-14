@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/auth/require-auth';
 
@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
 
     if (!id) {
@@ -64,7 +64,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const ocId = searchParams.get('oc_id');

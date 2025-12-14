@@ -413,6 +413,7 @@ export interface WorldLore {
   description_markdown?: string | null;
   image_url?: string | null;
   icon_url?: string | null;
+  banner_image_url?: string | null;
   world_fields?: WorldFieldDefinitions | null;
   modular_fields?: WorldFieldValues | null;
   created_at: string;

@@ -19,47 +19,44 @@ export function LoreDetail({ lore }: LoreDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="wiki-card overflow-hidden" style={themeStyles}>
-        <div className="relative h-64 w-full overflow-hidden">
-          {lore.image_url ? (
-            <Image
-              src={convertGoogleDriveUrl(lore.image_url)}
-              alt={lore.name}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              unoptimized={lore.image_url.includes('drive.google.com') || isGoogleSitesUrl(lore.image_url)}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-              <span className="text-gray-500 text-6xl">?</span>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 text-sm font-medium bg-purple-600/80 text-white rounded">
-                {lore.lore_type}
-              </span>
-              {lore.world && (
-                <Link
-                  href={`/worlds/${lore.world.slug}`}
-                  className="text-sm text-white/80 hover:text-white underline"
-                >
-                  {lore.world.name}
-                </Link>
-              )}
-            </div>
-            <h1 className="text-4xl font-bold text-white">{lore.name}</h1>
-          </div>
+      {/* Banner Image */}
+      {lore.banner_image_url && (
+        <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+          <Image
+            src={convertGoogleDriveUrl(lore.banner_image_url)}
+            alt={`${lore.name} banner`}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            unoptimized={lore.banner_image_url.includes('drive.google.com') || isGoogleSitesUrl(lore.banner_image_url)}
+          />
         </div>
+      )}
+
+      {/* Header */}
+      <div className="wiki-card p-6" style={themeStyles}>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="px-3 py-1 text-sm font-medium bg-purple-600/80 text-white rounded">
+            {lore.lore_type}
+          </span>
+          {lore.world && (
+            <Link
+              href={`/worlds/${lore.world.slug}`}
+              className="text-sm text-white/80 hover:text-white underline"
+            >
+              {lore.world.name}
+            </Link>
+          )}
+        </div>
+        <h1 className="text-4xl font-bold text-white">{lore.name}</h1>
       </div>
 
-      {/* Description */}
+      {/* Description (Markdown) */}
       {lore.description && (
         <div className="wiki-card p-6">
-          <p className="text-lg text-gray-300">{lore.description}</p>
+          <div className="prose prose-invert max-w-none">
+            <Markdown content={lore.description} />
+          </div>
         </div>
       )}
 

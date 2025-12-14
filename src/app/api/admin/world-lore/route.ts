@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { validateRequiredFields, checkSlugUniqueness, errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 
 import { checkAuth } from '@/lib/auth/require-auth';
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
   const { searchParams } = new URL(request.url);
 
   // Extract filter parameters
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const body = await request.json();
   const {
@@ -83,6 +83,7 @@ export async function POST(request: Request) {
     description_markdown,
     image_url,
     icon_url,
+    banner_image_url,
     world_fields,
     modular_fields,
     related_ocs, // Array of { oc_id, role }
@@ -130,6 +131,7 @@ export async function POST(request: Request) {
       description_markdown,
       image_url,
       icon_url,
+      banner_image_url,
       world_fields: world_fields || {},
       modular_fields: modular_fields || {},
       story_alias_id: body.story_alias_id || null,

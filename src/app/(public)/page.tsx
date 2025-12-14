@@ -127,6 +127,13 @@ export default async function HomePage() {
           >
             View Timelines
           </Link>
+          <Link
+            href="/stats"
+            prefetch={true}
+            className="px-5 py-2.5 md:px-6 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
+          >
+            View Statistics
+          </Link>
           {user && (
             <Link
               href="/admin"
@@ -140,30 +147,52 @@ export default async function HomePage() {
       </section>
 
       {/* Enhanced Stats Section */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 slide-up">
-        <div className="wiki-card p-4 md:p-6 text-center">
-          <div className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">
-            {worldCount}
-          </div>
-          <div className="text-sm md:text-base text-gray-300">Worlds</div>
+      <section className="slide-up">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100 flex items-center gap-2 md:gap-3">
+            <i className="fas fa-chart-bar text-purple-400 text-xl md:text-2xl"></i>
+            Statistics
+          </h2>
+          <Link
+            href="/stats"
+            className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 text-sm md:text-base transition-colors"
+          >
+            View Full Stats <i className="fas fa-arrow-right"></i>
+          </Link>
         </div>
-        <div className="wiki-card p-4 md:p-6 text-center">
-          <div className="text-3xl md:text-4xl font-bold text-pink-400 mb-2">
-            {ocCount}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+          <div className="wiki-card p-4 md:p-6 text-center hover:scale-105 transition-transform cursor-pointer">
+            <Link href="/worlds" className="block">
+              <div className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">
+                {worldCount}
+              </div>
+              <div className="text-sm md:text-base text-gray-300">Worlds</div>
+            </Link>
           </div>
-          <div className="text-sm md:text-base text-gray-300">Characters</div>
-        </div>
-        <div className="wiki-card p-4 md:p-6 text-center">
-          <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2">
-            {loreCount}
+          <div className="wiki-card p-4 md:p-6 text-center hover:scale-105 transition-transform cursor-pointer">
+            <Link href="/ocs" className="block">
+              <div className="text-3xl md:text-4xl font-bold text-pink-400 mb-2">
+                {ocCount}
+              </div>
+              <div className="text-sm md:text-base text-gray-300">Characters</div>
+            </Link>
           </div>
-          <div className="text-sm md:text-base text-gray-300">Lore Entries</div>
-        </div>
-        <div className="wiki-card p-4 md:p-6 text-center">
-          <div className="text-3xl md:text-4xl font-bold text-orange-400 mb-2">
-            {timelineEventCount}
+          <div className="wiki-card p-4 md:p-6 text-center hover:scale-105 transition-transform cursor-pointer">
+            <Link href="/lore" className="block">
+              <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2">
+                {loreCount}
+              </div>
+              <div className="text-sm md:text-base text-gray-300">Lore Entries</div>
+            </Link>
           </div>
-          <div className="text-sm md:text-base text-gray-300">Timeline Events</div>
+          <div className="wiki-card p-4 md:p-6 text-center hover:scale-105 transition-transform cursor-pointer">
+            <Link href="/timelines" className="block">
+              <div className="text-3xl md:text-4xl font-bold text-orange-400 mb-2">
+                {timelineEventCount}
+              </div>
+              <div className="text-sm md:text-base text-gray-300">Timeline Events</div>
+            </Link>
+          </div>
         </div>
       </section>
 

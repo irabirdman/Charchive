@@ -6,6 +6,7 @@ import Image from 'next/image';
 import type { WorldLore } from '@/types/oc';
 import { applyWorldThemeStyles } from '@/lib/theme/worldTheme';
 import { convertGoogleDriveUrl, isGoogleSitesUrl } from '@/lib/utils/googleDriveImage';
+import { Markdown } from '@/lib/utils/markdown';
 
 interface LoreCardProps {
   lore: WorldLore;
@@ -39,14 +40,14 @@ export function LoreCard({ lore }: LoreCardProps) {
           </div>
         )}
         <div className="relative h-48 w-full overflow-hidden">
-          {lore.image_url ? (
+          {lore.banner_image_url ? (
             <Image
-              src={convertGoogleDriveUrl(lore.image_url)}
+              src={convertGoogleDriveUrl(lore.banner_image_url)}
               alt={lore.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover"
-              unoptimized={lore.image_url.includes('drive.google.com') || isGoogleSitesUrl(lore.image_url)}
+              unoptimized={lore.banner_image_url.includes('drive.google.com') || isGoogleSitesUrl(lore.banner_image_url)}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
@@ -73,7 +74,9 @@ export function LoreCard({ lore }: LoreCardProps) {
         </div>
         {lore.description && (
           <div className="p-4">
-            <p className="text-sm text-gray-300 line-clamp-2">{lore.description}</p>
+            <div className="text-sm text-gray-300 prose prose-sm prose-invert max-w-none line-clamp-3 [&>*]:line-clamp-3 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+              <Markdown content={lore.description} />
+            </div>
           </div>
         )}
         {(lore.related_ocs && lore.related_ocs.length > 0) && (

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { validateRequiredFields, checkSlugUniquenessExcluding, errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
 
     if (!id) {
@@ -62,7 +62,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
 
     if (!id) {
@@ -78,6 +78,7 @@ export async function PUT(
       description_markdown,
       image_url,
       icon_url,
+      banner_image_url,
       world_fields,
       modular_fields,
       related_ocs, // Array of { oc_id, role }
@@ -143,6 +144,7 @@ export async function PUT(
         description_markdown,
         image_url,
         icon_url,
+        banner_image_url,
         world_fields: world_fields || {},
         modular_fields: modular_fields || {},
         story_alias_id: story_alias_id || null,
@@ -243,7 +245,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { id } = await params;
 
     if (!id) {

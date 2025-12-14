@@ -41,6 +41,7 @@ const worldLoreSchema = z.object({
   description_markdown: z.string().optional(),
   image_url: z.string().url().optional().or(z.literal('')),
   icon_url: z.string().url().optional().or(z.literal('')),
+  banner_image_url: z.string().url().optional().or(z.literal('')),
   world_fields: z.any().optional(),
   modular_fields: z.record(z.any()).optional(),
   related_ocs: z.array(z.object({
@@ -79,6 +80,7 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
       description_markdown: lore.description_markdown || '',
       image_url: lore.image_url || '',
       icon_url: lore.icon_url || '',
+      banner_image_url: lore.banner_image_url || '',
       world_fields: lore.world_fields || { field_sets: [] },
       modular_fields: lore.modular_fields || {},
       related_ocs: lore.related_ocs?.map(rel => ({
@@ -98,6 +100,7 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
       description_markdown: '',
       image_url: '',
       icon_url: '',
+      banner_image_url: '',
       world_fields: { field_sets: [] },
       modular_fields: {},
       related_ocs: [],
@@ -123,6 +126,7 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
       ...data,
       image_url: data.image_url || null,
       icon_url: data.icon_url || null,
+      banner_image_url: data.banner_image_url || null,
       description: data.description || null,
       description_markdown: data.description_markdown || null,
       world_fields: {
@@ -331,6 +335,19 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
         </FormSection>
 
         <FormSection title="Visual Identity" icon="visual-identity" accentColor="visual-identity" defaultOpen={true}>
+          <div>
+            <FormLabel htmlFor="banner_image_url">
+              Banner/Header Image URL
+            </FormLabel>
+            <FormInput
+              type="url"
+              {...register('banner_image_url')}
+              placeholder="https://example.com/banner.jpg"
+              disabled={isSubmitting}
+              helpText="Aesthetic banner image displayed at the top of the lore page"
+            />
+          </div>
+
           <div>
             <FormLabel htmlFor="image_url">
               Image URL

@@ -199,6 +199,16 @@ body {
   @apply border-l-4 border-gray-600 pl-4 italic text-gray-400 my-4;
 }
 
+.prose strong,
+.prose b {
+  @apply text-gray-100 font-semibold;
+}
+
+.prose em,
+.prose i {
+  @apply text-gray-200;
+}
+
 .prose img {
   @apply rounded-lg my-4;
 }
