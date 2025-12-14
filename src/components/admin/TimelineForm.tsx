@@ -40,11 +40,17 @@ export function TimelineForm({ timeline }: TimelineFormProps) {
 
   const methods = useForm<TimelineFormData>({
     resolver: zodResolver(timelineSchema),
-    defaultValues: timeline || {
-      world_id: '',
-      name: '',
-      description_markdown: '',
-    },
+    defaultValues: timeline
+      ? {
+          world_id: timeline.world_id,
+          name: timeline.name,
+          description_markdown: timeline.description_markdown ?? undefined,
+        }
+      : {
+          world_id: '',
+          name: '',
+          description_markdown: '',
+        },
   });
 
   const { register, handleSubmit, formState: { errors } } = methods;
