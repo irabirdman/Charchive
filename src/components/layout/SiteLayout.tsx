@@ -13,7 +13,7 @@ export function SiteLayout({ children }: SiteLayoutProps) {
         <NavigationProgress />
       </Suspense>
       <Navigation />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" suppressHydrationWarning>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 lg:py-8" suppressHydrationWarning>
         {children}
       </main>
     </div>

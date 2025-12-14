@@ -46,7 +46,7 @@ body {
   .wiki-infobox {
     @apply bg-gradient-to-br rounded-xl;
     @apply border-2 border-gray-600/80 shadow-xl;
-    @apply p-5 md:p-6;
+    @apply p-4 md:p-5 lg:p-6;
     @apply backdrop-blur-sm;
     background: linear-gradient(to bottom right, rgb(31 41 55 / 0.98), rgb(55 65 81 / 0.98));
   }
@@ -214,12 +214,12 @@ body {
 
 /* Wiki section headers */
 .wiki-section-header {
-  @apply text-2xl font-bold text-gray-100 mb-4 flex items-center gap-3;
+  @apply text-xl md:text-2xl font-bold text-gray-100 mb-3 md:mb-4 flex items-center gap-2 md:gap-3;
   @apply pb-2 border-b-2 border-gray-700/50;
 }
 
 .wiki-section-header i {
-  @apply text-xl;
+  @apply text-lg md:text-xl;
 }
 
 /* Next.js Image component dark background */

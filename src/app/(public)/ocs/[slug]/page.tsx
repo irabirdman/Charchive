@@ -168,13 +168,13 @@ export default async function OCDetailPage({
       </nav>
 
       <OCPageLayout oc={oc}>
-        <div className="flex flex-col lg:flex-row gap-8" suppressHydrationWarning>
-          <div className="lg:w-96 flex-shrink-0 lg:sticky lg:top-20 lg:self-start lg:h-fit" suppressHydrationWarning>
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:gap-8" suppressHydrationWarning>
+          <div className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-20 lg:self-start lg:h-fit" suppressHydrationWarning>
             <OCInfobox oc={oc} />
           </div>
-          <div className="flex-1 space-y-6" suppressHydrationWarning>
+          <div className="flex-1 space-y-4 md:space-y-6" suppressHydrationWarning>
             {/* Header - smaller, next to sidebar */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-gray-900/80 p-4 md:p-5 border border-gray-700/50 shadow-lg backdrop-blur-sm" suppressHydrationWarning>
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-gray-900/80 p-3 md:p-4 lg:p-5 border border-gray-700/50 shadow-lg backdrop-blur-sm" suppressHydrationWarning>
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" suppressHydrationWarning></div>
               <div className="relative flex items-start gap-4" suppressHydrationWarning>
                 {oc.world?.icon_url && (
@@ -221,7 +221,7 @@ export default async function OCDetailPage({
             {/* Overview Section */}
             {((oc.aliases || oc.affiliations || oc.romantic_orientation || oc.sexual_orientation || oc.story_alias || oc.species || oc.occupation || oc.development_status) || 
               hasCategoryFields('Core Identity') || hasCategoryFields('Overview')) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="overview" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-info-circle text-blue-400" aria-hidden="true" suppressHydrationWarning></i>
                   Overview
@@ -329,7 +329,7 @@ export default async function OCDetailPage({
 
             {/* Identity Background Section */}
             {(oc.ethnicity || oc.place_of_origin || oc.current_residence || (oc.languages && oc.languages.length > 0)) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="identity-background" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-globe-americas text-green-400" aria-hidden="true" suppressHydrationWarning></i>
                   Identity Background
@@ -396,7 +396,7 @@ export default async function OCDetailPage({
 
             {/* History Summary Section */}
             {oc.history_summary && (
-            <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+            <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
               <h2 id="biography" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                 <i className="fas fa-book text-blue-400" aria-hidden="true" suppressHydrationWarning></i>
                 Biography
@@ -409,7 +409,7 @@ export default async function OCDetailPage({
 
             {/* Abilities Section */}
             {(oc.abilities || oc.skills || oc.aptitudes || oc.strengths || oc.limits || oc.conditions) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="abilities" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-magic text-indigo-400" aria-hidden="true" suppressHydrationWarning></i>
                   Abilities
@@ -475,7 +475,7 @@ export default async function OCDetailPage({
 
             {/* Appearance Section */}
             {(oc.standard_look || oc.alternate_looks || oc.accessories || oc.visual_motifs || oc.appearance_changes || oc.height || oc.weight || oc.build || oc.eye_color || oc.hair_color || oc.skin_tone || oc.features || oc.appearance_summary) && (
-            <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+            <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="appearance" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                 <i className="fas fa-user text-purple-400" aria-hidden="true" suppressHydrationWarning></i>
                 Appearance
@@ -646,7 +646,7 @@ export default async function OCDetailPage({
 
             {/* Personality Overview Section */}
             {(oc.personality_summary || oc.alignment) && (
-            <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+            <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
               <h2 id="personality-overview" className="wiki-section-header scroll-mt-20">
                 <i className="fas fa-heart text-pink-400" aria-hidden="true" suppressHydrationWarning></i>
                   Personality Overview
@@ -665,7 +665,7 @@ export default async function OCDetailPage({
 
             {/* Personality Traits Section */}
             {(oc.positive_traits || oc.neutral_traits || oc.negative_traits) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="personality-traits" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-star text-yellow-400" aria-hidden="true" suppressHydrationWarning></i>
                   Personality Traits
@@ -731,7 +731,7 @@ export default async function OCDetailPage({
 
             {/* Personality Metrics Section */}
             {(oc.sociability || oc.communication_style || oc.judgment || oc.emotional_resilience || oc.courage || oc.risk_behavior || oc.honesty || oc.discipline || oc.temperament || oc.humor) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="personality-metrics" className="wiki-section-header scroll-mt-20">
                   <i className="fas fa-chart-line text-cyan-400" aria-hidden="true" suppressHydrationWarning></i>
                   Personality Metrics
@@ -1304,7 +1304,7 @@ export default async function OCDetailPage({
 
             {/* History Section */}
             {(oc.origin || oc.formative_years || oc.major_life_events) && (
-            <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+            <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="history" className="wiki-section-header scroll-mt-20">
                 <i className="fas fa-history text-amber-400" aria-hidden="true" suppressHydrationWarning></i>
                 History
@@ -1343,7 +1343,7 @@ export default async function OCDetailPage({
 
             {/* Preferences & Habits Section */}
             {(oc.likes || oc.dislikes) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="preferences" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-heart text-red-400" aria-hidden="true" suppressHydrationWarning></i>
                   Preferences & Habits
@@ -1411,7 +1411,7 @@ export default async function OCDetailPage({
 
             {/* Media Section - Additional Fields */}
             {(oc.seiyuu || oc.voice_actor || oc.theme_song || oc.inspirations || oc.design_notes || oc.name_meaning_etymology || oc.creator_notes) && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="media" className="wiki-section-header scroll-mt-20">
                   <i className="fas fa-film text-purple-400"></i>
                   Media & Additional Information
@@ -1507,7 +1507,7 @@ export default async function OCDetailPage({
 
             {/* Trivia Section */}
             {oc.trivia && (
-            <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+            <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
               <h2 id="trivia" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                 <i className="fas fa-star text-yellow-400" aria-hidden="true" suppressHydrationWarning></i>
                 Trivia
@@ -1544,7 +1544,7 @@ export default async function OCDetailPage({
               if (!hasUncategorizedFields) return null;
               
               return (
-                <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+                <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                   <h2 id="world-specific" className="wiki-section-header scroll-mt-20">
                     <i className="fas fa-cog text-cyan-400"></i>
                     World-Specific Information
@@ -1579,7 +1579,7 @@ export default async function OCDetailPage({
 
             {/* Other Versions Section - Show if part of multi-fandom identity */}
             {oc.identity && (oc.identity as any).versions && (oc.identity as any).versions.length > 1 && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="other-versions" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-globe text-blue-400" aria-hidden="true" suppressHydrationWarning></i>
                   Other Versions
@@ -1609,7 +1609,7 @@ export default async function OCDetailPage({
 
             {/* Gallery Section */}
             {oc.gallery && oc.gallery.length > 0 && (
-              <div className="wiki-card p-6 md:p-8" suppressHydrationWarning>
+              <div className="wiki-card p-4 md:p-6 lg:p-8" suppressHydrationWarning>
                 <h2 id="gallery" className="wiki-section-header scroll-mt-20" suppressHydrationWarning>
                   <i className="fas fa-images text-purple-400" aria-hidden="true" suppressHydrationWarning></i>
                   Gallery

@@ -18,7 +18,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Verify session token
-    const session = getSession(sessionCookie.value);
+    const session = await getSession(sessionCookie.value);
     
     if (!session) {
       const url = request.nextUrl.clone()

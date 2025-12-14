@@ -62,17 +62,17 @@ export default async function EditWorldPage({
     .eq('world_id', world.id);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-100">Edit World</h1>
+    <div className="px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-100">Edit World</h1>
         <Link
           href={`/admin/world-lore?world_id=${world.id}`}
-          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-500"
+          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-500 text-sm md:text-base w-fit"
         >
           View Lore Entries ({loreCount || 0})
         </Link>
       </div>
-      <div className="bg-gray-700/90 rounded-lg shadow-lg p-6 border border-gray-600/70">
+      <div className="bg-gray-700/90 rounded-lg shadow-lg p-4 md:p-6 border border-gray-600/70">
         <WorldForm world={world} />
       </div>
     </div>

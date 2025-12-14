@@ -157,9 +157,9 @@ export default async function EditOCPage({
       };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-50 mb-8">Edit Character</h1>
-      <div className="bg-gray-800/40 rounded-xl shadow-xl p-8 border border-gray-600/50 backdrop-blur-sm">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-50 mb-4 md:mb-8">Edit Character</h1>
+      <div className="bg-gray-800/40 rounded-xl shadow-xl p-4 md:p-6 lg:p-8 border border-gray-600/50 backdrop-blur-sm">
         <OCForm oc={oc} reverseRelationships={reverseRelationships} />
       </div>
     </div>

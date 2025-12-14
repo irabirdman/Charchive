@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     
     // Generate secure session token
     const sessionToken = generateSessionToken();
-    createSession(sessionToken);
+    await createSession(sessionToken);
 
     // Create response with success
     const response = NextResponse.json({ success: true });

@@ -18,7 +18,7 @@ export async function requireAuth() {
   }
 
   // Verify session token
-  const session = getSession(sessionCookie.value);
+  const session = await getSession(sessionCookie.value);
   
   if (!session) {
     redirect('/admin/login');
@@ -46,7 +46,7 @@ export async function checkAuth() {
   }
 
   // Verify session token
-  const session = getSession(sessionCookie.value);
+  const session = await getSession(sessionCookie.value);
   
   if (!session) {
     return null;

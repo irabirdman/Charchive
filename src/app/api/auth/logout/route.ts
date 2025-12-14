@@ -10,7 +10,7 @@ export async function POST() {
     
     // Delete session from store if it exists
     if (sessionCookie?.value) {
-      deleteSession(sessionCookie.value);
+      await deleteSession(sessionCookie.value);
     }
 
     const response = NextResponse.json({ success: true });

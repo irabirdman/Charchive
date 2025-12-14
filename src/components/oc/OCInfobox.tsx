@@ -12,7 +12,7 @@ interface OCInfoboxProps {
 
 export async function OCInfobox({ oc }: OCInfoboxProps) {
   return (
-    <Infobox sticky className="w-full md:w-96">
+    <Infobox sticky={false} className="w-full lg:w-96">
       <div className="relative w-full aspect-[4/5] mb-4 rounded-lg overflow-hidden" suppressHydrationWarning>
         {oc.image_url?.includes('drive.google.com') ? (
           <GoogleDriveImage

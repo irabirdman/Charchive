@@ -35,14 +35,14 @@ export function FormSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-5 py-3.5 bg-gradient-to-r ${accent.from} ${accent.to} ${accent.hoverFrom} ${accent.hoverTo} transition-all flex items-center justify-between text-left border-b border-gray-600/50`}
+        className={`w-full px-4 py-3 md:px-5 md:py-3.5 bg-gradient-to-r ${accent.from} ${accent.to} ${accent.hoverFrom} ${accent.hoverTo} transition-all flex items-center justify-between text-left border-b border-gray-600/50`}
       >
-        <h3 className="text-lg font-semibold text-gray-50 flex items-center gap-3">
-          <i className={`fas ${faIcon} text-gray-300`} aria-hidden="true"></i>
-          {title}
+        <h3 className="text-base md:text-lg font-semibold text-gray-50 flex items-center gap-2 md:gap-3">
+          <i className={`fas ${faIcon} text-gray-300 text-sm md:text-base`} aria-hidden="true"></i>
+          <span className="truncate">{title}</span>
         </h3>
         <svg
-          className={`w-5 h-5 text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 md:w-5 md:h-5 text-gray-300 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -52,7 +52,7 @@ export function FormSection({
         </svg>
       </button>
       {isOpen && (
-        <div className="p-5 space-y-5 bg-gray-800/20">
+        <div className="p-4 md:p-5 space-y-4 md:space-y-5 bg-gray-800/20">
           {children}
         </div>
       )}

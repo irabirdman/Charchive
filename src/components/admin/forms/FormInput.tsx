@@ -11,7 +11,7 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
   ({ register, error, helpText, className = '', disabled, ...props }, ref) => {
-    const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'w-full px-3 py-2 md:px-4 md:py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base';
 
     // Extract ref from register if it exists, otherwise use the forwarded ref
     const { ref: registerRef, ...registerProps } = register || {};

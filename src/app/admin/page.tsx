@@ -114,16 +114,16 @@ export default async function AdminDashboard() {
     .slice(0, 10);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-100">Admin Dashboard</h1>
-          <p className="text-gray-400 mt-2">Control center for managing all content and settings</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-100">Admin Dashboard</h1>
+          <p className="text-gray-400 mt-2 text-sm md:text-base">Control center for managing all content and settings</p>
         </div>
         <Link
           href="/"
-          className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+          className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors text-sm md:text-base w-fit"
         >
           ← Website Home
         </Link>
@@ -131,8 +131,8 @@ export default async function AdminDashboard() {
 
       {/* Enhanced Stats Section */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-4">Overview</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Overview</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <StatsCard
             title="Worlds"
             count={worldCount}
@@ -186,40 +186,40 @@ export default async function AdminDashboard() {
       )}
 
       {/* Quick Actions Bar */}
-      <div className="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-100 mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
+      <div className="bg-gray-800 rounded-lg shadow p-4 md:p-6 border border-gray-700">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-100 mb-4">Quick Actions</h2>
+        <div className="flex flex-wrap gap-2 md:gap-3">
           <Link
             href="/admin/ocs/new"
-            className="px-5 py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
           >
             <i className="fas fa-plus"></i>
             New OC
           </Link>
           <Link
             href="/admin/worlds/new"
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
           >
             <i className="fas fa-plus"></i>
             New World
           </Link>
           <Link
             href="/admin/world-lore/new"
-            className="px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
           >
             <i className="fas fa-plus"></i>
             New Lore Entry
           </Link>
           <Link
             href="/admin/timelines/new"
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
           >
             <i className="fas fa-plus"></i>
             New Timeline
           </Link>
           <Link
             href="/admin/timeline-events/new"
-            className="px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg flex items-center gap-2 text-sm md:text-base"
           >
             <i className="fas fa-plus"></i>
             New Timeline Event
@@ -229,8 +229,8 @@ export default async function AdminDashboard() {
 
       {/* Feature Tiles - Create Section */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-4">Create</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Create</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <FeatureTile
             title="New OC"
             description="Create a new original character for any world"
@@ -276,8 +276,8 @@ export default async function AdminDashboard() {
 
       {/* Feature Tiles - Manage Section */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-4">Manage</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Manage</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <FeatureTile
             title="Browse OCs"
             description="View and manage all original characters"
@@ -328,8 +328,8 @@ export default async function AdminDashboard() {
 
       {/* Feature Tiles - Admin Tools Section */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-4">Admin Tools</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Admin Tools</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <FeatureTile
             title="OC Statistics"
             description="View comprehensive analytics and statistics for all characters"

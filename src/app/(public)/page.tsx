@@ -89,41 +89,41 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-12 md:space-y-16">
       {/* Hero Section */}
-      <section className="hero-gradient rounded-2xl p-8 md:p-12 text-center fade-in">
-        <h1 className="text-5xl md:text-6xl font-bold text-gray-100 mb-4">
+      <section className="hero-gradient rounded-2xl p-6 md:p-8 lg:p-12 text-center fade-in">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-100 mb-3 md:mb-4">
           Ruutulian
         </h1>
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+        <p className="text-base md:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto mb-6 md:mb-8 px-4">
           Explore characters and worlds across every universe. A personal wiki for organizing and showcasing original characters and worlds.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-3 md:gap-4 px-4">
           <Link
             href="/worlds"
             prefetch={true}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg"
+            className="px-5 py-2.5 md:px-6 md:py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
           >
             Browse Worlds
           </Link>
           <Link
             href="/ocs"
             prefetch={true}
-            className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg"
+            className="px-5 py-2.5 md:px-6 md:py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
           >
             View Characters
           </Link>
           <Link
             href="/lore"
             prefetch={true}
-            className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg"
+            className="px-5 py-2.5 md:px-6 md:py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
           >
             Browse Lore
           </Link>
           <Link
             href="/timelines"
             prefetch={true}
-            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg"
+            className="px-5 py-2.5 md:px-6 md:py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
           >
             View Timelines
           </Link>
@@ -131,7 +131,7 @@ export default async function HomePage() {
             <Link
               href="/admin"
               prefetch={false}
-              className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all hover:scale-105 shadow-lg"
+              className="px-5 py-2.5 md:px-6 md:py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all hover:scale-105 shadow-lg text-sm md:text-base"
             >
               Admin Dashboard
             </Link>
@@ -140,40 +140,40 @@ export default async function HomePage() {
       </section>
 
       {/* Enhanced Stats Section */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-6 slide-up">
-        <div className="wiki-card p-6 text-center">
-          <div className="text-4xl font-bold text-purple-400 mb-2">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 slide-up">
+        <div className="wiki-card p-4 md:p-6 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-purple-400 mb-2">
             {worldCount}
           </div>
-          <div className="text-gray-300">Worlds</div>
+          <div className="text-sm md:text-base text-gray-300">Worlds</div>
         </div>
-        <div className="wiki-card p-6 text-center">
-          <div className="text-4xl font-bold text-pink-400 mb-2">
+        <div className="wiki-card p-4 md:p-6 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-pink-400 mb-2">
             {ocCount}
           </div>
-          <div className="text-gray-300">Characters</div>
+          <div className="text-sm md:text-base text-gray-300">Characters</div>
         </div>
-        <div className="wiki-card p-6 text-center">
-          <div className="text-4xl font-bold text-teal-400 mb-2">
+        <div className="wiki-card p-4 md:p-6 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2">
             {loreCount}
           </div>
-          <div className="text-gray-300">Lore Entries</div>
+          <div className="text-sm md:text-base text-gray-300">Lore Entries</div>
         </div>
-        <div className="wiki-card p-6 text-center">
-          <div className="text-4xl font-bold text-orange-400 mb-2">
+        <div className="wiki-card p-4 md:p-6 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-orange-400 mb-2">
             {timelineEventCount}
           </div>
-          <div className="text-gray-300">Timeline Events</div>
+          <div className="text-sm md:text-base text-gray-300">Timeline Events</div>
         </div>
       </section>
 
       {/* Quick Navigation Cards */}
       <section className="slide-up">
-        <div className="flex items-center gap-3 mb-6">
-          <i className="fas fa-compass text-2xl text-purple-400"></i>
-          <h2 className="text-3xl font-bold text-gray-100">Explore</h2>
+        <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+          <i className="fas fa-compass text-xl md:text-2xl text-purple-400"></i>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Explore</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <FeatureTile
             title="Browse Worlds"
             description="Explore all available worlds and universes"
@@ -217,11 +217,11 @@ export default async function HomePage() {
       (recentOCs.data && recentOCs.data.length > 0) ||
       (recentLore.data && recentLore.data.length > 0) ? (
         <section className="slide-up">
-          <div className="flex items-center gap-3 mb-6">
-            <i className="fas fa-clock text-2xl text-blue-400"></i>
-            <h2 className="text-3xl font-bold text-gray-100">Recently Updated</h2>
+          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+            <i className="fas fa-clock text-xl md:text-2xl text-blue-400"></i>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Recently Updated</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {recentWorlds.data && recentWorlds.data.length > 0 && (
               <div className="wiki-card p-4">
                 <h3 className="text-lg font-semibold text-gray-100 mb-3 flex items-center gap-2">
@@ -288,11 +288,11 @@ export default async function HomePage() {
 
       {/* Current Projects Section */}
       <section className="slide-up">
-        <div className="flex items-center gap-3 mb-6">
-          <i className="fas fa-folder-open text-2xl text-purple-400"></i>
-          <h2 className="text-3xl font-bold text-gray-100">Current Projects</h2>
+        <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+          <i className="fas fa-folder-open text-xl md:text-2xl text-purple-400"></i>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Current Projects</h2>
         </div>
-        <div className="wiki-card p-6">
+        <div className="wiki-card p-4 md:p-6">
           <p className="text-gray-300 mb-4">
             Welcome to Ruutulian! This is a personal wiki project for organizing and showcasing original characters and worlds across various universes.
           </p>
@@ -317,21 +317,21 @@ export default async function HomePage() {
 
       {/* Random Worlds */}
       <section className="slide-up">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-dice text-purple-400 text-2xl"></i>
-            <h2 className="text-3xl font-bold text-gray-100">Random Worlds</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <i className="fas fa-dice text-purple-400 text-xl md:text-2xl"></i>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Random Worlds</h2>
           </div>
           <Link
             href="/worlds"
             prefetch={true}
-            className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2"
+            className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 text-sm md:text-base"
           >
             View All <i className="fas fa-arrow-right"></i>
           </Link>
         </div>
         {randomWorlds.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {randomWorlds.map((world) => (
               <WorldCard key={world.id} world={world} />
             ))}
@@ -345,21 +345,21 @@ export default async function HomePage() {
 
       {/* Random Characters */}
       <section className="slide-up">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-dice text-pink-400 text-2xl"></i>
-            <h2 className="text-3xl font-bold text-gray-100">Random Characters</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <i className="fas fa-dice text-pink-400 text-xl md:text-2xl"></i>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Random Characters</h2>
           </div>
           <Link
             href="/ocs"
             prefetch={true}
-            className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2"
+            className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 text-sm md:text-base"
           >
             View All <i className="fas fa-arrow-right"></i>
           </Link>
         </div>
         {randomOCs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {randomOCs.map((oc) => (
               <OCCard key={oc.id} oc={oc} />
             ))}

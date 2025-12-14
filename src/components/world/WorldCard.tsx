@@ -51,23 +51,23 @@ export function WorldCard({ world }: WorldCardProps) {
             className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"
           />
         </div>
-        <div className="p-6 flex flex-col flex-grow">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="relative w-12 h-12 flex-shrink-0">
+        <div className="p-4 md:p-6 flex flex-col flex-grow">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
               <Image
                 src={convertGoogleDriveUrl(world.icon_url) || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/960px-Placeholder_view_vector.svg.png'}
                 alt={world.name}
                 fill
-                sizes="48px"
+                sizes="(max-width: 768px) 40px, 48px"
                 className="object-contain rounded-lg"
                 unoptimized={world.icon_url?.includes('drive.google.com') || isGoogleSitesUrl(world.icon_url)}
               />
             </div>
-            <h3 className="text-2xl font-bold text-gray-100">{world.name}</h3>
+            <h3 className="text-lg md:text-2xl font-bold text-gray-100 truncate">{world.name}</h3>
           </div>
           <div className="flex items-center gap-2 mt-auto">
             <span
-              className="px-3 py-1 rounded-full text-sm font-medium text-white"
+              className="px-2.5 py-1 md:px-3 rounded-full text-xs md:text-sm font-medium text-white"
               style={{ backgroundColor: world.primary_color }}
             >
               {world.series_type}
