@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { World } from '@/types/oc';
 
-interface World {
-  id: string;
-  name: string;
-  slug?: string;
-}
+type WorldListItem = Pick<World, 'id' | 'name'> & { slug?: string };
 
 interface UseWorldsOptions {
   includeSlug?: boolean;
 }
 
 interface UseWorldsResult {
-  worlds: World[];
+  worlds: WorldListItem[];
   loading: boolean;
   error: string | null;
 }
@@ -23,7 +20,7 @@ interface UseWorldsResult {
  */
 export function useWorlds(options: UseWorldsOptions = {}): UseWorldsResult {
   const { includeSlug = false } = options;
-  const [worlds, setWorlds] = useState<World[]>([]);
+  const [worlds, setWorlds] = useState<WorldListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,17 +30,27 @@ export function useWorlds(options: UseWorldsOptions = {}): UseWorldsResult {
         setLoading(true);
         setError(null);
         const supabase = createClient();
-        const selectFields = includeSlug ? 'id, name, slug' : 'id, name';
-        const { data, error: fetchError } = await supabase
-          .from('worlds')
-          .select(selectFields)
-          .order('name');
+        
+        let result;
+        if (includeSlug) {
+          result = await supabase
+            .from('worlds')
+            .select('id, name, slug')
+            .order('name');
+        } else {
+          result = await supabase
+            .from('worlds')
+            .select('id, name')
+            .order('name');
+        }
+
+        const { data, error: fetchError } = result;
 
         if (fetchError) {
           throw fetchError;
         }
 
-        setWorlds(data || []);
+        setWorlds((data as unknown as WorldListItem[]) || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch worlds');
         console.error('Error fetching worlds:', err);
