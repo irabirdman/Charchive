@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { World, WorldFieldDefinitions } from '@/types/oc';
+import type { World, WorldFieldDefinitions, WorldStoryData } from '@/types/oc';
 import { useFormSubmission } from '@/lib/hooks/useFormSubmission';
 import { slugify } from '@/lib/utils/slugify';
 import { WorldFieldsSection } from './WorldFieldsSection';
@@ -18,6 +18,7 @@ import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
 import { StoryAliasManager } from './StoryAliasManager';
+import { WorldStorySwitcher } from './WorldStorySwitcher';
 
 // Helper to normalize empty strings to undefined for optional fields
 const optionalString = z.preprocess(
@@ -75,6 +76,8 @@ const worldSchema = z.object({
   notes: optionalString,
   // World field system (definitions - read-only in this form)
   world_fields: z.any().optional(),
+  // Modular fields for world field system values
+  modular_fields: z.any().optional(),
 });
 
 type WorldFormData = z.infer<typeof worldSchema>;
@@ -85,13 +88,79 @@ interface WorldFormProps {
 
 export function WorldForm({ world }: WorldFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get story alias from URL query parameter
+  const initialStoryAliasId = useMemo(() => {
+    const storyParam = searchParams?.get('story');
+    if (!storyParam || !world) return null;
+    
+    // Find story alias by slug
+    const storyAlias = world.story_aliases?.find(sa => sa.slug === storyParam);
+    return storyAlias?.id || null;
+  }, [searchParams, world]);
+  
+  const [selectedStoryAliasId, setSelectedStoryAliasId] = useState<string | null>(initialStoryAliasId);
+  const [storyData, setStoryData] = useState<WorldStoryData | null>(null);
+  const [isLoadingStoryData, setIsLoadingStoryData] = useState(false);
+  
   // Get field definitions from world for display
   const fieldDefinitions = getWorldFieldDefinitions(world || null);
   
-  const { isSubmitting, error, success, submit } = useFormSubmission<WorldFormData>({
+  // Load story-specific data when story alias changes
+  const loadStoryData = useCallback(async () => {
+    if (!world || !selectedStoryAliasId) {
+      setStoryData(null);
+      return;
+    }
+
+    setIsLoadingStoryData(true);
+    try {
+      const response = await fetch(
+        `/api/admin/worlds/${world.id}/story-data?story_alias_id=${selectedStoryAliasId}`
+      );
+      const data = await response.json();
+      
+      if (response.ok && data) {
+        setStoryData(data);
+      } else {
+        setStoryData(null);
+      }
+    } catch (error) {
+      console.error('Error loading story data:', error);
+      setStoryData(null);
+    } finally {
+      setIsLoadingStoryData(false);
+    }
+  }, [world, selectedStoryAliasId]);
+
+  useEffect(() => {
+    loadStoryData();
+  }, [loadStoryData]);
+
+  // Update URL when story alias changes
+  useEffect(() => {
+    if (!world || !selectedStoryAliasId) {
+      // Remove story param if base world selected
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('story');
+      router.replace(currentUrl.pathname + currentUrl.search, { scroll: false });
+      return;
+    }
+
+    // Update URL with story alias slug
+    const storyAlias = world.story_aliases?.find(sa => sa.id === selectedStoryAliasId);
+    if (storyAlias) {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('story', storyAlias.slug);
+      router.replace(currentUrl.pathname + currentUrl.search, { scroll: false });
+    }
+  }, [selectedStoryAliasId, world, router]);
+  
+  const baseSubmit = useFormSubmission<WorldFormData>({
     apiRoute: '/api/admin/worlds',
     entity: world,
-    successRoute: '/admin/worlds',
+    successRoute: world ? `/admin/worlds/${world.id}` : '/admin/worlds',
     showSuccessMessage: true,
     successMessage: 'World saved successfully!',
     transformData: (data) => {
@@ -136,49 +205,85 @@ export function WorldForm({ world }: WorldFormProps) {
     },
   });
 
+
   // Helper to convert null to empty string for form defaults
   const getDefaultValue = (value: string | null | undefined): string => {
     return value ?? '';
   };
 
+  // Merge base world data with story-specific data
+  const mergedWorldData = useMemo(() => {
+    if (!world) return null;
+    
+    // If story data exists, merge it with base world (story data overrides)
+    if (storyData) {
+      return {
+        ...world,
+        setting: storyData.setting ?? world.setting,
+        lore: storyData.lore ?? world.lore,
+        the_world_society: storyData.the_world_society ?? world.the_world_society,
+        culture: storyData.culture ?? world.culture,
+        politics: storyData.politics ?? world.politics,
+        technology: storyData.technology ?? world.technology,
+        environment: storyData.environment ?? world.environment,
+        races_species: storyData.races_species ?? world.races_species,
+        power_systems: storyData.power_systems ?? world.power_systems,
+        religion: storyData.religion ?? world.religion,
+        government: storyData.government ?? world.government,
+        important_factions: storyData.important_factions ?? world.important_factions,
+        notable_figures: storyData.notable_figures ?? world.notable_figures,
+        languages: storyData.languages ?? world.languages,
+        trade_economy: storyData.trade_economy ?? world.trade_economy,
+        travel_transport: storyData.travel_transport ?? world.travel_transport,
+        themes: storyData.themes ?? world.themes,
+        inspirations: storyData.inspirations ?? world.inspirations,
+        current_era_status: storyData.current_era_status ?? world.current_era_status,
+        notes: storyData.notes ?? world.notes,
+        modular_fields: storyData.modular_fields ?? world.modular_fields,
+      };
+    }
+    
+    return world;
+  }, [world, storyData]);
+
   const methods = useForm<WorldFormData>({
     resolver: zodResolver(worldSchema),
-    defaultValues: world ? {
-      name: world.name || '',
-      slug: world.slug || '',
-      series_type: world.series_type || 'original',
-      summary: world.summary || '',
-      description_markdown: getDefaultValue(world.description_markdown),
-      primary_color: world.primary_color || '#64748b',
-      accent_color: world.accent_color || '#94a3b8',
-      header_image_url: getDefaultValue(world.header_image_url),
-      icon_url: getDefaultValue(world.icon_url),
-      setting_img: getDefaultValue(world.setting_img),
-      banner_image: getDefaultValue(world.banner_image),
-      is_public: world.is_public ?? true,
-      genre: getDefaultValue(world.genre),
-      synopsis: getDefaultValue(world.synopsis),
-      setting: getDefaultValue(world.setting),
-      lore: getDefaultValue(world.lore),
-      the_world_society: getDefaultValue(world.the_world_society),
-      culture: getDefaultValue(world.culture),
-      politics: getDefaultValue(world.politics),
-      technology: getDefaultValue(world.technology),
-      environment: getDefaultValue(world.environment),
-      races_species: getDefaultValue(world.races_species),
-      power_systems: getDefaultValue(world.power_systems),
-      religion: getDefaultValue(world.religion),
-      government: getDefaultValue(world.government),
-      important_factions: getDefaultValue(world.important_factions),
-      notable_figures: getDefaultValue(world.notable_figures),
-      languages: getDefaultValue(world.languages),
-      trade_economy: getDefaultValue(world.trade_economy),
-      travel_transport: getDefaultValue(world.travel_transport),
-      themes: getDefaultValue(world.themes),
-      inspirations: getDefaultValue(world.inspirations),
-      current_era_status: getDefaultValue(world.current_era_status),
-      notes: getDefaultValue(world.notes),
-      world_fields: world.world_fields || undefined,
+    defaultValues: mergedWorldData ? {
+      name: mergedWorldData.name || '',
+      slug: mergedWorldData.slug || '',
+      series_type: mergedWorldData.series_type || 'original',
+      summary: mergedWorldData.summary || '',
+      description_markdown: getDefaultValue(mergedWorldData.description_markdown),
+      primary_color: mergedWorldData.primary_color || '#64748b',
+      accent_color: mergedWorldData.accent_color || '#94a3b8',
+      header_image_url: getDefaultValue(mergedWorldData.header_image_url),
+      icon_url: getDefaultValue(mergedWorldData.icon_url),
+      setting_img: getDefaultValue(mergedWorldData.setting_img),
+      banner_image: getDefaultValue(mergedWorldData.banner_image),
+      is_public: mergedWorldData.is_public ?? true,
+      genre: getDefaultValue(mergedWorldData.genre),
+      synopsis: getDefaultValue(mergedWorldData.synopsis),
+      setting: getDefaultValue(mergedWorldData.setting),
+      lore: getDefaultValue(mergedWorldData.lore),
+      the_world_society: getDefaultValue(mergedWorldData.the_world_society),
+      culture: getDefaultValue(mergedWorldData.culture),
+      politics: getDefaultValue(mergedWorldData.politics),
+      technology: getDefaultValue(mergedWorldData.technology),
+      environment: getDefaultValue(mergedWorldData.environment),
+      races_species: getDefaultValue(mergedWorldData.races_species),
+      power_systems: getDefaultValue(mergedWorldData.power_systems),
+      religion: getDefaultValue(mergedWorldData.religion),
+      government: getDefaultValue(mergedWorldData.government),
+      important_factions: getDefaultValue(mergedWorldData.important_factions),
+      notable_figures: getDefaultValue(mergedWorldData.notable_figures),
+      languages: getDefaultValue(mergedWorldData.languages),
+      trade_economy: getDefaultValue(mergedWorldData.trade_economy),
+      travel_transport: getDefaultValue(mergedWorldData.travel_transport),
+      themes: getDefaultValue(mergedWorldData.themes),
+      inspirations: getDefaultValue(mergedWorldData.inspirations),
+      current_era_status: getDefaultValue(mergedWorldData.current_era_status),
+      notes: getDefaultValue(mergedWorldData.notes),
+      world_fields: mergedWorldData.world_fields || undefined,
     } : {
       name: '',
       slug: '',
@@ -218,8 +323,51 @@ export function WorldForm({ world }: WorldFormProps) {
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isDirty }, setValue, watch, trigger } = methods;
+  const { register, handleSubmit, formState: { errors, isDirty }, setValue, watch, trigger, reset } = methods;
   const nameValue = watch('name');
+
+  // Update form when story data loads
+  useEffect(() => {
+    if (mergedWorldData) {
+      reset({
+        name: mergedWorldData.name || '',
+        slug: mergedWorldData.slug || '',
+        series_type: mergedWorldData.series_type || 'original',
+        summary: mergedWorldData.summary || '',
+        description_markdown: getDefaultValue(mergedWorldData.description_markdown),
+        primary_color: mergedWorldData.primary_color || '#64748b',
+        accent_color: mergedWorldData.accent_color || '#94a3b8',
+        header_image_url: getDefaultValue(mergedWorldData.header_image_url),
+        icon_url: getDefaultValue(mergedWorldData.icon_url),
+        setting_img: getDefaultValue(mergedWorldData.setting_img),
+        banner_image: getDefaultValue(mergedWorldData.banner_image),
+        is_public: mergedWorldData.is_public ?? true,
+        genre: getDefaultValue(mergedWorldData.genre),
+        synopsis: getDefaultValue(mergedWorldData.synopsis),
+        setting: getDefaultValue(mergedWorldData.setting),
+        lore: getDefaultValue(mergedWorldData.lore),
+        the_world_society: getDefaultValue(mergedWorldData.the_world_society),
+        culture: getDefaultValue(mergedWorldData.culture),
+        politics: getDefaultValue(mergedWorldData.politics),
+        technology: getDefaultValue(mergedWorldData.technology),
+        environment: getDefaultValue(mergedWorldData.environment),
+        races_species: getDefaultValue(mergedWorldData.races_species),
+        power_systems: getDefaultValue(mergedWorldData.power_systems),
+        religion: getDefaultValue(mergedWorldData.religion),
+        government: getDefaultValue(mergedWorldData.government),
+        important_factions: getDefaultValue(mergedWorldData.important_factions),
+        notable_figures: getDefaultValue(mergedWorldData.notable_figures),
+        languages: getDefaultValue(mergedWorldData.languages),
+        trade_economy: getDefaultValue(mergedWorldData.trade_economy),
+        travel_transport: getDefaultValue(mergedWorldData.travel_transport),
+        themes: getDefaultValue(mergedWorldData.themes),
+        inspirations: getDefaultValue(mergedWorldData.inspirations),
+        current_era_status: getDefaultValue(mergedWorldData.current_era_status),
+        notes: getDefaultValue(mergedWorldData.notes),
+        world_fields: mergedWorldData.world_fields || undefined,
+      });
+    }
+  }, [mergedWorldData, reset]);
 
   useEffect(() => {
     if (!world && nameValue) {
@@ -242,9 +390,76 @@ export function WorldForm({ world }: WorldFormProps) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
+  const [customError, setCustomError] = useState<string | null>(null);
+  const [customSuccess, setCustomSuccess] = useState(false);
+  const [isCustomSubmitting, setIsCustomSubmitting] = useState(false);
+
   const onSubmit = async (data: WorldFormData) => {
-    await submit(data);
+    if (world && selectedStoryAliasId) {
+      // Custom handling for story data
+      setIsCustomSubmitting(true);
+      setCustomError(null);
+      setCustomSuccess(false);
+      
+      try {
+        const storyDataPayload = {
+          story_alias_id: selectedStoryAliasId,
+          setting: data.setting || null,
+          lore: data.lore || null,
+          the_world_society: data.the_world_society || null,
+          culture: data.culture || null,
+          politics: data.politics || null,
+          technology: data.technology || null,
+          environment: data.environment || null,
+          races_species: data.races_species || null,
+          power_systems: data.power_systems || null,
+          religion: data.religion || null,
+          government: data.government || null,
+          important_factions: data.important_factions || null,
+          notable_figures: data.notable_figures || null,
+          languages: data.languages || null,
+          trade_economy: data.trade_economy || null,
+          travel_transport: data.travel_transport || null,
+          themes: data.themes || null,
+          inspirations: data.inspirations || null,
+          current_era_status: data.current_era_status || null,
+          notes: data.notes || null,
+          modular_fields: data.modular_fields || {},
+        };
+
+        const response = await fetch(`/api/admin/worlds/${world.id}/story-data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storyDataPayload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({
+            error: `Failed to save: ${response.statusText}`,
+          }));
+          throw new Error(errorData.error || `Failed to save: ${response.statusText}`);
+        }
+
+        setCustomSuccess(true);
+        // Reload story data and refresh
+        await loadStoryData();
+        setTimeout(() => {
+          router.refresh();
+        }, 1000);
+      } catch (err) {
+        setCustomError(err instanceof Error ? err.message : 'Failed to save story data');
+      } finally {
+        setIsCustomSubmitting(false);
+      }
+    } else {
+      // Use base submit for world updates
+      await baseSubmit.submit(data);
+    }
   };
+
+  const isSubmitting = isCustomSubmitting || baseSubmit.isSubmitting;
+  const error = customError || baseSubmit.error;
+  const success = customSuccess || baseSubmit.success;
 
   const onError = (errors: any) => {
     console.error('Form validation errors:', errors);
@@ -275,9 +490,34 @@ export function WorldForm({ world }: WorldFormProps) {
           }).join(', ')}`}
         />
       )}
-      {success && <FormMessage type="success" message="World saved successfully!" />}
+      {success && <FormMessage type="success" message={selectedStoryAliasId ? 'Story world data saved successfully!' : 'World saved successfully!'} />}
+      
+      {world && world.series_type === 'canon' && (
+        <WorldStorySwitcher
+          worldId={world.id}
+          worldIsCanon={world.series_type === 'canon'}
+          selectedStoryAliasId={selectedStoryAliasId}
+          onStoryAliasChange={setSelectedStoryAliasId}
+          disabled={isSubmitting || isLoadingStoryData}
+        />
+      )}
+      
+      {isLoadingStoryData && (
+        <div className="text-sm text-gray-400 mb-4">Loading story data...</div>
+      )}
 
-      <FormSection title="Core Identity" icon="core-identity" accentColor="core-identity" defaultOpen={true}>
+      <FormSection 
+        title="Core Identity" 
+        icon="core-identity" 
+        accentColor="core-identity" 
+        defaultOpen={true}
+      >
+        {selectedStoryAliasId && (
+          <div className="mb-4 p-3 bg-amber-900/20 border border-amber-700/50 rounded text-sm text-amber-300">
+            <strong>Note:</strong> Core identity fields (name, slug, colors, images) are shared across all story versions. 
+            Only content fields below can be customized per story.
+          </div>
+        )}
         <div>
           <FormLabel htmlFor="name" required>
             Name
@@ -767,9 +1007,13 @@ export function WorldForm({ world }: WorldFormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoadingStoryData}
           >
-            {world ? 'Update World' : 'Create World'}
+            {selectedStoryAliasId 
+              ? 'Save Story World Data' 
+              : world 
+                ? 'Update World' 
+                : 'Create World'}
           </FormButton>
         </div>
       </div>

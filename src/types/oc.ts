@@ -61,6 +61,40 @@ export interface StoryAlias {
   world?: World;
 }
 
+export interface WorldStoryData {
+  id: string;
+  world_id: string;
+  story_alias_id?: string | null;
+  // World content fields (story-specific versions)
+  setting?: string | null;
+  lore?: string | null;
+  the_world_society?: string | null;
+  culture?: string | null;
+  politics?: string | null;
+  technology?: string | null;
+  environment?: string | null;
+  races_species?: string | null;
+  power_systems?: string | null;
+  religion?: string | null;
+  government?: string | null;
+  important_factions?: string | null;
+  notable_figures?: string | null;
+  languages?: string | null;
+  trade_economy?: string | null;
+  travel_transport?: string | null;
+  themes?: string | null;
+  inspirations?: string | null;
+  current_era_status?: string | null;
+  notes?: string | null;
+  // World field system values (story-specific)
+  modular_fields?: WorldFieldValues | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  world?: World;
+  story_alias?: StoryAlias | null;
+}
+
 export interface World {
   id: string;
   name: string;
@@ -107,6 +141,8 @@ export interface World {
   modular_fields?: WorldFieldValues | null;
   // Story aliases
   story_aliases?: StoryAlias[];
+  // Story-specific world data
+  story_data?: WorldStoryData[];
 }
 
 export interface OC {

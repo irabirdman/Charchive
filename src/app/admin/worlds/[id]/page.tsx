@@ -30,8 +30,10 @@ export async function generateMetadata({
 
 export default async function EditWorldPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams?: { story?: string };
 }) {
   const supabase = await createClient();
 
