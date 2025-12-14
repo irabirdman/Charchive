@@ -98,12 +98,18 @@ export function successResponse<T>(data: T, status: number = 200): NextResponse 
  * Handles errors and returns appropriate error response.
  */
 export function handleError(error: unknown, defaultMessage: string = 'Internal server error'): NextResponse {
-  console.error('API error:', error);
+  // Import logger dynamically to avoid circular dependencies
+  const { logger } = require('@/lib/logger');
   
   if (error instanceof Error) {
+    logger.error('API', defaultMessage, {
+      error: error.message,
+      stack: error.stack
+    });
     return errorResponse(error.message, 500);
   }
   
+  logger.error('API', defaultMessage, { error: String(error) });
   return errorResponse(defaultMessage, 500);
 }
 

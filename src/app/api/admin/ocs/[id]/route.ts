@@ -22,10 +22,19 @@ export async function PUT(
     }
 
     const body = await request.json();
+    
+    // Log incoming request for debugging
+    logger.info('OC', `Received update request for OC ${id}`, {
+      hasName: !!body.name,
+      hasSlug: !!body.slug,
+      hasWorldId: !!body.world_id,
+      totalFields: Object.keys(body).length
+    });
 
     // Validate required fields
     const validationError = validateRequiredFields(body, ['name', 'slug', 'world_id']);
     if (validationError) {
+      logger.error('OC', 'Validation error', { ocId: id, validationError });
       return validationError;
     }
 
@@ -71,8 +80,11 @@ export async function PUT(
       return errorResponse('OC not found', 404);
     }
 
-    // Log what we're about to update
-    logger.debug('OC', `Updating OC ${id}`, { keys: Object.keys(updateData) });
+    // Log what we're about to update (use info instead of debug so it's always visible)
+    logger.info('OC', `Updating OC ${id}`, { 
+      keys: Object.keys(updateData),
+      fieldCount: Object.keys(updateData).length 
+    });
 
     // Perform the update and check affected rows
     const { data: updateResult, error: updateError } = await supabase
@@ -82,17 +94,25 @@ export async function PUT(
       .select('id');
 
     if (updateError) {
-      logger.error('OC', 'Update error', updateError);
+      logger.error('OC', 'Update error', { 
+        error: updateError,
+        ocId: id,
+        updateDataKeys: Object.keys(updateData)
+      });
       return errorResponse(updateError.message || 'Failed to update OC');
     }
 
     // Check if any rows were actually updated
     if (!updateResult || updateResult.length === 0) {
-      logger.error('OC', 'No rows were updated', { updateResult });
+      logger.error('OC', 'No rows were updated', { 
+        ocId: id,
+        updateResult,
+        updateDataKeys: Object.keys(updateData)
+      });
       return errorResponse('No rows were updated. The OC may not exist or the data may be invalid.');
     }
 
-    logger.success('OC', `Update successful for OC ${id}`);
+    logger.success('OC', `Update successful for OC ${id}`, { updatedFields: Object.keys(updateData).length });
 
     // Verify the update by fetching the updated row immediately
     const { data: verifyData, error: verifyError } = await supabase
@@ -102,21 +122,26 @@ export async function PUT(
       .single();
 
     if (verifyError) {
-      console.error('Verify error after update:', verifyError);
+      logger.error('OC', 'Verify error after update', { 
+        error: verifyError,
+        ocId: id
+      });
       return errorResponse('Failed to verify update: ' + verifyError.message);
     }
 
     if (!verifyData) {
+      logger.error('OC', 'OC not found after update', { ocId: id });
       return errorResponse('OC not found after update', 404);
     }
 
-    // Log a sample of updated fields to verify
-    console.log('Verified update - sample fields:', {
+    // Log a sample of updated fields to verify (use logger.info for production visibility)
+    logger.info('OC', 'Verified update - sample fields', {
       name: verifyData.name,
       first_name: verifyData.first_name,
       last_name: verifyData.last_name,
       species: verifyData.species,
       age: verifyData.age,
+      world_id: verifyData.world_id,
     });
 
     // Fetch the updated OC with relationships
@@ -153,6 +178,10 @@ export async function PUT(
 
     return successResponse(data);
   } catch (error) {
+    logger.error('OC', 'Unexpected error in PUT handler', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return handleError(error, 'Failed to update OC');
   }
 }

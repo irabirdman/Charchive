@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { validateRequiredFields, checkSlugUniqueness, errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
@@ -13,10 +14,19 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const body = await request.json();
+    
+    // Log incoming request for debugging
+    logger.info('OC', 'Received create request', {
+      hasName: !!body.name,
+      hasSlug: !!body.slug,
+      hasWorldId: !!body.world_id,
+      totalFields: Object.keys(body).length
+    });
 
     // Validate required fields
     const validationError = validateRequiredFields(body, ['name', 'slug', 'world_id']);
     if (validationError) {
+      logger.error('OC', 'Validation error', { validationError });
       return validationError;
     }
 
@@ -38,7 +48,7 @@ export async function POST(request: Request) {
         .single();
 
       if (identityError) {
-        console.error('Error creating identity:', identityError);
+        logger.error('OC', 'Error creating identity', { error: identityError });
         return errorResponse('Failed to create identity', 500);
       }
 
@@ -102,14 +112,16 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      logger.error('OC', 'Supabase error creating OC', { error });
       return errorResponse(error.message || 'Failed to create OC');
     }
 
     if (!data) {
+      logger.error('OC', 'No data returned after creating OC');
       return errorResponse('Failed to create OC', 500);
     }
 
+    logger.success('OC', `Successfully created OC: ${data.name}`, { ocId: data.id });
     return successResponse(data);
   } catch (error) {
     return handleError(error, 'Failed to create OC');
