@@ -1800,9 +1800,10 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           <FormLabel htmlFor="aliases">
             Aliases
           </FormLabel>
-          <FormInput
+          <FormTextarea
             {...register('aliases')}
-            placeholder="Alternate names, titles, or nicknames"
+            rows={2}
+            placeholder="Alternate names, titles, or nicknames (supports markdown)"
             disabled={isSubmitting}
           />
         </div>
@@ -1966,17 +1967,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="occupation">
               Occupation
             </FormLabel>
-            <Controller
-              name="occupation"
-              control={control}
-              render={({ field }) => (
-                <FormAutocomplete
-                  {...field}
-                  optionsSource="occupation"
-                  placeholder="Type occupation..."
-                  disabled={isSubmitting}
-                />
-              )}
+            <FormTextarea
+              {...register('occupation')}
+              rows={2}
+              placeholder="Occupation or job (supports markdown)"
+              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -2003,17 +1998,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="species">
               Species / Race
             </FormLabel>
-            <Controller
-              name="species"
-              control={control}
-              render={({ field }) => (
-                <FormAutocomplete
-                  {...field}
-                  optionsSource="species"
-                  placeholder="Type species..."
-                  disabled={isSubmitting}
-                />
-              )}
+            <FormTextarea
+              {...register('species')}
+              rows={2}
+              placeholder="Species or race (supports markdown)"
+              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -2035,34 +2024,22 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="romantic_orientation">
               Romantic Orientation
             </FormLabel>
-            <Controller
-              name="romantic_orientation"
-              control={control}
-              render={({ field }) => (
-                <FormAutocomplete
-                  {...field}
-                  optionsSource="romantic"
-                  placeholder="Type romantic orientation..."
-                  disabled={isSubmitting}
-                />
-              )}
+            <FormTextarea
+              {...register('romantic_orientation')}
+              rows={2}
+              placeholder="Romantic orientation (supports markdown)"
+              disabled={isSubmitting}
             />
           </div>
           <div>
             <FormLabel htmlFor="sexual_orientation">
               Sexual Orientation
             </FormLabel>
-            <Controller
-              name="sexual_orientation"
-              control={control}
-              render={({ field }) => (
-                <FormAutocomplete
-                  {...field}
-                  optionsSource="sexual"
-                  placeholder="Type sexual orientation..."
-                  disabled={isSubmitting}
-                />
-              )}
+            <FormTextarea
+              {...register('sexual_orientation')}
+              rows={2}
+              placeholder="Sexual orientation (supports markdown)"
+              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -2084,17 +2061,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           <FormLabel htmlFor="ethnicity">
             Ethnicity
           </FormLabel>
-          <Controller
-            name="ethnicity"
-            control={control}
-            render={({ field }) => (
-              <FormAutocomplete
-                {...field}
-                optionsSource="ethnicity_race"
-                placeholder="Type ethnicity..."
-                disabled={isSubmitting}
-              />
-            )}
+          <FormTextarea
+            {...register('ethnicity')}
+            rows={2}
+            placeholder="Ethnicity or race (supports markdown)"
+            disabled={isSubmitting}
           />
         </div>
 
@@ -2103,9 +2074,10 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="place_of_origin">
               Place of Origin
             </FormLabel>
-            <FormInput
+            <FormTextarea
               {...register('place_of_origin')}
-              placeholder="Birthplace or hometown"
+              rows={2}
+              placeholder="Birthplace or hometown (supports markdown)"
               disabled={isSubmitting}
             />
           </div>
@@ -2113,9 +2085,10 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="current_residence">
               Current Residence
             </FormLabel>
-            <FormInput
+            <FormTextarea
               {...register('current_residence')}
-              placeholder="Where the character currently lives"
+              rows={2}
+              placeholder="Where the character currently lives (supports markdown)"
               disabled={isSubmitting}
             />
           </div>
@@ -2342,9 +2315,10 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           <FormLabel htmlFor="alignment" optional>
             Alignment
           </FormLabel>
-          <FormInput
+          <FormTextarea
             {...register('alignment')}
-            placeholder="Broad moral outlook or ethical stance"
+            rows={2}
+            placeholder="Broad moral outlook or ethical stance (supports markdown)"
             disabled={isSubmitting}
           />
         </div>
@@ -2900,14 +2874,10 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           <FormLabel htmlFor="development_status">
             Development Status
           </FormLabel>
-          <FormSelect
+          <FormTextarea
             {...register('development_status')}
-            options={[
-              { value: 'wip', label: 'WIP' },
-              { value: 'complete', label: 'Complete' },
-              { value: 'abandoned', label: 'Abandoned' },
-            ]}
-            placeholder="Select development status"
+            rows={2}
+            placeholder="Development status or notes (supports markdown)"
             disabled={isSubmitting}
           />
         </div>

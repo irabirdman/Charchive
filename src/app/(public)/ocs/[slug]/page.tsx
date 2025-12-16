@@ -300,7 +300,9 @@ export default async function OCDetailPage({
                           <i className="fas fa-dna text-blue-400"></i>
                           <span className="font-semibold text-gray-200">Species</span>
                         </div>
-                        <p className="text-gray-300 whitespace-pre-wrap">{oc.species}</p>
+                        <div className="prose max-w-none">
+                          <Markdown content={oc.species} />
+                        </div>
                       </div>
                     )}
                     {oc.occupation && (
@@ -309,7 +311,9 @@ export default async function OCDetailPage({
                           <i className="fas fa-briefcase text-blue-400" aria-hidden="true" suppressHydrationWarning></i>
                           <span className="font-semibold text-gray-200">Occupation</span>
                         </div>
-                        <p className="text-gray-300 whitespace-pre-wrap">{oc.occupation}</p>
+                        <div className="prose max-w-none">
+                          <Markdown content={oc.occupation} />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -321,7 +325,9 @@ export default async function OCDetailPage({
                         <i className="fas fa-tag text-blue-400"></i>
                         <span className="font-semibold text-gray-200">Aliases</span>
                       </div>
-                      <p className="text-gray-300 whitespace-pre-wrap">{oc.aliases}</p>
+                      <div className="prose max-w-none">
+                        <Markdown content={oc.aliases} />
+                      </div>
                     </div>
                   )}
 
@@ -347,7 +353,9 @@ export default async function OCDetailPage({
                             <i className="fas fa-heart text-red-400"></i>
                             <span className="font-semibold text-gray-200">Romantic Orientation</span>
                           </div>
-                          <p className="text-gray-300 whitespace-pre-wrap">{oc.romantic_orientation}</p>
+                          <div className="prose max-w-none">
+                            <Markdown content={oc.romantic_orientation} />
+                          </div>
                         </div>
                       )}
                       {oc.sexual_orientation && (
@@ -356,7 +364,9 @@ export default async function OCDetailPage({
                             <i className="fas fa-heart text-rose-400" aria-hidden="true" suppressHydrationWarning></i>
                             <span className="font-semibold text-gray-200">Sexual Orientation</span>
                           </div>
-                          <p className="text-gray-300 whitespace-pre-wrap">{oc.sexual_orientation}</p>
+                          <div className="prose max-w-none">
+                            <Markdown content={oc.sexual_orientation} />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -369,7 +379,9 @@ export default async function OCDetailPage({
                         <i className="fas fa-tasks text-blue-400"></i>
                         <span className="font-semibold text-gray-200">Development Status</span>
                       </div>
-                      <p className="text-gray-300 whitespace-pre-wrap">{oc.development_status}</p>
+                      <div className="prose max-w-none">
+                        <Markdown content={oc.development_status} />
+                      </div>
                     </div>
                   )}
 
@@ -394,7 +406,9 @@ export default async function OCDetailPage({
                         <i className="fas fa-flag text-green-400" aria-hidden="true" suppressHydrationWarning></i>
                         <span className="font-semibold text-gray-200">Ethnicity</span>
                       </div>
-                      <p className="text-gray-300 whitespace-pre-wrap">{oc.ethnicity}</p>
+                      <div className="prose max-w-none">
+                        <Markdown content={oc.ethnicity} />
+                      </div>
                     </div>
                   )}
 
@@ -407,7 +421,9 @@ export default async function OCDetailPage({
                             <i className="fas fa-map-marker-alt text-green-400"></i>
                             <span className="font-semibold text-gray-200">Place of Origin</span>
                           </div>
-                          <p className="text-gray-300 whitespace-pre-wrap">{oc.place_of_origin}</p>
+                          <div className="prose max-w-none">
+                            <Markdown content={oc.place_of_origin} />
+                          </div>
                         </div>
                       )}
                       {oc.current_residence && (
@@ -416,7 +432,9 @@ export default async function OCDetailPage({
                             <i className="fas fa-home text-green-400" aria-hidden="true" suppressHydrationWarning></i>
                             <span className="font-semibold text-gray-200">Current Residence</span>
                           </div>
-                          <p className="text-gray-300 whitespace-pre-wrap">{oc.current_residence}</p>
+                          <div className="prose max-w-none">
+                            <Markdown content={oc.current_residence} />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -708,7 +726,7 @@ export default async function OCDetailPage({
                   {oc.alignment && (
                     <div className="mt-4">
                       <span className="font-semibold text-gray-200">Alignment: </span>
-                      <span>{oc.alignment}</span>
+                      <Markdown content={oc.alignment} />
                     </div>
                   )}
                 </div>
