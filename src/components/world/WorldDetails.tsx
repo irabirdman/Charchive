@@ -31,17 +31,9 @@ function SectionWithImage({
         <i className={`${icon} ${iconColor}`}></i>
         {title}
       </h2>
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className={`flex-1 ${imageUrl ? 'md:pr-6' : ''}`}>
-          {content && (
-            <div className="text-gray-300 prose max-w-none">
-              <Markdown content={content} />
-            </div>
-          )}
-          {children}
-        </div>
+      <div className="relative">
         {imageUrl && (
-          <div className="md:w-80 flex-shrink-0">
+          <div className="float-right ml-6 mb-4 w-full md:w-80 flex-shrink-0">
             <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-700/50">
               <Image
                 src={convertGoogleDriveUrl(imageUrl) || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/960px-Placeholder_view_vector.svg.png'}
@@ -54,6 +46,11 @@ function SectionWithImage({
             </div>
           </div>
         )}
+        <div className="text-gray-300 prose max-w-none">
+          {content && <Markdown content={content} />}
+          {children}
+        </div>
+        <div className="clear-both"></div>
       </div>
     </div>
   );

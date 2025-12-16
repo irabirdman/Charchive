@@ -176,8 +176,9 @@ body {
 
 .prose ul,
 .prose ol {
-  @apply mb-4 pl-6 space-y-2.5;
+  @apply mb-4 pl-6;
   list-style-position: outside;
+  margin-top: 0;
 }
 
 .prose ul {
@@ -190,14 +191,23 @@ body {
 
 .prose li {
   @apply text-gray-300;
-  @apply pl-2;
-  @apply leading-7;
-  position: relative;
+  @apply pl-1;
+  @apply leading-relaxed;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose li:first-child {
+  margin-top: 0;
+}
+
+.prose li:last-child {
+  margin-bottom: 0;
 }
 
 .prose ul > li::marker {
   @apply text-gray-400;
-  font-size: 1.1em;
+  font-size: 0.9em;
 }
 
 .prose ol > li::marker {
@@ -206,8 +216,9 @@ body {
 }
 
 .prose ul ul {
-  @apply mt-2 mb-2;
+  @apply mt-1 mb-1;
   list-style-type: circle;
+  margin-left: 0.5rem;
 }
 
 .prose ul ul ul {
@@ -215,24 +226,35 @@ body {
 }
 
 .prose ol ol {
-  @apply mt-2 mb-2;
+  @apply mt-1 mb-1;
   list-style-type: lower-alpha;
+  margin-left: 0.5rem;
 }
 
 .prose ol ol ol {
   list-style-type: lower-roman;
 }
 
+/* Reset paragraph margins inside list items */
 .prose li > p {
-  @apply mb-2 mt-0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: 1.7;
 }
 
-.prose li > p:first-child {
-  @apply mt-0;
+/* Add spacing between multiple paragraphs in list items */
+.prose li > p + p {
+  margin-top: 0.5rem !important;
 }
 
-.prose li > p:last-child {
-  @apply mb-0;
+/* Add spacing after the last paragraph in a list item if there's more content */
+.prose li > p:last-of-type {
+  margin-bottom: 0 !important;
+}
+
+/* Ensure list items with only a paragraph still have proper spacing from other list items */
+.prose li:not(:first-child) > p:first-child {
+  /* Spacing is handled by li margin-top */
 }
 
 .prose li > *:first-child {
@@ -241,6 +263,12 @@ body {
 
 .prose li > *:last-child {
   margin-bottom: 0;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .prose a {
