@@ -6,6 +6,31 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Timelines',
+  description: 'Explore chronological timelines and events across all worlds on Ruutulian. Track story progression and major events in your favorite worlds.',
+  keywords: ['timelines', 'events', 'chronology', 'story timeline', 'world events', 'OC wiki'],
+  openGraph: {
+    title: 'Timelines | Ruutulian',
+    description: 'Explore chronological timelines and events across all worlds on Ruutulian.',
+    url: '/timelines',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Timelines | Ruutulian',
+    description: 'Explore chronological timelines and events across all worlds.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/timelines',
+  },
 };
 
 export const revalidate = 60;

@@ -7,6 +7,31 @@ import { WorldFilters } from '@/components/filters/WorldFilters';
 
 export const metadata: Metadata = {
   title: 'Worlds',
+  description: 'Browse all fictional worlds and universes on Ruutulian. Explore canon and original worlds with detailed lore, characters, and timelines.',
+  keywords: ['worlds', 'fictional worlds', 'world building', 'universes', 'canon worlds', 'original worlds', 'OC wiki'],
+  openGraph: {
+    title: 'Worlds | Ruutulian',
+    description: 'Browse all fictional worlds and universes on Ruutulian. Explore canon and original worlds with detailed lore, characters, and timelines.',
+    url: '/worlds',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Worlds | Ruutulian',
+    description: 'Browse all fictional worlds and universes on Ruutulian.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/worlds',
+  },
 };
 
 export const revalidate = 60;

@@ -1,6 +1,36 @@
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreList } from '@/components/lore/LoreList';
+
+export const metadata: Metadata = {
+  title: 'Lore',
+  description: 'Browse all lore entries and codex information on Ruutulian. Discover detailed world building, history, and background information.',
+  keywords: ['lore', 'codex', 'world building', 'world lore', 'background information', 'OC wiki'],
+  openGraph: {
+    title: 'Lore | Ruutulian',
+    description: 'Browse all lore entries and codex information on Ruutulian. Discover detailed world building, history, and background information.',
+    url: '/lore',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Lore | Ruutulian',
+    description: 'Browse all lore entries and codex information.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/lore',
+  },
+};
 
 export default async function LorePage() {
   const supabase = await createClient();
@@ -39,6 +69,8 @@ export default async function LorePage() {
     </div>
   );
 }
+
+
 
 
 

@@ -8,7 +8,31 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Statistics',
-  description: 'Comprehensive statistics and analytics for Ruutulian',
+  description: 'Comprehensive statistics and analytics for Ruutulian. View detailed demographics, distributions, and insights about characters, worlds, and content.',
+  keywords: ['statistics', 'analytics', 'demographics', 'data', 'insights', 'OC wiki'],
+  openGraph: {
+    title: 'Statistics | Ruutulian',
+    description: 'Comprehensive statistics and analytics for Ruutulian. View detailed demographics, distributions, and insights.',
+    url: '/stats',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Statistics | Ruutulian',
+    description: 'Comprehensive statistics and analytics for Ruutulian.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/stats',
+  },
 };
 
 export const revalidate = 300; // Revalidate every 5 minutes

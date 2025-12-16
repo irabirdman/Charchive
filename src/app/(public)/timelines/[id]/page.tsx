@@ -1,10 +1,74 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const supabase = await createClient();
+
+  const { data: timeline } = await supabase
+    .from('timelines')
+    .select('name, description_markdown, world:worlds(name, slug)')
+    .eq('id', params.id)
+    .single();
+
+  if (!timeline) {
+    return {
+      title: 'Timeline Not Found',
+    };
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const url = `${baseUrl}/timelines/${params.id}`;
+  const world = timeline.world as any;
+  const description = timeline.description_markdown
+    ? timeline.description_markdown.substring(0, 155).replace(/\n/g, ' ').trim() + (timeline.description_markdown.length > 155 ? '...' : '')
+    : `${timeline.name}${world ? ` - Timeline from ${world.name}` : ''} on Ruutulian`;
+
+  return {
+    title: timeline.name,
+    description,
+    keywords: [
+      timeline.name,
+      'timeline',
+      'events',
+      'chronology',
+      world?.name || '',
+      'OC wiki',
+    ].filter(Boolean),
+    openGraph: {
+      title: `${timeline.name} | Ruutulian`,
+      description,
+      url,
+      type: 'website',
+      images: [
+        {
+          url: '/icon.png',
+          width: 512,
+          height: 512,
+          alt: timeline.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary',
+      title: `${timeline.name} | Ruutulian`,
+      description,
+      images: ['/icon.png'],
+    },
+    alternates: {
+      canonical: url,
+    },
+  };
+}
 
 export default async function TimelinePage({
   params,

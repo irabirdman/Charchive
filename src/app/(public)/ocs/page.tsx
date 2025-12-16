@@ -7,6 +7,31 @@ import { CharacterFilters } from '@/components/filters/CharacterFilters';
 
 export const metadata: Metadata = {
   title: 'Characters',
+  description: 'Browse all original characters on Ruutulian. Discover characters from various worlds with detailed information, appearance, personality, and relationships.',
+  keywords: ['original characters', 'OCs', 'characters', 'fictional characters', 'character database', 'OC wiki'],
+  openGraph: {
+    title: 'Characters | Ruutulian',
+    description: 'Browse all original characters on Ruutulian. Discover characters from various worlds with detailed information, appearance, personality, and relationships.',
+    url: '/ocs',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Characters | Ruutulian',
+    description: 'Browse all original characters on Ruutulian.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/ocs',
+  },
 };
 
 export const revalidate = 60;

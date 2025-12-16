@@ -21,7 +21,7 @@ export async function generateMetadata({
 
   const { data: world } = await supabase
     .from('worlds')
-    .select('name')
+    .select('name, slug, summary, description_markdown, header_image_url, icon_url, series_type')
     .eq('slug', resolvedParams.slug)
     .eq('is_public', true)
     .single();
@@ -32,8 +32,51 @@ export async function generateMetadata({
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const url = `${baseUrl}/worlds/${resolvedParams.slug}`;
+  const description = world.summary || world.description_markdown?.substring(0, 155).replace(/\n/g, ' ').trim() || `${world.name} - ${world.series_type} world on Ruutulian`;
+
   return {
     title: world.name,
+    description,
+    keywords: [
+      world.name,
+      world.series_type,
+      'world building',
+      'fictional world',
+      'universe',
+      'OC wiki',
+    ],
+    openGraph: {
+      title: `${world.name} | Ruutulian`,
+      description,
+      url,
+      type: 'website',
+      images: world.header_image_url || world.icon_url
+        ? [
+            {
+              url: world.header_image_url || world.icon_url || '/icon.png',
+              alt: world.name,
+            },
+          ]
+        : [
+            {
+              url: '/icon.png',
+              width: 512,
+              height: 512,
+              alt: world.name,
+            },
+          ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${world.name} | Ruutulian`,
+      description,
+      images: world.header_image_url || world.icon_url ? [world.header_image_url || world.icon_url || '/icon.png'] : ['/icon.png'],
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 

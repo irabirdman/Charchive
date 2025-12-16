@@ -7,6 +7,31 @@ import { FeatureTile } from '@/components/admin/FeatureTile';
 
 export const metadata: Metadata = {
   title: 'Home',
+  description: 'Welcome to Ruutulian - Explore characters and worlds across every universe. Browse original characters, worlds, lore, timelines, and statistics.',
+  keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters'],
+  openGraph: {
+    title: 'Ruutulian - Original Character Wiki',
+    description: 'Explore characters and worlds across every universe. Browse original characters, worlds, lore, timelines, and statistics.',
+    url: '/',
+    type: 'website',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Ruutulian Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Ruutulian - Original Character Wiki',
+    description: 'Explore characters and worlds across every universe. Browse original characters, worlds, lore, timelines, and statistics.',
+    images: ['/icon.png'],
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export const revalidate = 60;
@@ -88,8 +113,32 @@ export default async function HomePage() {
       .limit(3),
   ]);
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  
+  // Structured data for SEO
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Ruutulian',
+    description: 'Explore characters and worlds across every universe. A personal wiki for organizing and showcasing original characters and worlds.',
+    url: baseUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${baseUrl}/ocs?search={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
-    <div className="space-y-12 md:space-y-16">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="space-y-12 md:space-y-16">
       {/* Hero Section */}
       <section className="hero-gradient rounded-2xl p-6 md:p-8 lg:p-12 text-center fade-in">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-100 mb-3 md:mb-4">
@@ -400,5 +449,6 @@ export default async function HomePage() {
         )}
       </section>
     </div>
+    </>
   );
 }

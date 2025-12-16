@@ -7,3 +7,5 @@ ALTER TABLE world_lore
 -- Add comment for documentation
 COMMENT ON COLUMN world_lore.banner_image_url IS 'Banner/header image URL displayed at the top of the lore page for aesthetic purposes';
 
+
+

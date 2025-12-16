@@ -20,14 +20,15 @@ import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const supabase = await createClient();
+  const resolvedParams = await params;
 
   const { data: oc } = await supabase
     .from('ocs')
-    .select('name, world:worlds(name)')
-    .eq('slug', params.slug)
+    .select('name, slug, history_summary, image_url, world:worlds(name, slug)')
+    .eq('slug', resolvedParams.slug)
     .eq('is_public', true)
     .single();
 
@@ -37,8 +38,54 @@ export async function generateMetadata({
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const url = `${baseUrl}/ocs/${resolvedParams.slug}`;
+  const description = oc.history_summary 
+    ? oc.history_summary.substring(0, 155).replace(/\n/g, ' ').trim() + (oc.history_summary.length > 155 ? '...' : '')
+    : `${oc.name}${oc.world ? ` from ${(oc.world as any).name}` : ''} - Original Character on Ruutulian`;
+  const world = oc.world as any;
+
   return {
     title: oc.name,
+    description,
+    keywords: [
+      oc.name,
+      'original character',
+      'OC',
+      world?.name || '',
+      'character wiki',
+      'fictional character',
+    ].filter(Boolean),
+    openGraph: {
+      title: `${oc.name} | Ruutulian`,
+      description,
+      url,
+      type: 'profile',
+      images: oc.image_url
+        ? [
+            {
+              url: oc.image_url,
+              alt: oc.name,
+            },
+          ]
+        : [
+            {
+              url: '/icon.png',
+              width: 512,
+              height: 512,
+              alt: oc.name,
+            },
+          ],
+    },
+    twitter: {
+      card: 'summary',
+      title: `${oc.name} | Ruutulian`,
+      description,
+      images: oc.image_url ? [oc.image_url] : ['/icon.png'],
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -47,9 +94,10 @@ export const revalidate = 300;
 export default async function OCDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
   const supabase = await createClient();
+  const resolvedParams = await params;
 
   const { data: oc } = await supabase
     .from('ocs')
@@ -71,7 +119,7 @@ export default async function OCDetailPage({
         )
       )
     `)
-    .eq('slug', params.slug)
+    .eq('slug', resolvedParams.slug)
     .eq('is_public', true)
     .single();
 

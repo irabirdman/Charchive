@@ -1,7 +1,71 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreList } from '@/components/lore/LoreList';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const supabase = await createClient();
+  const resolvedParams = await params;
+
+  const { data: world } = await supabase
+    .from('worlds')
+    .select('name, slug, summary')
+    .eq('slug', resolvedParams.slug)
+    .eq('is_public', true)
+    .single();
+
+  if (!world) {
+    return {
+      title: 'World Not Found',
+    };
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const url = `${baseUrl}/worlds/${resolvedParams.slug}/lore`;
+  const description = `Browse all lore entries for ${world.name} on Ruutulian. Discover detailed world building, history, and background information.`;
+
+  return {
+    title: `${world.name} - Lore`,
+    description,
+    keywords: [
+      world.name,
+      'lore',
+      'codex',
+      'world building',
+      'world lore',
+      'background information',
+      'OC wiki',
+    ],
+    openGraph: {
+      title: `${world.name} - Lore | Ruutulian`,
+      description,
+      url,
+      type: 'website',
+      images: [
+        {
+          url: '/icon.png',
+          width: 512,
+          height: 512,
+          alt: world.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary',
+      title: `${world.name} - Lore | Ruutulian`,
+      description,
+      images: ['/icon.png'],
+    },
+    alternates: {
+      canonical: url,
+    },
+  };
+}
 
 export default async function WorldLorePage({
   params,
