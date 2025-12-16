@@ -155,14 +155,18 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save options');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || 'Failed to save options';
+        throw new Error(errorMessage);
       }
 
-      setSaveMessage({ type: 'success', text: 'Options saved successfully!' });
+      const data = await response.json();
+      setSaveMessage({ type: 'success', text: data.message || 'Options saved successfully!' });
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Error saving options:', error);
-      setSaveMessage({ type: 'error', text: 'Failed to save options. Please try again.' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save options. Please try again.';
+      setSaveMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsSaving(false);
     }

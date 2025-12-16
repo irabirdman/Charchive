@@ -79,10 +79,15 @@ export async function PUT(request: NextRequest) {
       try {
         fs.writeFileSync(tempFile, JSON.stringify(fieldsToUpdate), 'utf-8');
         
-        execSync(`node "${scriptPath}" "${tempFile}"`, {
+        // Use proper path normalization for Windows compatibility
+        const normalizedScriptPath = path.normalize(scriptPath);
+        const normalizedTempFile = path.normalize(tempFile);
+        
+        execSync(`node "${normalizedScriptPath}" "${normalizedTempFile}"`, {
           cwd: projectRoot,
           stdio: 'pipe',
           encoding: 'utf-8',
+          shell: process.platform === 'win32' ? true : false,
         });
         
         // Clean up temp file if it still exists (script should delete it)
