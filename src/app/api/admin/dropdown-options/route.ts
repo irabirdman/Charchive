@@ -68,10 +68,10 @@ export async function PUT(request: NextRequest) {
     if (Object.keys(fieldsToUpdate).length > 0) {
       // Get project root
       const projectRoot = process.cwd();
-      const scriptPath = path.join(projectRoot, 'scripts', 'update-csv-options.cjs');
+      const scriptPath = path.join(projectRoot, 'scripts', 'utilities', 'update-csv-options.cjs');
       
       if (!fs.existsSync(scriptPath)) {
-        throw new Error('Update script not found');
+        throw new Error(`Update script not found at: ${scriptPath}`);
       }
 
       // Write options to temp file and call the update script
@@ -97,7 +97,8 @@ export async function PUT(request: NextRequest) {
         console.error('Error executing update script:', execError.message);
         if (execError.stdout) console.error('stdout:', execError.stdout);
         if (execError.stderr) console.error('stderr:', execError.stderr);
-        throw new Error(`Failed to update CSV files: ${execError.message}`);
+        const errorDetails = execError.stderr || execError.stdout || execError.message;
+        throw new Error(`Failed to update CSV files: ${errorDetails}`);
       }
     }
 
