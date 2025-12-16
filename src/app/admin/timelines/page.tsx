@@ -10,6 +10,15 @@ export default async function AdminTimelinesPage() {
     .select('id, name, world:worlds(name)')
     .order('name', { ascending: true });
 
+  // Transform the data to ensure world is a single object or null
+  const transformedTimelines = timelines?.map((timeline) => ({
+    id: timeline.id,
+    name: timeline.name,
+    world: Array.isArray(timeline.world) 
+      ? (timeline.world[0] ? { name: timeline.world[0].name } : null)
+      : (timeline.world ? { name: timeline.world.name } : null),
+  })) || [];
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
@@ -22,7 +31,7 @@ export default async function AdminTimelinesPage() {
         </Link>
       </div>
 
-      <TimelinesList timelines={timelines || []} />
+      <TimelinesList timelines={transformedTimelines} />
     </div>
   );
 }
