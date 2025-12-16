@@ -11,13 +11,22 @@ export default async function AdminTimelinesPage() {
     .order('name', { ascending: true });
 
   // Transform the data to ensure world is a single object or null
-  const transformedTimelines = timelines?.map((timeline) => ({
-    id: timeline.id,
-    name: timeline.name,
-    world: Array.isArray(timeline.world) 
-      ? (timeline.world[0] ? { name: timeline.world[0].name } : null)
-      : (timeline.world ? { name: timeline.world.name } : null),
-  })) || [];
+  const transformedTimelines = timelines?.map((timeline) => {
+    const world = timeline.world as { name: string } | { name: string }[] | null;
+    let worldValue: { name: string } | null = null;
+    
+    if (Array.isArray(world) && world.length > 0) {
+      worldValue = { name: world[0].name };
+    } else if (world && !Array.isArray(world)) {
+      worldValue = { name: world.name };
+    }
+    
+    return {
+      id: timeline.id,
+      name: timeline.name,
+      world: worldValue,
+    };
+  }) || [];
 
   return (
     <div>
