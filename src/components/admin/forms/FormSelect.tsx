@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   register?: UseFormRegisterReturn;
@@ -30,20 +31,24 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
   }, ref) => {
     const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
 
-    // Get options from generated cache (csvOptionsData.ts) if optionsSource is provided
-    // This file is auto-generated from the dropdown_options database table
+    // Fetch options from database first, fallback to generated file
+    const { options: dbOptions } = useDropdownOptions(optionsSource);
+
+    // Get options: use provided options, then database, then generated file
     const selectOptions = useMemo(() => {
       if (options) {
         return options;
       }
-      if (optionsSource && csvOptions[optionsSource]) {
-        return csvOptions[optionsSource].map((value) => ({
+      if (optionsSource) {
+        // Use database options if available, otherwise fallback to generated file
+        const sourceOptions = dbOptions.length > 0 ? dbOptions : (csvOptions[optionsSource] || []);
+        return sourceOptions.map((value) => ({
           value,
           label: value,
         }));
       }
       return [];
-    }, [options, optionsSource]);
+    }, [options, optionsSource, dbOptions]);
 
     // Extract ref from register if it exists, otherwise use the forwarded ref
     const { ref: registerRef, ...registerProps } = register || {};

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UseFormRegisterReturn, ControllerRenderProps } from 'react-hook-form';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface FormAutocompleteProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'onBlur' | 'onKeyDown'> {
   register?: UseFormRegisterReturn;
@@ -64,17 +65,20 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLUListElement>(null);
 
-    // Get options from generated cache (csvOptionsData.ts) if optionsSource is provided
-    // This file is auto-generated from the dropdown_options database table
+    // Fetch options from database first, fallback to generated file
+    const { options: dbOptions } = useDropdownOptions(optionsSource);
+
+    // Get options: use provided options, then database, then generated file
     const availableOptions = useMemo(() => {
       if (options) {
         return options;
       }
-      if (optionsSource && csvOptions[optionsSource]) {
-        return csvOptions[optionsSource];
+      if (optionsSource) {
+        // Use database options if available, otherwise fallback to generated file
+        return dbOptions.length > 0 ? dbOptions : (csvOptions[optionsSource] || []);
       }
       return [];
-    }, [options, optionsSource]);
+    }, [options, optionsSource, dbOptions]);
 
     // Filter suggestions based on input
     const filteredSuggestions = useMemo(() => {

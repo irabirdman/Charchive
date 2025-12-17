@@ -6,17 +6,21 @@ import { csvOptions } from '@/lib/utils/csvOptionsData';
 export default async function DropdownOptionsPage() {
   const supabase = await createClient();
 
-  // Fetch options from database, fallback to generated TypeScript file
+  // Always fetch from database first, fallback to generated TypeScript file
   let initialOptions = csvOptions;
   
   try {
+    console.log('[Server] Fetching dropdown options from database...');
     const { data, error } = await supabase
       .from('dropdown_options')
       .select('field, option')
       .order('field', { ascending: true })
       .order('option', { ascending: true });
 
-    if (!error && data) {
+    if (error) {
+      console.error('[Server] Error fetching from database:', error);
+      console.warn('[Server] Falling back to generated file');
+    } else if (data) {
       // Group options by field
       const dbOptions: Record<string, string[]> = {};
       for (const row of data) {
@@ -31,11 +35,15 @@ export default async function DropdownOptionsPage() {
         dbOptions[field].sort();
       });
       
+      const totalOptions = Object.values(dbOptions).reduce((sum, opts) => sum + opts.length, 0);
+      console.log(`[Server] Loaded ${Object.keys(dbOptions).length} fields with ${totalOptions} total options from database`);
       initialOptions = dbOptions;
+    } else {
+      console.warn('[Server] No data returned from database, using generated file');
     }
   } catch (error) {
     // Fallback to generated file if database query fails
-    console.warn('Failed to load options from database, using generated file:', error);
+    console.error('[Server] Failed to load options from database, using generated file:', error);
   }
 
   return (

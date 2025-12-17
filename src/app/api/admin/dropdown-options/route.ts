@@ -1,8 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { checkAuth } from '@/lib/auth/require-auth';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Regenerates the csvOptionsData.ts file from the database
+ * This ensures form components have the latest options
+ */
+async function regenerateTypeScriptFile(supabase: any, requestId: string) {
+  try {
+    console.log(`[${requestId}] Regenerating TypeScript file from database...`);
+    
+    // Query all options from database
+    const { data, error } = await supabase
+      .from('dropdown_options')
+      .select('field, option')
+      .order('field', { ascending: true })
+      .order('option', { ascending: true });
+
+    if (error) {
+      console.error(`[${requestId}] Error fetching options for regeneration:`, error);
+      return false;
+    }
+
+    // Group options by field
+    const options: Record<string, string[]> = {};
+    if (data) {
+      for (const row of data) {
+        if (!options[row.field]) {
+          options[row.field] = [];
+        }
+        options[row.field].push(row.option);
+      }
+    }
+
+    // Sort options within each field
+    Object.keys(options).forEach(field => {
+      options[field].sort();
+    });
+
+    // Generate TypeScript file content
+    const fileContent = `// Auto-generated file - do not edit manually
+// Generated from: dropdown_options table in database
+// Run: npx tsx scripts/utilities/generate-dropdown-options.ts
+// Last generated: ${new Date().toISOString()}
+
+export const csvOptions: Record<string, string[]> = ${JSON.stringify(options, null, 2)};
+
+// Individual exports for convenience
+${Object.entries(options).map(([key, values]) => 
+  `export const ${key}Options: string[] = ${JSON.stringify(values)};`
+).join('\n')}
+`;
+
+    // Write to file
+    const outputPath = path.join(process.cwd(), 'src/lib/utils/csvOptionsData.ts');
+    fs.writeFileSync(outputPath, fileContent, 'utf-8');
+
+    console.log(`[${requestId}] ✓ TypeScript file regenerated: ${Object.keys(options).length} fields, ${data?.length || 0} total options`);
+    return true;
+  } catch (error) {
+    console.error(`[${requestId}] ✗ Error regenerating TypeScript file:`, error);
+    return false;
+  }
+}
 
 export async function GET() {
   try {
@@ -319,6 +383,19 @@ export async function PUT(request: NextRequest) {
     }
 
     console.log(`[${requestId}] ✓ All fields updated successfully`);
+    
+    // Regenerate TypeScript file so form components have the latest options
+    // Do this asynchronously so it doesn't block the response
+    regenerateTypeScriptFile(supabase, requestId).then(success => {
+      if (success) {
+        console.log(`[${requestId}] ✓ TypeScript file regeneration completed`);
+      } else {
+        console.warn(`[${requestId}] ⚠ TypeScript file regeneration failed, but database update succeeded`);
+      }
+    }).catch(err => {
+      console.error(`[${requestId}] ⚠ TypeScript file regeneration error:`, err);
+    });
+
     return NextResponse.json({ 
       success: true, 
       message: `Options saved successfully for ${updatedFields.length} field(s)`,

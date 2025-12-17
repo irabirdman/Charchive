@@ -36,10 +36,16 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
   const handleAddOption = (field: string, value: string) => {
     if (!value.trim()) return;
 
+    const trimmed = value.trim();
     setOptions((prev) => {
       const current = prev[field] || [];
-      const trimmed = value.trim();
-      if (current.includes(trimmed)) return prev;
+      // Check case-insensitively to avoid duplicates
+      const normalizedCurrent = current.map(v => v.toLowerCase());
+      if (normalizedCurrent.includes(trimmed.toLowerCase())) {
+        console.log(`[Client] Option "${trimmed}" already exists in ${field} (case-insensitive match)`);
+        return prev;
+      }
+      console.log(`[Client] Adding new option "${trimmed}" to field ${field}`);
       return {
         ...prev,
         [field]: [...current, trimmed].sort(),
@@ -159,8 +165,31 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
 
       const data = await response.json();
       console.log('[Client] Success response:', data);
-      setSaveMessage({ type: 'success', text: data.message || 'Options saved successfully!' });
-      setTimeout(() => setSaveMessage(null), 3000);
+      
+      // If fields were updated, refresh data from server
+      if (data.updatedFields && data.updatedFields.length > 0) {
+        console.log('[Client] Refreshing options from server after successful save...');
+        try {
+          const refreshResponse = await fetch('/api/admin/dropdown-options');
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            if (refreshData.options) {
+              console.log('[Client] Refreshed options from server:', Object.keys(refreshData.options).length, 'fields');
+              setOptions(refreshData.options);
+            }
+          }
+        } catch (refreshError) {
+          console.warn('[Client] Failed to refresh options after save:', refreshError);
+        }
+      }
+      
+      setSaveMessage({ 
+        type: 'success', 
+        text: data.message || (data.updatedFields?.length > 0 
+          ? `Options saved successfully for ${data.updatedFields.length} field(s)!` 
+          : 'No changes detected - all options are already saved.')
+      });
+      setTimeout(() => setSaveMessage(null), 5000);
     } catch (error) {
       console.error('[Client] Error saving options:', error);
       if (error instanceof Error) {
