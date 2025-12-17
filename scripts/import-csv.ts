@@ -232,7 +232,20 @@ function buildBio(personality: string, history: string): string {
 }
 
 async function importOCs() {
-  const csvPath = path.join(process.cwd(), "Ruu's OC List 2025 - Copy of [OC List].csv");
+  // Try multiple possible CSV file locations
+  const possiblePaths = [
+    path.join(process.cwd(), "Ruu's OC List 2025 - Copy of [OC List] (1).csv"),
+    path.join(process.cwd(), "Ruu's OC List 2025 - Copy of [OC List].csv"),
+    "e:\\Users\\Ruu\\Downloads\\Ruu's OC List 2025 - Copy of [OC List] (1).csv",
+  ];
+  
+  let csvPath = possiblePaths.find(p => fs.existsSync(p));
+  
+  if (!csvPath) {
+    console.error(`CSV file not found. Tried:`);
+    possiblePaths.forEach(p => console.error(`  - ${p}`));
+    process.exit(1);
+  }
   
   if (!fs.existsSync(csvPath)) {
     console.error(`CSV file not found at: ${csvPath}`);
@@ -393,17 +406,45 @@ async function importOCs() {
         }
       }
 
+      // Handle identity_id - create or reuse identity
+      let identityId = existing?.identity_id || null;
+      if (!identityId) {
+        // Check if an identity with this name already exists
+        const { data: existingIdentity } = await supabase
+          .from('oc_identities')
+          .select('id')
+          .eq('name', name)
+          .maybeSingle();
+        
+        if (existingIdentity) {
+          identityId = existingIdentity.id;
+        } else {
+          // Create new identity
+          const { data: newIdentity, error: identityError } = await supabase
+            .from('oc_identities')
+            .insert({ name })
+            .select('id')
+            .single();
+          
+          if (identityError) {
+            console.warn(`Failed to create identity for ${name}:`, identityError.message);
+          } else {
+            identityId = newIdentity.id;
+          }
+        }
+      }
+
       if (existing) {
         console.log(`Updating existing OC: ${existing.name || name} (ID: ${existing.id})`);
         console.log(`  Setting first_name: "${firstName}", last_name: "${lastName}", name: "${name}"`);
         const { error } = await supabase
           .from('ocs')
-          .update(ocData)
+          .update({ ...ocData, identity_id: identityId })
           .eq('id', existing.id);
         if (error) throw error;
       } else {
         console.log(`Creating new OC: ${name}`);
-        const { error } = await supabase.from('ocs').insert(ocData);
+        const { error } = await supabase.from('ocs').insert({ ...ocData, identity_id: identityId });
         if (error) throw error;
       }
 

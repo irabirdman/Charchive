@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreList } from '@/components/lore/LoreList';
+import { LoreFilters } from '@/components/filters/LoreFilters';
 
 export const metadata: Metadata = {
   title: 'Lore',
@@ -32,10 +34,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LorePage() {
+interface LorePageProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default async function LorePage({ searchParams }: LorePageProps) {
   const supabase = await createClient();
 
-  const { data: loreEntries } = await supabase
+  // Extract filter values from searchParams
+  const worldId = typeof searchParams.world === 'string' ? searchParams.world : '';
+  const loreType = typeof searchParams.lore_type === 'string' ? searchParams.lore_type : '';
+
+  // Build query
+  let query = supabase
     .from('world_lore')
     .select(`
       *,
@@ -49,8 +60,18 @@ export default async function LorePage() {
         event:timeline_events(id, title)
       )
     `)
-    .eq('world.is_public', true)
-    .order('lore_type', { ascending: true })
+    .eq('world.is_public', true);
+
+  // Apply filters
+  if (worldId) {
+    query = query.eq('world_id', worldId);
+  }
+  if (loreType) {
+    query = query.eq('lore_type', loreType);
+  }
+
+  const { data: loreEntries } = await query
+    .order('world_id', { ascending: true })
     .order('name', { ascending: true });
 
   return (
@@ -63,8 +84,12 @@ export default async function LorePage() {
         ]}
       />
 
+      <Suspense fallback={<div className="wiki-card p-6 mb-6">Loading filters...</div>}>
+        <LoreFilters />
+      </Suspense>
+
       <section className="mt-8">
-        <LoreList loreEntries={loreEntries || []} />
+        <LoreList loreEntries={loreEntries || []} searchParams={searchParams} />
       </section>
     </div>
   );

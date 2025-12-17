@@ -1,78 +1,105 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo } from 'react';
+import Link from 'next/link';
 import type { WorldLore } from '@/types/oc';
 import { LoreCard } from './LoreCard';
 
 interface LoreListProps {
   loreEntries: WorldLore[];
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-const loreTypes = ['clan', 'organization', 'location', 'religion', 'species', 'technique', 'concept', 'artifact', 'other'] as const;
+export function LoreList({ loreEntries, searchParams }: LoreListProps) {
+  const search = typeof searchParams.search === 'string' ? searchParams.search : '';
 
-export function LoreList({ loreEntries }: LoreListProps) {
-  const [selectedType, setSelectedType] = useState<string>('');
+  // Filter by search term (name, description, or world name)
+  const filteredEntries = useMemo(() => {
+    if (!search) return loreEntries;
 
-  const filteredEntries = selectedType
-    ? loreEntries.filter((entry) => entry.lore_type === selectedType)
-    : loreEntries;
+    const searchLower = search.toLowerCase();
+    return loreEntries.filter(
+      (entry) =>
+        entry.name.toLowerCase().includes(searchLower) ||
+        entry.description?.toLowerCase().includes(searchLower) ||
+        entry.description_markdown?.toLowerCase().includes(searchLower) ||
+        entry.world?.name.toLowerCase().includes(searchLower)
+    );
+  }, [loreEntries, search]);
 
-  const groupedByType = filteredEntries.reduce((acc, entry) => {
-    if (!acc[entry.lore_type]) {
-      acc[entry.lore_type] = [];
-    }
-    acc[entry.lore_type].push(entry);
-    return acc;
-  }, {} as Record<string, WorldLore[]>);
+  // Group by world/fandom
+  const groupedByWorld = useMemo(() => {
+    return filteredEntries.reduce((acc, entry) => {
+      const worldId = entry.world?.id || 'unknown';
+      const worldName = entry.world?.name || 'Unknown World';
+      
+      if (!acc[worldId]) {
+        acc[worldId] = {
+          world: entry.world,
+          worldName,
+          entries: [],
+        };
+      }
+      acc[worldId].entries.push(entry);
+      return acc;
+    }, {} as Record<string, { world: WorldLore['world']; worldName: string; entries: WorldLore[] }>);
+  }, [filteredEntries]);
+
+  // Sort entries within each world by lore type, then by name
+  const sortedGroups = useMemo(() => {
+    return Object.entries(groupedByWorld).map(([worldId, group]) => ({
+      ...group,
+      entries: group.entries.sort((a, b) => {
+        // First sort by lore type
+        if (a.lore_type !== b.lore_type) {
+          return a.lore_type.localeCompare(b.lore_type);
+        }
+        // Then by name
+        return a.name.localeCompare(b.name);
+      }),
+    }));
+  }, [groupedByWorld]);
+
+  if (filteredEntries.length === 0) {
+    return (
+      <div className="wiki-card p-12 text-center">
+        <p className="text-gray-500 text-lg">
+          {loreEntries.length > 0
+            ? 'No lore entries match your search or filters.'
+            : 'No lore entries available yet.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Filter */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={() => setSelectedType('')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            selectedType === ''
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          All Types
-        </button>
-        {loreTypes.map((type) => (
-          <button
-            key={type}
-            onClick={() => setSelectedType(type)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              selectedType === type
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Grouped List */}
-      {Object.keys(groupedByType).length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          No lore entries found.
-        </div>
-      ) : (
-        Object.entries(groupedByType).map(([type, entries]) => (
-          <section key={type} className="space-y-4">
+    <div className="space-y-8">
+      {sortedGroups.map((group) => (
+        <section key={group.world?.id || 'unknown'} className="space-y-4">
+          <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-100">
-              {type.charAt(0).toUpperCase() + type.slice(1)}
+              {group.worldName}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {entries.map((entry) => (
-                <LoreCard key={entry.id} lore={entry} />
-              ))}
-            </div>
-          </section>
-        ))
-      )}
+            {group.world && (
+              <Link
+                href={`/worlds/${group.world.slug}`}
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                <i className="fas fa-external-link-alt mr-1"></i>
+                View World
+              </Link>
+            )}
+            <span className="text-sm text-gray-400">
+              ({group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'})
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {group.entries.map((entry) => (
+              <LoreCard key={entry.id} lore={entry} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
