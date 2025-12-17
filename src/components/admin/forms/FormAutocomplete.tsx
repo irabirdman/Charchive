@@ -13,7 +13,7 @@ interface FormAutocompleteProps extends Omit<React.InputHTMLAttributes<HTMLInput
   error?: string;
   helpText?: string;
   options?: string[];
-  optionsSource?: keyof typeof csvOptions;
+  optionsSource?: keyof typeof csvOptions | string; // Allow string for fields not in csvOptions
   placeholder?: string;
   allowCustom?: boolean; // Allow adding custom values not in the options list
 }
@@ -67,7 +67,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
 
     // Fetch options from database first, fallback to generated file
     // The hook already handles the fallback, so we can use it directly
-    const { options: dbOptions } = useDropdownOptions(optionsSource);
+    const { options: dbOptions, isLoading } = useDropdownOptions(optionsSource);
 
     // Get options: use provided options, then database/generated file from hook
     const availableOptions = useMemo(() => {
@@ -79,7 +79,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
         return dbOptions;
       }
       return [];
-    }, [options, optionsSource, dbOptions]);
+    }, [options, optionsSource, dbOptions, isLoading]);
 
     // Filter suggestions based on input
     const filteredSuggestions = useMemo(() => {

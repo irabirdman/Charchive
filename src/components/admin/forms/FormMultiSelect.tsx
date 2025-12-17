@@ -57,11 +57,6 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
     } else if (optionsSource) {
       // Hook already provides database options or fallback to generated file
       // dbOptions is the result from useDropdownOptions hook
-      console.log(`[FormMultiSelect] Building options for "${optionsSource}":`, {
-        dbOptionsLength: dbOptions.length,
-        isLoading,
-        sampleOptions: dbOptions.slice(0, 5),
-      });
       baseOptions.push(...dbOptions.map((val) => ({
         value: val,
         label: val,

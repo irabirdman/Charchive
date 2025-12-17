@@ -1927,6 +1927,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
                   optionsSource="pronouns"
                   placeholder="Type pronouns..."
                   disabled={isSubmitting}
+                  allowCustom={true}
                 />
               )}
             />
@@ -1945,6 +1946,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
                   optionsSource="gender"
                   placeholder="Type gender..."
                   disabled={isSubmitting}
+                  allowCustom={true}
                 />
               )}
             />
@@ -1967,11 +1969,18 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             <FormLabel htmlFor="occupation">
               Occupation
             </FormLabel>
-            <FormTextarea
-              {...register('occupation')}
-              rows={2}
-              placeholder="Occupation or job (supports markdown)"
-              disabled={isSubmitting}
+            <Controller
+              name="occupation"
+              control={control}
+              render={({ field }) => (
+                <FormAutocomplete
+                  {...field}
+                  optionsSource="occupation"
+                  placeholder="Type occupation..."
+                  disabled={isSubmitting}
+                  allowCustom={true}
+                />
+              )}
             />
           </div>
         </div>
@@ -1990,6 +1999,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
                   optionsSource="sex"
                   placeholder="Type sex..."
                   disabled={isSubmitting}
+                  allowCustom={true}
                 />
               )}
             />
