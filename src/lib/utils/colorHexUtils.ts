@@ -98,3 +98,4 @@ export function extractColorNameOnly(storedValue: string | null | undefined): st
   return colorName.trim();
 }
 
+

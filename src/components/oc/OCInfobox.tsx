@@ -5,6 +5,7 @@ import { Infobox } from '@/components/wiki/Infobox';
 import { InfoRow } from '@/components/wiki/InfoRow';
 import { convertGoogleDriveUrl, isGoogleSitesUrl } from '@/lib/utils/googleDriveImage';
 import { GoogleDriveImage } from '@/components/oc/GoogleDriveImage';
+import { formatDateOfBirth } from '@/lib/utils/dateFormat';
 
 interface OCInfoboxProps {
   oc: OC;
@@ -50,7 +51,7 @@ export async function OCInfobox({ oc }: OCInfoboxProps) {
           <span className="capitalize font-medium">{oc.status}</span>
         </InfoRow>
         {oc.age && <InfoRow label="Age" value={oc.age} icon="fas fa-birthday-cake" />}
-        {oc.date_of_birth && <InfoRow label="Date of Birth" value={oc.date_of_birth} icon="fas fa-calendar" />}
+        {oc.date_of_birth && <InfoRow label="Date of Birth" value={formatDateOfBirth(oc.date_of_birth)} icon="fas fa-calendar" />}
         {oc.pronouns && <InfoRow label="Pronouns" value={oc.pronouns} icon="fas fa-user-friends" />}
         {oc.gender && (
           <InfoRow label="Gender" value={oc.gender} icon="fas fa-venus-mars" />

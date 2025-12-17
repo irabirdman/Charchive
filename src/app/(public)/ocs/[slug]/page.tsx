@@ -16,6 +16,7 @@ import { TagList } from '@/components/wiki/TagList';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
 import { extractColorHex, extractColorName, getColorHex } from '@/lib/utils/colorHexUtils';
 import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
+import { formatHeightWithMetric, formatWeightWithMetric } from '@/lib/utils/unitConversion';
 
 export async function generateMetadata({
   params,
@@ -598,13 +599,13 @@ export default async function OCDetailPage({
                         {oc.height && (
                           <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
                             <div className="text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Height</div>
-                            <div className="text-gray-200 font-medium">{oc.height}</div>
+                            <div className="text-gray-200 font-medium">{formatHeightWithMetric(oc.height)}</div>
                           </div>
                         )}
                         {oc.weight && (
                           <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
                             <div className="text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Weight</div>
-                            <div className="text-gray-200 font-medium">{oc.weight}</div>
+                            <div className="text-gray-200 font-medium">{formatWeightWithMetric(oc.weight)}</div>
                           </div>
                         )}
                         {oc.build && (
@@ -1447,7 +1448,7 @@ export default async function OCDetailPage({
                   <i className="fas fa-heart text-red-400" aria-hidden="true" suppressHydrationWarning></i>
                   Preferences & Habits
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-300 prose max-w-none">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-300 prose max-w-none">
                   {oc.likes && (() => {
                     const likesText = oc.likes.trim();
                     const hasCommas = likesText.includes(',');
@@ -1455,12 +1456,12 @@ export default async function OCDetailPage({
                     
                     return (
                       <div>
-                        <h3 className="text-lg font-semibold text-green-400 mb-4 flex items-center gap-2">
-                          <i className="fas fa-thumbs-up text-green-400"></i>
+                        <h3 className="text-lg font-semibold text-green-400 mb-3 flex items-center gap-2">
+                          <i className="fas fa-heart text-green-400"></i>
                           Likes
                         </h3>
                         {items ? (
-                          <ul className="space-y-3 list-none pl-0">
+                          <ul className="space-y-2 list-none pl-0">
                             {items.map((item: string, index: number) => (
                               <li key={index} className="flex items-start gap-3 text-gray-300 leading-relaxed">
                                 <span className="text-green-400 mt-1.5 flex-shrink-0">
@@ -1483,12 +1484,12 @@ export default async function OCDetailPage({
                     
                     return (
                       <div>
-                        <h3 className="text-lg font-semibold text-red-400 mb-4 flex items-center gap-2">
-                          <i className="fas fa-thumbs-down text-red-400"></i>
+                        <h3 className="text-lg font-semibold text-red-400 mb-3 flex items-center gap-2">
+                          <i className="fas fa-heart-broken text-red-400"></i>
                           Dislikes
                         </h3>
                         {items ? (
-                          <ul className="space-y-3 list-none pl-0">
+                          <ul className="space-y-2 list-none pl-0">
                             {items.map((item: string, index: number) => (
                               <li key={index} className="flex items-start gap-3 text-gray-300 leading-relaxed">
                                 <span className="text-red-400 mt-1.5 flex-shrink-0">

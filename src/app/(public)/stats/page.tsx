@@ -158,7 +158,8 @@ export default async function StatsPage() {
   // Species distribution (top 10)
   const speciesCounts: Record<string, number> = {};
   allOCs?.forEach(oc => {
-    const species = oc.species || 'not specified';
+    // Check both direct species field and modular_fields for custom input species
+    const species = oc.species || (oc.modular_fields as any)?.species || 'not specified';
     speciesCounts[species] = (speciesCounts[species] || 0) + 1;
   });
   const speciesDistribution: DistributionItem[] = Object.entries(speciesCounts)

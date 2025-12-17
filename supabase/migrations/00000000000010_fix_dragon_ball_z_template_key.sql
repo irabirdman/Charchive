@@ -24,3 +24,4 @@ BEGIN
   RAISE NOTICE 'Updated % world(s) with dragonball template key', updated_count;
 END $$;
 
+
