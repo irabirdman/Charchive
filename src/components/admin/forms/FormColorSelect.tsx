@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { UseFormRegisterReturn, UseFormSetValue, useFormContext } from 'react-hook-form';
 import { useDropdownOptions } from '@/hooks/useDropdownOptions';
+import { csvOptions } from '@/lib/utils/csvOptionsData';
 
 interface FormColorSelectProps {
   register: UseFormRegisterReturn;
