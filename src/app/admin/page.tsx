@@ -369,6 +369,81 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
+      {/* Guides & Instructions Section */}
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-4">Guides & Instructions</h2>
+        <div className="bg-gradient-to-r from-pink-900/20 to-purple-900/20 border border-pink-700/50 rounded-lg p-4 md:p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 mt-1">
+              <i className="fas fa-info-circle text-2xl text-pink-400"></i>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-100 mb-2">
+                  Creating Multiple Versions of the Same OC in Different Worlds
+                </h3>
+                <p className="text-sm md:text-base text-gray-300 mb-4">
+                  If you have an OC that exists in 2 different worlds, you can create separate versions that are linked together as the same character identity.
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                  <h4 className="text-base font-semibold text-gray-100 mb-2 flex items-center gap-2">
+                    <span className="text-pink-400">Step 1:</span> Create the First Version
+                  </h4>
+                  <p className="text-sm text-gray-300">
+                    Create your OC normally by going to <strong className="text-gray-100">Admin → Characters → New OC</strong>. 
+                    Select the first world and fill in all the character details. The system will automatically create an OC Identity for this character.
+                  </p>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                  <h4 className="text-base font-semibold text-gray-100 mb-2 flex items-center gap-2">
+                    <span className="text-pink-400">Step 2:</span> Add a Second Version for a Different World
+                  </h4>
+                  <p className="text-sm text-gray-300 mb-2">
+                    To add another version of the same character in a different world:
+                  </p>
+                  <ol className="list-decimal list-inside text-sm text-gray-300 space-y-1 ml-2">
+                    <li>Go to <strong className="text-gray-100">Admin → Characters</strong> and find your character</li>
+                    <li>Click on the version count link (e.g., "1 version") in the Versions column</li>
+                    <li>This opens the <strong className="text-gray-100">Identity Manager</strong> page</li>
+                    <li>Click the <strong className="text-gray-100">"➕ Add New Version"</strong> button</li>
+                    <li>Select a <strong className="text-gray-100">different World/Fandom</strong> than the first version</li>
+                    <li>Fill in the character details for this new version</li>
+                    <li>Click <strong className="text-gray-100">Save</strong></li>
+                  </ol>
+                  <p className="text-sm text-gray-400 mt-2 italic">
+                    Each version has completely separate data (appearance, stats, relationships, etc.) and can exist in different worlds.
+                  </p>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                  <h4 className="text-base font-semibold text-gray-100 mb-2 flex items-center gap-2">
+                    <span className="text-pink-400">Step 3:</span> Editing Versions
+                  </h4>
+                  <p className="text-sm text-gray-300">
+                    When editing a character with multiple versions, you'll see a version switcher banner at the top of the edit form. 
+                    You can switch between versions to edit each one separately. Remember: each version's data is completely independent!
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-700/50 mt-4">
+                <AdminLink
+                  href="/admin/ocs"
+                  className="inline-flex items-center gap-2 text-sm md:text-base text-pink-400 hover:text-pink-300 font-medium"
+                >
+                  Go to Characters →
+                  <i className="fas fa-arrow-right"></i>
+                </AdminLink>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Recent Activity */}
       <div>
         <RecentActivity items={recentItems} />
