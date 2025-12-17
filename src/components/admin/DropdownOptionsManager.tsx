@@ -53,7 +53,6 @@ export function DropdownOptionsManager({ initialOptions, initialHexCodes }: Drop
       // Check case-insensitively to avoid duplicates
       const normalizedCurrent = current.map(v => v.toLowerCase());
       if (normalizedCurrent.includes(trimmed.toLowerCase())) {
-        console.log(`[Client] Option "${trimmed}" already exists in ${field} (case-insensitive match)`);
         const fieldLabel = fieldLabels[field] || field;
         setAddMessage({ 
           field, 
@@ -63,7 +62,6 @@ export function DropdownOptionsManager({ initialOptions, initialHexCodes }: Drop
         setTimeout(() => setAddMessage(null), 3000);
         return prev;
       }
-      console.log(`[Client] Adding new option "${trimmed}" to field ${field}`);
       const fieldLabel = fieldLabels[field] || field;
       setAddMessage({ 
         field, 
@@ -160,18 +158,8 @@ export function DropdownOptionsManager({ initialOptions, initialHexCodes }: Drop
     setSaveMessage(null);
 
     // Log what we're about to send
-    const fieldsCount = Object.keys(options).length;
-    const totalOptions = Object.values(options).reduce((sum, opts) => sum + opts.length, 0);
-    console.log('[Client] Starting save operation...');
-    console.log('[Client] Fields to save:', fieldsCount);
-    console.log('[Client] Total options:', totalOptions);
-    console.log('[Client] Options data:', options);
-
     try {
       const requestBody = { options, hexCodes };
-      console.log('[Client] Sending PUT request to /api/admin/dropdown-options');
-      console.log('[Client] Request body size:', JSON.stringify(requestBody).length, 'bytes');
-      console.log('[Client] Hex codes being sent:', Object.keys(hexCodes).length, 'fields with hex codes');
       
       const response = await fetch('/api/admin/dropdown-options', {
         method: 'PUT',
@@ -179,37 +167,29 @@ export function DropdownOptionsManager({ initialOptions, initialHexCodes }: Drop
         body: JSON.stringify(requestBody),
       });
 
-      console.log('[Client] Response status:', response.status, response.statusText);
-      console.log('[Client] Response headers:', Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('[Client] Error response data:', errorData);
         const errorMessage = errorData.error || 'Failed to save options';
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log('[Client] Success response:', data);
       
       // If fields were updated, refresh data from server
       if (data.updatedFields && data.updatedFields.length > 0) {
-        console.log('[Client] Refreshing options from server after successful save...');
         try {
           const refreshResponse = await fetch('/api/admin/dropdown-options');
           if (refreshResponse.ok) {
             const refreshData = await refreshResponse.json();
             if (refreshData.options) {
-              console.log('[Client] Refreshed options from server:', Object.keys(refreshData.options).length, 'fields');
               setOptions(refreshData.options);
             }
             if (refreshData.hexCodes) {
-              console.log('[Client] Refreshed hex codes from server');
               setHexCodes(refreshData.hexCodes);
             }
           }
         } catch (refreshError) {
-          console.warn('[Client] Failed to refresh options after save:', refreshError);
+          // Silently fail refresh - data is already saved
         }
       }
       
@@ -222,16 +202,10 @@ export function DropdownOptionsManager({ initialOptions, initialHexCodes }: Drop
       setTimeout(() => setSaveMessage(null), 5000);
     } catch (error) {
       console.error('[Client] Error saving options:', error);
-      if (error instanceof Error) {
-        console.error('[Client] Error name:', error.name);
-        console.error('[Client] Error message:', error.message);
-        console.error('[Client] Error stack:', error.stack);
-      }
       const errorMessage = error instanceof Error ? error.message : 'Failed to save options. Please try again.';
       setSaveMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsSaving(false);
-      console.log('[Client] Save operation completed');
     }
   };
 

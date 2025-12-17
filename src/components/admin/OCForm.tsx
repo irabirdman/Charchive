@@ -50,7 +50,7 @@ function TemplateFieldsSection({
       title={`${template.name} - Template Fields`} 
       icon="template" 
       accentColor="content" 
-      defaultOpen={false}
+      defaultOpen={true}
     >
       <div className="space-y-4">
         {template.fields.map((field) => {
@@ -1133,6 +1133,8 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   const templateType = watch('template_type');
   const nameValue = watch('name');
   const worldId = watch('world_id');
+  
+  // Template type is managed by world selection
   const firstName = watch('first_name');
   const lastName = watch('last_name');
   const dateOfBirth = watch('date_of_birth');
@@ -1236,13 +1238,30 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       // If editing and OC has world data, use it
       if (oc?.world) {
         setSelectedWorld(oc.world);
-        // Also ensure template_type is set based on world
         const templateType = getTemplateTypeFromWorldSlug(oc.world.slug) as TemplateType;
         setValue('template_type', templateType, { shouldDirty: false });
         return;
       }
 
-      // Otherwise fetch the world
+      // Immediately update selectedWorld with basic info from worlds array if available
+      const worldFromList = worlds.find(w => w.id === worldId);
+      if (worldFromList) {
+        const templateType = getTemplateTypeFromWorldSlug(worldFromList.slug) as TemplateType;
+        setValue('template_type', templateType, { shouldDirty: !oc });
+        
+        setSelectedWorld(prev => {
+          if (!prev || prev.id !== worldId) {
+            return {
+              id: worldFromList.id,
+              name: worldFromList.name,
+              slug: worldFromList.slug,
+            } as World;
+          }
+          return prev;
+        });
+      }
+
+      // Fetch the full world data including oc_templates
       const supabase = createClient();
       const { data } = await supabase
         .from('worlds')
@@ -1250,14 +1269,15 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         .eq('id', worldId)
         .single();
       if (data) {
-        setSelectedWorld(data as World);
-        // Also ensure template_type is set based on world
         const templateType = getTemplateTypeFromWorldSlug(data.slug) as TemplateType;
+        setSelectedWorld(data as World);
         setValue('template_type', templateType, { shouldDirty: false });
+      } else {
+        console.error('[OCForm] Failed to fetch world data');
       }
     }
     loadWorld();
-  }, [worldId, oc, setValue]);
+  }, [worldId, oc, setValue, worlds]);
 
   // Auto-set template_type when world changes (both create and edit mode)
   useEffect(() => {
@@ -1265,16 +1285,6 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       const selectedWorld = worlds.find(w => w.id === worldId);
       if (selectedWorld) {
         const templateType = getTemplateTypeFromWorldSlug(selectedWorld.slug) as TemplateType;
-        // Debug logging to help identify issues
-        if (templateType === 'none' && selectedWorld.name.toLowerCase().includes('dragon')) {
-          console.warn('Template type not found for world:', {
-            name: selectedWorld.name,
-            slug: selectedWorld.slug,
-            templateType
-          });
-        }
-        // Always set template_type when world changes
-        // Use shouldDirty: false when editing to avoid marking form as dirty
         setValue('template_type', templateType, { shouldDirty: !oc });
       }
     }
@@ -1409,11 +1419,6 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   }, []);
 
   const onSubmit = async (data: OCFormData) => {
-    console.log('=== OC FORM SUBMIT STARTED ===');
-    console.log('Form data:', data);
-    console.log('OC ID:', oc?.id);
-    console.log('Is creating new:', !oc);
-    
     setIsSubmitting(true);
     setError(null);
     setSuccess(false);
@@ -1582,22 +1587,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         ? { ...cleanedData, ...(oc.identity_id && { identity_id: oc.identity_id }) }
         : { ...cleanedData, ...(identityId && { identity_id: identityId }) };
 
-      // Debug log to verify template_type and world_id are being sent
-      console.log('Submitting OC with template_type:', requestBody.template_type);
-      console.log('Submitting OC with world_id:', requestBody.world_id);
-
-      console.log('Making request to:', url);
-      console.log('Request method:', method);
-      console.log('Request body keys:', Object.keys(requestBody));
-      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
-
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -1622,7 +1616,6 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       } else {
         // Update the form with the saved data to reflect changes immediately
         if (ocData) {
-          console.log('Updating form with saved data:', ocData.name);
           const defaultValues = getDefaultValues(ocData as OC);
           reset(defaultValues, { keepDefaultValues: false, keepDirty: false });
           // Explicitly set world_id to ensure it's selected
@@ -1687,10 +1680,33 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
   // Helper function to get effective template (uses only world's oc_templates)
   const getEffectiveTemplate = (templateType: string): TemplateDefinition => {
+    // Ensure selectedWorld matches the current worldId to avoid using stale data
+    if (!selectedWorld || selectedWorld.id !== worldId) {
+      return { name: templateType, fields: [] };
+    }
+    
     // Only use world's oc_templates - no global templates
     if (selectedWorld?.oc_templates && typeof selectedWorld.oc_templates === 'object') {
       const worldTemplates = selectedWorld.oc_templates as Record<string, { name?: string; fields?: TemplateField[] }>;
-      const worldTemplate = worldTemplates[templateType];
+      
+      // Try to find template by templateType first, then by world slug as fallback
+      let worldTemplate = worldTemplates[templateType];
+      
+      // If not found by templateType, try the world slug
+      if (!worldTemplate && selectedWorld.slug) {
+        worldTemplate = worldTemplates[selectedWorld.slug];
+      }
+      
+      // If still not found, try other common variations
+      if (!worldTemplate && templateType === 'dragonball') {
+        const variations = ['dragon-ball-z', 'dragon-ball', 'dragonball'];
+        for (const variation of variations) {
+          if (worldTemplates[variation]) {
+            worldTemplate = worldTemplates[variation];
+            break;
+          }
+        }
+      }
       
       if (worldTemplate?.fields && Array.isArray(worldTemplate.fields)) {
         return {
@@ -1839,6 +1855,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
                   placeholder="Select a world"
                   error={errors.world_id?.message}
                   disabled={isSubmitting}
+                  onChange={(e) => {
+                    const newWorldId = e.target.value;
+                    const selectedWorld = worlds.find(w => w.id === newWorldId);
+                    field.onChange(e);
+                  }}
                 />
               )}
             />
@@ -1874,11 +1895,14 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             </FormLabel>
             <FormInput
               type="text"
-              value={templates[templateType as TemplateType]?.name || 'None'}
+              value={effectiveTemplate?.name || templates[templateType as TemplateType]?.name || templateType || 'None'}
               disabled
               className="bg-gray-800/80 border-gray-600/50 text-gray-400 cursor-not-allowed"
             />
             <input type="hidden" {...register('template_type')} />
+            <div className="text-xs text-gray-500 mt-1">
+              Template Type: {templateType || 'none'} | World: {selectedWorld?.name || 'None'}
+            </div>
           </div>
         </div>
       </FormSection>
@@ -1945,7 +1969,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
               render={({ field }) => (
                 <FormAutocomplete
                   {...field}
-                  optionsSource="gender"
+                  optionsSource="gender_identity"
                   placeholder="Type gender..."
                   disabled={isSubmitting}
                   allowCustom={true}
@@ -2073,11 +2097,18 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           <FormLabel htmlFor="ethnicity">
             Ethnicity
           </FormLabel>
-          <FormTextarea
-            {...register('ethnicity')}
-            rows={2}
-            placeholder="Ethnicity or race (supports markdown)"
-            disabled={isSubmitting}
+          <Controller
+            name="ethnicity"
+            control={control}
+            render={({ field }) => (
+              <FormAutocomplete
+                {...field}
+                optionsSource="ethnicity_race"
+                placeholder="Type ethnicity or race..."
+                disabled={isSubmitting}
+                allowCustom={true}
+              />
+            )}
           />
         </div>
 
@@ -2912,7 +2943,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       {/* Template-Specific Fields Section */}
       {effectiveTemplate && effectiveTemplate.fields && effectiveTemplate.fields.length > 0 && (
         <TemplateFieldsSection
-          template={effectiveTemplate}
+          template={effectiveTemplate as TemplateDefinition}
           templateType={templateType}
           control={control}
           register={register}
@@ -2990,12 +3021,6 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             disabled={isSubmitting}
             className="w-full sm:w-auto"
             onClick={(e) => {
-              console.log('=== SUBMIT BUTTON CLICKED ===');
-              console.log('Form errors:', errors);
-              console.log('Is dirty:', isDirty);
-              console.log('Is submitting:', isSubmitting);
-              // Use getValues() instead of watch() to avoid circular reference issues
-              console.log('Form values:', getValues());
               // Don't prevent default - let the form submit normally
             }}
           >

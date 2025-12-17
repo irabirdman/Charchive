@@ -47,7 +47,6 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
         if (!res.ok) {
           // Don't throw for 401/403 - just use fallback silently
           if (res.status === 401 || res.status === 403) {
-            console.log(`[useDropdownOptions] Auth not available for ${field}, using fallback`);
             setDbOptions(null);
             setIsLoading(false);
             return null;
@@ -59,52 +58,31 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
       .then(data => {
         if (!data) return; // Handled auth error above
         
-        // Debug logging
-        console.log(`[useDropdownOptions] Fetched data for field "${field}":`, {
-          hasOptions: !!data.options,
-          fieldsInData: data.options ? Object.keys(data.options) : [],
-          hasField: data.options && data.options[field] !== undefined,
-          fieldValue: data.options && data.options[field],
-          fieldValueLength: data.options && data.options[field] ? data.options[field].length : 0,
-        });
+        // Check if field exists (with case-insensitive fallback)
+        let fieldData: string[] | undefined = data.options?.[field];
+        let hexCodeData: Record<string, string> | undefined = data.hexCodes?.[field];
         
-        if (data.options && data.options[field]) {
-          console.log(`[useDropdownOptions] Setting dbOptions for "${field}":`, data.options[field].length, 'options');
-          setDbOptions(data.options[field]);
-          // Set hex codes if available
-          if (data.hexCodes && data.hexCodes[field]) {
-            setDbHexCodes(data.hexCodes[field]);
-          } else {
-            setDbHexCodes({});
+        if (!fieldData && data.options) {
+          // Try case-insensitive match
+          const fieldKeys = Object.keys(data.options);
+          const matchingKey = fieldKeys.find(k => k.toLowerCase() === field.toLowerCase());
+          if (matchingKey) {
+            fieldData = data.options[matchingKey];
+            hexCodeData = data.hexCodes?.[matchingKey];
           }
+        }
+        
+        if (fieldData && Array.isArray(fieldData)) {
+          setDbOptions(fieldData);
+          setDbHexCodes(hexCodeData || {});
         } else {
           // Field not found in database, will use fallback
-          console.warn(`[useDropdownOptions] Field "${field}" not found in database response`);
-          // Check if field exists with different casing
-          if (data.options) {
-            const fieldKeys = Object.keys(data.options);
-            const matchingKey = fieldKeys.find(k => k.toLowerCase() === field.toLowerCase());
-            if (matchingKey) {
-              console.log(`[useDropdownOptions] Found field with different casing: "${matchingKey}" (looking for "${field}")`);
-              setDbOptions(data.options[matchingKey]);
-              if (data.hexCodes && data.hexCodes[matchingKey]) {
-                setDbHexCodes(data.hexCodes[matchingKey]);
-              } else {
-                setDbHexCodes({});
-              }
-            } else {
-              setDbOptions(null);
-              setDbHexCodes(null);
-            }
-          } else {
-            setDbOptions(null);
-            setDbHexCodes(null);
-          }
+          setDbOptions(null);
+          setDbHexCodes(null);
         }
         setIsLoading(false);
       })
       .catch(err => {
-        console.warn(`[useDropdownOptions] Failed to fetch ${field} from database, using fallback:`, err);
         setError(err);
         setDbOptions(null);
         setDbHexCodes(null);

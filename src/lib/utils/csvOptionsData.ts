@@ -3,7 +3,7 @@
 // This file is a FALLBACK - the database is the primary source of truth
 // The useDropdownOptions hook fetches from database first, then falls back to this file
 // Run: npx tsx scripts/utilities/generate-dropdown-options.ts
-// Last generated: 2025-12-17T14:02:52.792Z
+// Last generated: 2025-12-17T14:24:35.698Z
 
 export const csvOptions: Record<string, string[]> = {
   "accent": [
@@ -15,6 +15,7 @@ export const csvOptions: Record<string, string[]> = {
     "Chicago",
     "Chicano English (Mexican-American)",
     "Chinese",
+    "DEVELOPMENT",
     "Dutch",
     "German",
     "Greek",
@@ -570,6 +571,22 @@ export const csvOptions: Record<string, string[]> = {
     "Green; Sea",
     "Green; Soft",
     "Green; Warm",
+    "Heterochromia; Central",
+    "Heterochromia; L Blue / R Brown",
+    "Heterochromia; L Blue / R Green",
+    "Heterochromia; L Brown / R Blue",
+    "Heterochromia; L Brown / R Green",
+    "Heterochromia; L Gold / R Blue",
+    "Heterochromia; L Gold / R Brown",
+    "Heterochromia; L Gold / R Green",
+    "Heterochromia; L Gray / R Blue",
+    "Heterochromia; L Gray / R Brown",
+    "Heterochromia; L Gray / R Green",
+    "Heterochromia; L Green / R Blue",
+    "Heterochromia; L Green / R Brown",
+    "Heterochromia; L Hazel / R Blue",
+    "Heterochromia; L Hazel / R Green",
+    "Heterochromia; Sectoral",
     "Jade",
     "Medium",
     "Neutral",
@@ -659,10 +676,16 @@ export const csvOptions: Record<string, string[]> = {
     "Soft",
     "Tawny",
     "White",
+    "White; Beige",
     "White; Cool",
     "White; Cream",
+    "White; Frost",
+    "White; Ghost",
+    "White; Ice",
     "White; Ivory",
+    "White; Pearl",
     "White; Pure",
+    "White; Snow",
     "White; Soft",
     "White; Warm",
     "Yellow; Canary",
@@ -999,30 +1022,7 @@ export const csvOptions: Record<string, string[]> = {
     "RESENTFUL",
     "RIDICULOUS",
     "RIGID",
-    "RITUALISTIC",
-    "ROWDY",
-    "RUINED",
-    "SADISTIC",
-    "SANCTIMONIOUS",
-    "SCHEMING",
-    "SCORNFUL",
-    "SECRETIVE",
-    "SEDENTARY",
-    "SELF-INDULGENT",
-    "SELFISH",
-    "SHALLOW",
-    "SHORTSIGHTED",
-    "SHY",
-    "SILLY",
-    "SINGLE-MINDED",
-    "SLOPPY",
-    "SLOW",
-    "SLY",
-    "SMALL-THINKING",
-    "SOFT HEADED",
-    "SORDID",
-    "STEELY",
-    "STIFF"
+    "RITUALISTIC"
   ]
 };
 
@@ -1389,6 +1389,22 @@ export const colorHexCodes: Record<string, Record<string, string>> = {
     "Green; Sea": "#2e8b57",
     "Green; Soft": "#90ee90",
     "Green; Warm": "#228b22",
+    "Heterochromia; Central": "#808080",
+    "Heterochromia; L Blue / R Brown": "#4169e1",
+    "Heterochromia; L Blue / R Green": "#4169e1",
+    "Heterochromia; L Brown / R Blue": "#8b4513",
+    "Heterochromia; L Brown / R Green": "#8b4513",
+    "Heterochromia; L Gold / R Blue": "#ffd700",
+    "Heterochromia; L Gold / R Brown": "#ffd700",
+    "Heterochromia; L Gold / R Green": "#ffd700",
+    "Heterochromia; L Gray / R Blue": "#808080",
+    "Heterochromia; L Gray / R Brown": "#808080",
+    "Heterochromia; L Gray / R Green": "#808080",
+    "Heterochromia; L Green / R Blue": "#228b22",
+    "Heterochromia; L Green / R Brown": "#228b22",
+    "Heterochromia; L Hazel / R Blue": "#8b7355",
+    "Heterochromia; L Hazel / R Green": "#8b7355",
+    "Heterochromia; Sectoral": "#808080",
     "Medium": "#d2b48c",
     "Olive": "#bab86c",
     "Orange; Apricot": "#fbceb1",
@@ -1468,10 +1484,16 @@ export const colorHexCodes: Record<string, Record<string, string>> = {
     "Silver; Soft": "#c9c0bb",
     "Silver; Steel": "#a8a8a8",
     "Silver; White": "#c0c0c0",
+    "White; Beige": "#f5f5dc",
     "White; Cool": "#f0f8ff",
     "White; Cream": "#fffdd0",
+    "White; Frost": "#e8f5e9",
+    "White; Ghost": "#f8f8ff",
+    "White; Ice": "#b0e0e6",
     "White; Ivory": "#fffff0",
+    "White; Pearl": "#f8f6f0",
     "White; Pure": "#ffffff",
+    "White; Snow": "#fffafa",
     "White; Soft": "#fafafa",
     "White; Warm": "#fdf5e6",
     "Yellow; Canary": "#ffef00",
@@ -1484,12 +1506,12 @@ export const colorHexCodes: Record<string, Record<string, string>> = {
 };
 
 // Individual exports for convenience
-export const accentOptions: string[] = ["Boston","Brazilian Portuguese","Californian","Canadian","Caribbean","Chicago","Chicano English (Mexican-American)","Chinese","Dutch","German","Greek","Hawaiian Pidgin","Indian","Jamaican","Japanese","Korean","Midwestern","Minnesotan","New Orleans (cajun)","New York","New Zealand","Pacific Northwest","Philadelphia","Polish","Russian","South African","Southern Appalachian","Southern Californian (SoCal)","Texan","Turkish","Valley (California)","Welsh"];
+export const accentOptions: string[] = ["Boston","Brazilian Portuguese","Californian","Canadian","Caribbean","Chicago","Chicano English (Mexican-American)","Chinese","DEVELOPMENT","Dutch","German","Greek","Hawaiian Pidgin","Indian","Jamaican","Japanese","Korean","Midwestern","Minnesotan","New Orleans (cajun)","New York","New Zealand","Pacific Northwest","Philadelphia","Polish","Russian","South African","Southern Appalachian","Southern Californian (SoCal)","Texan","Turkish","Valley (California)","Welsh"];
 export const ethnicity_raceOptions: string[] = ["African","African Descent","Afro-Caribbean","Afro-Latinx","Arab","Armenian","Ashkenazi Jewish","Asian","Asian Descent","Australian Aboriginal","Basque","Bengali","Berber","Bhutanese","Brazilian","Burmese","Cambodian","Caribbean","Caucasian","Caucasian / Pacific Islander","Chicano","Chinese","Creole","Cuban","Dominican","Druze","Eastern European","Egyptian","Ethiopian","Finnish","First Nations","French","German","German Descent","Gerudo / Sheikah","Ghanaian","Greek Descent","Guatemalan","Haitian","Hmong","Hylian","Icelandic","Igbo","Indigenous Australian","Indigenous Canadian","Inuit","Iranian","Iraqi","Israeli","Italian","Italian/Chinese","Japanese","Japanese/British","Jewish","Kazakh","Korean","Kurdish","Latinx","Lebanese","Lithuanian","Lithuanian / Romanian","Lithuanian/Mediterranean/French/Arabian","Lithuanian/Romanian/French/Arabian","Maori","Mayan","Mediterranean","Mediterranean Caucasian Mix","Mediterranean Descent","Meowth","Mestizo","Mexican","Mexican-American","Middle Eastern","Mongolian","Moravian","Nigerian","Pacific Islander","Palestinian","Pashtun","Persian","Polynesian Descent","Portuguese","Punjabi","Quechua","Roma","Romanian","Russian","Samoan","Sardinian","Scandinavian","Scanner","Sephardic Jewish","Sicilian","Somali","South Asian","Southeast Asian","Swahili","Syrian","Tibetan","Tlingit","Tongan","Turkish","Uyghur","Venezuelan","Vietnamese","West African","White","Yoruba"];
 export const eye_colorOptions: string[] = ["Ash","Azure","Black","Black/Silver","Black; Ash","Black; Black/Silver","Black; Charcoal","Black; Jet","Black; Midnight","Black; Obsidian","Black; Onyx","Black; Raven","Black; Soft","Blonde; Ash","Blonde; Beige","Blonde; Butter","Blonde; Champagne","Blonde; Cream","Blonde; Dark","Blonde; Frosted","Blonde; Golden","Blonde; Honey","Blonde; Lemon","Blonde; Light","Blonde; Medium","Blonde; Neutral","Blonde; Platinum","Blonde; Sandy","Blonde; Silver","Blonde; Sunflower","Blonde; Vanilla","Blonde; White","Blood","Blue","Blue; Aqua","Blue; Azure","Blue; Baby","Blue; Cerulean","Blue; Cobalt","Blue; Cyan","Blue; Dark","Blue; Deep","Blue; Denim","Blue; Ice","Blue; Indigo","Blue; Light","Blue; Midnight","Blue; Navy","Blue; Pale","Blue; Royal","Blue; Sapphire","Blue; Sky","Blue; Slate","Blue; Soft","Blue; Steel","Blue; Storm","Blue; Teal","Blue; Turquoise","Blue; Ultramarine","Brown","Brown; Auburn","Brown; Caramel","Brown; Chestnut","Brown; Chocolate","Brown; Coffee","Brown; Cool","Brown; Copper","Brown; Dark","Brown; Dark Mahogany","Brown; Espresso","Brown; Hazel","Brown; Light","Brown; Mahogany","Brown; Medium","Brown; Mocha","Brown; Neutral","Brown; Rose","Brown; Sandy","Brown; Sepia","Brown; Soft Copper","Brown; Tawny","Brown; Walnut","Brown; Warm","Bubblegum","Burnt","Cardinal","Carmine","Coral","Crimson","Deep","Espresso","Gold","Gold; Amber","Gold; Bright","Gold; Dark","Gold; Honey","Gold; Light","Gold; Metallic","Gold; Soft","Gold; Warm","Gray","Gray; Ash","Gray; Charcoal","Gray; Cool","Gray; Dark","Gray; Gunmetal","Gray; Light","Gray; Metallic","Gray; Pale","Gray; Pearl","Gray; Platinum","Gray; Slate","Gray; Smoke","Gray; Smoky","Gray; Soft","Gray; Steel","Gray; Warm","Green","Green/Pink","Green; Aquatic","Green; Chartreuse","Green; Cool","Green; Dark","Green; Emerald","Green; Fern","Green; Forest","Green; Jade","Green; Kelly","Green; Light","Green; Lime","Green; Mint","Green; Neon","Green; Olive","Green; Pale","Green; Peacock","Green; Pistachio","Green; Sage","Green; Sea","Green; Soft","Green; Warm","Heterochromia; Central","Heterochromia; L Blue / R Brown","Heterochromia; L Blue / R Green","Heterochromia; L Brown / R Blue","Heterochromia; L Brown / R Green","Heterochromia; L Gold / R Blue","Heterochromia; L Gold / R Brown","Heterochromia; L Gold / R Green","Heterochromia; L Gray / R Blue","Heterochromia; L Gray / R Brown","Heterochromia; L Gray / R Green","Heterochromia; L Green / R Blue","Heterochromia; L Green / R Brown","Heterochromia; L Hazel / R Blue","Heterochromia; L Hazel / R Green","Heterochromia; Sectoral","Ice","Indigo","Lemon","Light","Lilac","Lime","Multi","Orange","Orange; Apricot","Orange; Burnt","Orange; Dark","Orange; Light","Orange; Peach","Orange; Pumpkin","Orange; Rust","Orange; Sunset","Orange; Tangerine","Orange; Vermilion","Orange; Warm","Pink","Pink; Baby","Pink; Blush","Pink; Bubblegum","Pink; Candy","Pink; Coral","Pink; Dark","Pink; Dusty","Pink; Dusty Rose","Pink; Fuchsia","Pink; Hot","Pink; Light","Pink; Magenta","Pink; Neon","Pink; Pastel","Pink; Peach","Pink; Rose","Pink; Salmon","Pink; Soft","Purple","Purple; Amethyst","Purple; Dark","Purple; Deep","Purple; Eggplant","Purple; Grape","Purple; Indigo","Purple; Lavender","Purple; Light","Purple; Lilac","Purple; Magenta","Purple; Mauve","Purple; Mulberry","Purple; Orchid","Purple; Periwinkle","Purple; Plum","Purple; Raspberry","Purple; Soft","Purple; Soft Lavender","Purple; Violet","Red","Red; Auburn","Red; Blood","Red; Burgundy","Red; Burnt Copper","Red; Carmine","Red; Cherry","Red; Cool","Red; Copper","Red; Crimson","Red; Dark","Red; Deep Copper","Red; Fire","Red; Ginger","Red; Light","Red; Raspberry","Red; Ruby","Red; Scarlet","Red; Strawberry Blonde","Red; Warm","Red; Wine","Silver; Ash","Silver; Dark","Silver; Ice","Silver; Light","Silver; Metallic","Silver; Platinum","Silver; Soft","Silver; Steel","Silver; White","White; Beige","White; Cool","White; Cream","White; Frost","White; Ghost","White; Ice","White; Ivory","White; Pearl","White; Pure","White; Snow","White; Soft","White; Warm","Yellow","Yellow; Canary","Yellow; Dark","Yellow; Lemon","Yellow; Light","Yellow; Mustard","Yellow; Saffron"];
 export const gender_identityOptions: string[] = ["Agender","Androgynous","Bigender","Cisgender","Demiboy","Demigirl","Genderfluid","Genderqueer","Intersex","Neutrois","Non-binary","Pangender","Third Gender","Transgender","Two-spirit"];
-export const hair_colorOptions: string[] = ["Ash","Baby","Beige","Black","Black/Silver","Black; Ash","Black; Black/Silver","Black; Charcoal","Black; Jet","Black; Midnight","Black; Obsidian","Black; Onyx","Black; Raven","Black; Soft","Blonde","Blonde; Ash","Blonde; Beige","Blonde; Butter","Blonde; Champagne","Blonde; Cream","Blonde; Dark","Blonde; Frosted","Blonde; Golden","Blonde; Honey","Blonde; Lemon","Blonde; Light","Blonde; Medium","Blonde; Neutral","Blonde; Platinum","Blonde; Sandy","Blonde; Silver","Blonde; Sunflower","Blonde; Vanilla","Blonde; White","Blue","Blue; Aqua","Blue; Azure","Blue; Baby","Blue; Cerulean","Blue; Cobalt","Blue; Cyan","Blue; Dark","Blue; Deep","Blue; Denim","Blue; Ice","Blue; Indigo","Blue; Light","Blue; Midnight","Blue; Navy","Blue; Pale","Blue; Royal","Blue; Sapphire","Blue; Sky","Blue; Slate","Blue; Soft","Blue; Steel","Blue; Storm","Blue; Teal","Blue; Turquoise","Blue; Ultramarine","Brown","Brown; Auburn","Brown; Caramel","Brown; Chestnut","Brown; Chocolate","Brown; Coffee","Brown; Cool","Brown; Copper","Brown; Dark","Brown; Dark Mahogany","Brown; Espresso","Brown; Hazel","Brown; Light","Brown; Mahogany","Brown; Medium","Brown; Mocha","Brown; Neutral","Brown; Rose","Brown; Sandy","Brown; Sepia","Brown; Soft Copper","Brown; Tawny","Brown; Walnut","Brown; Warm","Cobalt","Cool","Dark","Dusty","Dusty Rose","Fern","Gold; Amber","Gold; Bright","Gold; Dark","Gold; Honey","Gold; Light","Gold; Metallic","Gold; Soft","Gold; Warm","Gray","Gray; Ash","Gray; Charcoal","Gray; Cool","Gray; Dark","Gray; Gunmetal","Gray; Light","Gray; Metallic","Gray; Pale","Gray; Pearl","Gray; Platinum","Gray; Slate","Gray; Smoke","Gray; Smoky","Gray; Soft","Gray; Steel","Gray; Warm","Green","Green; Aquatic","Green; Chartreuse","Green; Cool","Green; Dark","Green; Emerald","Green; Fern","Green; Forest","Green; Jade","Green; Kelly","Green; Light","Green; Lime","Green; Mint","Green; Neon","Green; Olive","Green; Pale","Green; Peacock","Green; Pistachio","Green; Sage","Green; Sea","Green; Soft","Green; Warm","Jade","Medium","Neutral","Olive","Orange","Orange; Apricot","Orange; Burnt","Orange; Dark","Orange; Light","Orange; Peach","Orange; Pumpkin","Orange; Rust","Orange; Sunset","Orange; Tangerine","Orange; Vermilion","Orange; Warm","Pink","Pink; Baby","Pink; Blush","Pink; Bubblegum","Pink; Candy","Pink; Coral","Pink; Dark","Pink; Dusty","Pink; Dusty Rose","Pink; Fuchsia","Pink; Hot","Pink; Light","Pink; Magenta","Pink; Neon","Pink; Pastel","Pink; Peach","Pink; Rose","Pink; Salmon","Pink; Soft","Pumpkin","Purple","Purple; Amethyst","Purple; Dark","Purple; Deep","Purple; Eggplant","Purple; Grape","Purple; Indigo","Purple; Lavender","Purple; Light","Purple; Lilac","Purple; Magenta","Purple; Mauve","Purple; Mulberry","Purple; Orchid","Purple; Periwinkle","Purple; Plum","Purple; Raspberry","Purple; Soft","Purple; Soft Lavender","Purple; Violet","Red; Auburn","Red; Blood","Red; Burgundy","Red; Burnt Copper","Red; Carmine","Red; Cherry","Red; Cool","Red; Copper","Red; Crimson","Red; Dark","Red; Deep Copper","Red; Fire","Red; Ginger","Red; Light","Red; Raspberry","Red; Ruby","Red; Scarlet","Red; Strawberry Blonde","Red; Warm","Red; Wine","Silver","Silver; Ash","Silver; Dark","Silver; Ice","Silver; Light","Silver; Metallic","Silver; Platinum","Silver; Soft","Silver; Steel","Silver; White","Soft","Tawny","White","White; Cool","White; Cream","White; Ivory","White; Pure","White; Soft","White; Warm","Yellow; Canary","Yellow; Dark","Yellow; Lemon","Yellow; Light","Yellow; Mustard","Yellow; Saffron"];
+export const hair_colorOptions: string[] = ["Ash","Baby","Beige","Black","Black/Silver","Black; Ash","Black; Black/Silver","Black; Charcoal","Black; Jet","Black; Midnight","Black; Obsidian","Black; Onyx","Black; Raven","Black; Soft","Blonde","Blonde; Ash","Blonde; Beige","Blonde; Butter","Blonde; Champagne","Blonde; Cream","Blonde; Dark","Blonde; Frosted","Blonde; Golden","Blonde; Honey","Blonde; Lemon","Blonde; Light","Blonde; Medium","Blonde; Neutral","Blonde; Platinum","Blonde; Sandy","Blonde; Silver","Blonde; Sunflower","Blonde; Vanilla","Blonde; White","Blue","Blue; Aqua","Blue; Azure","Blue; Baby","Blue; Cerulean","Blue; Cobalt","Blue; Cyan","Blue; Dark","Blue; Deep","Blue; Denim","Blue; Ice","Blue; Indigo","Blue; Light","Blue; Midnight","Blue; Navy","Blue; Pale","Blue; Royal","Blue; Sapphire","Blue; Sky","Blue; Slate","Blue; Soft","Blue; Steel","Blue; Storm","Blue; Teal","Blue; Turquoise","Blue; Ultramarine","Brown","Brown; Auburn","Brown; Caramel","Brown; Chestnut","Brown; Chocolate","Brown; Coffee","Brown; Cool","Brown; Copper","Brown; Dark","Brown; Dark Mahogany","Brown; Espresso","Brown; Hazel","Brown; Light","Brown; Mahogany","Brown; Medium","Brown; Mocha","Brown; Neutral","Brown; Rose","Brown; Sandy","Brown; Sepia","Brown; Soft Copper","Brown; Tawny","Brown; Walnut","Brown; Warm","Cobalt","Cool","Dark","Dusty","Dusty Rose","Fern","Gold; Amber","Gold; Bright","Gold; Dark","Gold; Honey","Gold; Light","Gold; Metallic","Gold; Soft","Gold; Warm","Gray","Gray; Ash","Gray; Charcoal","Gray; Cool","Gray; Dark","Gray; Gunmetal","Gray; Light","Gray; Metallic","Gray; Pale","Gray; Pearl","Gray; Platinum","Gray; Slate","Gray; Smoke","Gray; Smoky","Gray; Soft","Gray; Steel","Gray; Warm","Green","Green; Aquatic","Green; Chartreuse","Green; Cool","Green; Dark","Green; Emerald","Green; Fern","Green; Forest","Green; Jade","Green; Kelly","Green; Light","Green; Lime","Green; Mint","Green; Neon","Green; Olive","Green; Pale","Green; Peacock","Green; Pistachio","Green; Sage","Green; Sea","Green; Soft","Green; Warm","Heterochromia; Central","Heterochromia; L Blue / R Brown","Heterochromia; L Blue / R Green","Heterochromia; L Brown / R Blue","Heterochromia; L Brown / R Green","Heterochromia; L Gold / R Blue","Heterochromia; L Gold / R Brown","Heterochromia; L Gold / R Green","Heterochromia; L Gray / R Blue","Heterochromia; L Gray / R Brown","Heterochromia; L Gray / R Green","Heterochromia; L Green / R Blue","Heterochromia; L Green / R Brown","Heterochromia; L Hazel / R Blue","Heterochromia; L Hazel / R Green","Heterochromia; Sectoral","Jade","Medium","Neutral","Olive","Orange","Orange; Apricot","Orange; Burnt","Orange; Dark","Orange; Light","Orange; Peach","Orange; Pumpkin","Orange; Rust","Orange; Sunset","Orange; Tangerine","Orange; Vermilion","Orange; Warm","Pink","Pink; Baby","Pink; Blush","Pink; Bubblegum","Pink; Candy","Pink; Coral","Pink; Dark","Pink; Dusty","Pink; Dusty Rose","Pink; Fuchsia","Pink; Hot","Pink; Light","Pink; Magenta","Pink; Neon","Pink; Pastel","Pink; Peach","Pink; Rose","Pink; Salmon","Pink; Soft","Pumpkin","Purple","Purple; Amethyst","Purple; Dark","Purple; Deep","Purple; Eggplant","Purple; Grape","Purple; Indigo","Purple; Lavender","Purple; Light","Purple; Lilac","Purple; Magenta","Purple; Mauve","Purple; Mulberry","Purple; Orchid","Purple; Periwinkle","Purple; Plum","Purple; Raspberry","Purple; Soft","Purple; Soft Lavender","Purple; Violet","Red; Auburn","Red; Blood","Red; Burgundy","Red; Burnt Copper","Red; Carmine","Red; Cherry","Red; Cool","Red; Copper","Red; Crimson","Red; Dark","Red; Deep Copper","Red; Fire","Red; Ginger","Red; Light","Red; Raspberry","Red; Ruby","Red; Scarlet","Red; Strawberry Blonde","Red; Warm","Red; Wine","Silver","Silver; Ash","Silver; Dark","Silver; Ice","Silver; Light","Silver; Metallic","Silver; Platinum","Silver; Soft","Silver; Steel","Silver; White","Soft","Tawny","White","White; Beige","White; Cool","White; Cream","White; Frost","White; Ghost","White; Ice","White; Ivory","White; Pearl","White; Pure","White; Snow","White; Soft","White; Warm","Yellow; Canary","Yellow; Dark","Yellow; Lemon","Yellow; Light","Yellow; Mustard","Yellow; Saffron"];
 export const mbtiOptions: string[] = ["ENFJ","ENFP","ENTJ","ENTP","ESFJ","ESFP","ESTJ","ESTP","INFJ","INFP","INTJ","INTP","ISFJ","ISFP","ISTJ","ISTP"];
 export const moralOptions: string[] = ["Chaotic Evil","Chaotic Good","Chaotic Neutral","Lawful Evil","Lawful Good","Lawful Neutral","Neutral Evil","Neutral Good","True Neutral"];
 export const nationalityOptions: string[] = ["Afghan","American","Argentine","Australian","Austrian","Bangladeshi","Belgian","Bosnian","Brazilian","British","Bulgarian","Canadian","Chilean","Chinese","Colombian","Costa Rican","Croatian","Cuban","Czech","Danish","Dominican","Dutch","Egyptian","Emirati","Ethiopian","Filipino","Finnish","French","German","Greek","Haitian","Hungarian","Icelandic","Inariko","Indian","Indonesian","Iranian","Iraqi","Irish","Israeli","Italian","Jamaican","Japanese","Jordanian","Kenyan","Konohagakure","Korean","Lebanese","Malaysian","Mexican","Mongolian","Moroccan","New Zealander (Kiwi)","Nigerian","Norwegian","Pakistani","Palestinian","Panamanian","Peruvian","Polish","Portuguese","Romanian","Rudania","Russian","Saudi Arabian","Scottish","Serbian","Singaporean","South African","Spanish","Sri Lankan","Sun Empire","Sunagakure","Swedish","Swiss","Syrian","Thai","Trinidadian","Turkish","Ukrainian","Venezuelan","Vhintl","Vietnamese","Welsh"];
-export const negative_traitsOptions: string[] = ["ABRASIVE","ABRUPT","AGONIZING","AIMLESS","AIRY","ALOOF","AMORAL","ANGRY","ASOCIAL","ASSERTIVE","ASTIGMATIC","BARBARIC","BEWILDERED","BIZARRE","BLAND","BLUNT","BOISTEROUS","BRITTLE","BRUTAL","CALCULATING","CALLOUS","CANTANKEROUS","CARELESS","CAUTIOUS","CHARMLESS","CHILDISH","CLUMSY","COARSE","COLD","COLORLESS","COMPLACENT","COMPLAINTIVE","COMPULSIVE","CONCEITED","CONDEMNATORY","CONFORMIST","CONFUSED","CONTEMPTIBLE","CONVENTIONAL","COWARDLY","CRAFTY","CRASS","CRAZY","CRIMINAL","CRITICAL","CRUDE","CRUEL","CYNICAL","DECADENT","DECEITFUL","DELICATE","DEMANDING","DEPENDENT","DESPERATE","DESTRUCTIVE","DEVIOUS","DIFFICULT","DIRTY","DISCONCERTING","DISCONTENTED","DISCOURAGING","DISCOURTEOUS","DISHONEST","DISLOYAL","DISOBEDIENT","DISORDERLY","DISORGANIZED","DISPUTATIOUS","DISRESPECTFUL","DISRUPTIVE","DISSOLUTE","DISSONANT","DISTRACTIBLE","DISTURBING","DOGMATIC","DOMINEERING","DULL","EASILY DISCOURAGED","EGOCENTRIC","ENERVATED","ENVIOUS","ERRATIC","ESCAPIST","EXCITABLE","EXPEDIENT","EXTRAVAGANT","EXTREME","FAITHLESS","FANATICAL","FANCIFUL","FATALISTIC","FAWNING","FEARFUL","FICKLE","FIERY","FIXED","FLAMBOYANT","FOOLISH","FORGETFUL","FRAUDULENT","FRIGHTENING","FRIVOLOUS","GLOOMY","GRACELESS","GRAND","GREEDY","GRIM","GULLIBLE","HATEFUL","HAUGHTY","HEDONISTIC","HESITANT","HIDEBOUND","HIGH-HANDED","HOSTILE","IGNORANT","IMITATIVE","IMPATIENT","IMPRACTICAL","IMPRUDENT","IMPULSIVE","INCONSIDERATE","INCURIOUS","INDECISIVE","INDULGENT","INERT","INHIBITED","INSECURE","INSENSITIVE","INSINCERE","INSULTING","INTOLERANT","IRASCIBLE","IRRATIONAL","IRRESPONSIBLE","IRRITABLE","LAZY","LIBIDINOUS","LOQUACIOUS","MALICIOUS","MANIPULATIVE","MANNERED","MANNERLESS","MAWKISH","MEALY MOUTHED","MECHANICAL","MEDDLESOME","MELANCHOLIC","MERETRICIOUS","MESSY","MISERABLE","MISERLY","MISGUIDED","MISTAKEN","MONEY-MINDED","MONSTROUS","MOODY","MORBID","MUDDLE-HEADED","NAIVE","NARCISSISTIC","NARROW","NARROW-MINDED","NATTY","NEGATIVISTIC","NEGLECTFUL","NEUROTIC","NIHILISTIC","OBNOXIOUS","OBSESSIVE","OBVIOUS","ODD","OFFHAND","ONE-DIMENSIONAL","ONE-SIDED","OPINIONATED","OPPORTUNISTIC","OPPRESSED","OUTRAGEOUS","OVER IMAGINATIVE","PARANOID","PASSIVE","PEDANTIC","PERVERSE","PETTY","PHARISAICAL","PHLEGMATIC","PLODDING","POMPOUS","POSSESSIVE","POWER-HUNGRY","PREDATORY","PREJUDICED","PRESUMPTUOUS","PRETENTIOUS","PRIM","PROCRASTINATING","PROFLIGATE","PROVOCATIVE","PUGNACIOUS","PURITANICAL","QUIRKY","REACTIONARY","REACTIVE","REGIMENTAL","REGRETFUL","REPENTANT","REPRESSED","RESENTFUL","RIDICULOUS","RIGID","RITUALISTIC","ROWDY","RUINED","SADISTIC","SANCTIMONIOUS","SCHEMING","SCORNFUL","SECRETIVE","SEDENTARY","SELF-INDULGENT","SELFISH","SHALLOW","SHORTSIGHTED","SHY","SILLY","SINGLE-MINDED","SLOPPY","SLOW","SLY","SMALL-THINKING","SOFT HEADED","SORDID","STEELY","STIFF"];
+export const negative_traitsOptions: string[] = ["ABRASIVE","ABRUPT","AGONIZING","AIMLESS","AIRY","ALOOF","AMORAL","ANGRY","ASOCIAL","ASSERTIVE","ASTIGMATIC","BARBARIC","BEWILDERED","BIZARRE","BLAND","BLUNT","BOISTEROUS","BRITTLE","BRUTAL","CALCULATING","CALLOUS","CANTANKEROUS","CARELESS","CAUTIOUS","CHARMLESS","CHILDISH","CLUMSY","COARSE","COLD","COLORLESS","COMPLACENT","COMPLAINTIVE","COMPULSIVE","CONCEITED","CONDEMNATORY","CONFORMIST","CONFUSED","CONTEMPTIBLE","CONVENTIONAL","COWARDLY","CRAFTY","CRASS","CRAZY","CRIMINAL","CRITICAL","CRUDE","CRUEL","CYNICAL","DECADENT","DECEITFUL","DELICATE","DEMANDING","DEPENDENT","DESPERATE","DESTRUCTIVE","DEVIOUS","DIFFICULT","DIRTY","DISCONCERTING","DISCONTENTED","DISCOURAGING","DISCOURTEOUS","DISHONEST","DISLOYAL","DISOBEDIENT","DISORDERLY","DISORGANIZED","DISPUTATIOUS","DISRESPECTFUL","DISRUPTIVE","DISSOLUTE","DISSONANT","DISTRACTIBLE","DISTURBING","DOGMATIC","DOMINEERING","DULL","EASILY DISCOURAGED","EGOCENTRIC","ENERVATED","ENVIOUS","ERRATIC","ESCAPIST","EXCITABLE","EXPEDIENT","EXTRAVAGANT","EXTREME","FAITHLESS","FANATICAL","FANCIFUL","FATALISTIC","FAWNING","FEARFUL","FICKLE","FIERY","FIXED","FLAMBOYANT","FOOLISH","FORGETFUL","FRAUDULENT","FRIGHTENING","FRIVOLOUS","GLOOMY","GRACELESS","GRAND","GREEDY","GRIM","GULLIBLE","HATEFUL","HAUGHTY","HEDONISTIC","HESITANT","HIDEBOUND","HIGH-HANDED","HOSTILE","IGNORANT","IMITATIVE","IMPATIENT","IMPRACTICAL","IMPRUDENT","IMPULSIVE","INCONSIDERATE","INCURIOUS","INDECISIVE","INDULGENT","INERT","INHIBITED","INSECURE","INSENSITIVE","INSINCERE","INSULTING","INTOLERANT","IRASCIBLE","IRRATIONAL","IRRESPONSIBLE","IRRITABLE","LAZY","LIBIDINOUS","LOQUACIOUS","MALICIOUS","MANIPULATIVE","MANNERED","MANNERLESS","MAWKISH","MEALY MOUTHED","MECHANICAL","MEDDLESOME","MELANCHOLIC","MERETRICIOUS","MESSY","MISERABLE","MISERLY","MISGUIDED","MISTAKEN","MONEY-MINDED","MONSTROUS","MOODY","MORBID","MUDDLE-HEADED","NAIVE","NARCISSISTIC","NARROW","NARROW-MINDED","NATTY","NEGATIVISTIC","NEGLECTFUL","NEUROTIC","NIHILISTIC","OBNOXIOUS","OBSESSIVE","OBVIOUS","ODD","OFFHAND","ONE-DIMENSIONAL","ONE-SIDED","OPINIONATED","OPPORTUNISTIC","OPPRESSED","OUTRAGEOUS","OVER IMAGINATIVE","PARANOID","PASSIVE","PEDANTIC","PERVERSE","PETTY","PHARISAICAL","PHLEGMATIC","PLODDING","POMPOUS","POSSESSIVE","POWER-HUNGRY","PREDATORY","PREJUDICED","PRESUMPTUOUS","PRETENTIOUS","PRIM","PROCRASTINATING","PROFLIGATE","PROVOCATIVE","PUGNACIOUS","PURITANICAL","QUIRKY","REACTIONARY","REACTIVE","REGIMENTAL","REGRETFUL","REPENTANT","REPRESSED","RESENTFUL","RIDICULOUS","RIGID","RITUALISTIC"];
