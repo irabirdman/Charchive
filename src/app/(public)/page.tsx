@@ -125,6 +125,31 @@ export default async function HomePage() {
     .order('updated_at', { ascending: false })
     .limit(6);
 
+  // Get current projects section data
+  const { data: currentProjectsData } = await supabase
+    .from('current_projects')
+    .select('*')
+    .single();
+
+  // Default current projects data if none exists
+  const currentProjects = currentProjectsData || {
+    description: 'Welcome to Ruutulian! Ruu\'s personal OC wiki for organizing and storing information on her original characters, worlds, lore, and timelines across various universes.',
+    project_items: [
+      {
+        title: 'World Building',
+        description: 'Creating and expanding unique worlds and universes',
+        icon: 'fas fa-globe',
+        color: 'purple',
+      },
+      {
+        title: 'Character Development',
+        description: 'Developing rich characters with detailed backstories',
+        icon: 'fas fa-users',
+        color: 'pink',
+      },
+    ],
+  };
+
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
   
   // Structured data for SEO
@@ -407,25 +432,36 @@ export default async function HomePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Current Projects</h2>
         </div>
         <div className="wiki-card p-4 md:p-6">
-          <p className="text-gray-300 mb-4">
-            Welcome to Ruutulian! Ruu's personal OC wiki for organizing and storing information on her original characters, worlds, lore, and timelines across various universes.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-purple-900/30 to-purple-800/30 rounded-lg">
-              <i className="fas fa-globe text-purple-400 text-xl mt-1"></i>
-              <div>
-                <h3 className="font-semibold text-gray-100 mb-1">World Building</h3>
-                <p className="text-sm text-gray-300">Creating and expanding unique worlds and universes</p>
-              </div>
+          {currentProjects.description && (
+            <p className="text-gray-300 mb-4">{currentProjects.description}</p>
+          )}
+          {currentProjects.project_items && currentProjects.project_items.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentProjects.project_items.map((item: any, index: number) => {
+                const colorConfig: Record<string, { bg: string; icon: string }> = {
+                  purple: { bg: 'from-purple-900/30 to-purple-800/30', icon: 'text-purple-400' },
+                  pink: { bg: 'from-pink-900/30 to-pink-800/30', icon: 'text-pink-400' },
+                  teal: { bg: 'from-teal-900/30 to-teal-800/30', icon: 'text-teal-400' },
+                  blue: { bg: 'from-blue-900/30 to-blue-800/30', icon: 'text-blue-400' },
+                  orange: { bg: 'from-orange-900/30 to-orange-800/30', icon: 'text-orange-400' },
+                  indigo: { bg: 'from-indigo-900/30 to-indigo-800/30', icon: 'text-indigo-400' },
+                };
+                const color = colorConfig[item.color] || colorConfig.purple;
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 p-4 bg-gradient-to-br ${color.bg} rounded-lg`}
+                  >
+                    <i className={`${item.icon} ${color.icon} text-xl mt-1`}></i>
+                    <div>
+                      <h3 className="font-semibold text-gray-100 mb-1">{item.title}</h3>
+                      <p className="text-sm text-gray-300">{item.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex items-start gap-3 p-4 bg-gradient-to-br from-pink-900/30 to-pink-800/30 rounded-lg">
-              <i className="fas fa-users text-pink-400 text-xl mt-1"></i>
-              <div>
-                <h3 className="font-semibold text-gray-100 mb-1">Character Development</h3>
-                <p className="text-sm text-gray-300">Developing rich characters with detailed backstories</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
