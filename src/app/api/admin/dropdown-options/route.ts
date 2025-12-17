@@ -146,21 +146,72 @@ export async function PUT(request: NextRequest) {
       }
 
       const currentValues = currentOptions[field] || new Set();
-        const newSet = new Set(newValues);
+      const newSet = new Set(newValues);
       
       console.log(`[${requestId}] Field ${field}: current=${currentValues.size} options, new=${newSet.size} options`);
       
-      // Check if arrays are different
-        const isDifferent = 
+      // Find items that are in new but not in current (case-insensitive)
+      const newItems: string[] = [];
+      const currentValuesLower = new Set(Array.from(currentValues).map(v => v.trim().toLowerCase()));
+      
+      for (const val of newValues) {
+        const trimmed = val.trim();
+        const normalized = trimmed.toLowerCase();
+        if (!currentValuesLower.has(normalized)) {
+          newItems.push(trimmed);
+        }
+      }
+      
+      // Find items that are in current but not in new (case-insensitive)
+      const removedItems: string[] = [];
+      const newValuesLower = new Set(newValues.map(v => v.trim().toLowerCase()));
+      
+      for (const val of currentValues) {
+        const trimmed = val.trim();
+        const normalized = trimmed.toLowerCase();
+        if (!newValuesLower.has(normalized)) {
+          removedItems.push(trimmed);
+        }
+      }
+      
+      // Check if arrays are different (exact match, case-sensitive)
+      const exactNewItems = newValues.filter(val => !currentValues.has(val.trim()));
+      const exactRemovedItems = Array.from(currentValues).filter(val => !newSet.has(val.trim()));
+      
+      const isDifferent = 
         currentValues.size !== newSet.size ||
-        newValues.some(val => !currentValues.has(val)) ||
-        Array.from(currentValues).some(val => !newSet.has(val));
-        
-        if (isDifferent) {
-        console.log(`[${requestId}] Field ${field} has changes - will be updated`);
-          fieldsToUpdate[field] = newValues;
+        exactNewItems.length > 0 ||
+        exactRemovedItems.length > 0;
+
+      console.log(`[${requestId}] Field ${field} comparison details:`);
+      console.log(`[${requestId}]   - Exact new items (case-sensitive):`, exactNewItems);
+      console.log(`[${requestId}]   - Exact removed items (case-sensitive):`, exactRemovedItems);
+      console.log(`[${requestId}]   - Case-insensitive new items:`, newItems);
+      console.log(`[${requestId}]   - Case-insensitive removed items:`, removedItems);
+      
+      if (isDifferent) {
+        console.log(`[${requestId}] Field ${field} HAS CHANGES - will be updated`);
+        if (exactNewItems.length > 0) {
+          console.log(`[${requestId}]   ✓ Adding ${exactNewItems.length} new item(s):`, exactNewItems);
+        }
+        if (exactRemovedItems.length > 0) {
+          console.log(`[${requestId}]   ✗ Removing ${exactRemovedItems.length} item(s):`, exactRemovedItems);
+        }
+        if (currentValues.size !== newSet.size) {
+          console.log(`[${requestId}]   Size change: ${currentValues.size} → ${newSet.size}`);
+        }
+        fieldsToUpdate[field] = newValues;
       } else {
-        console.log(`[${requestId}] Field ${field} has no changes - skipping`);
+        console.log(`[${requestId}] Field ${field} has NO CHANGES - skipping`);
+        // Log a sample for debugging
+        if (newValues.length > 0 && field === 'negative_traits') {
+          console.log(`[${requestId}]   DEBUG: First 10 new values:`, newValues.slice(0, 10));
+          console.log(`[${requestId}]   DEBUG: Last 10 new values:`, newValues.slice(-10));
+          console.log(`[${requestId}]   DEBUG: Contains "STUBBORN":`, newValues.includes('STUBBORN'));
+          console.log(`[${requestId}]   DEBUG: Contains "stubborn":`, newValues.includes('stubborn'));
+          console.log(`[${requestId}]   DEBUG: Current set has "STUBBORN":`, currentValues.has('STUBBORN'));
+          console.log(`[${requestId}]   DEBUG: Current set has "stubborn":`, currentValues.has('stubborn'));
+        }
       }
     });
 
