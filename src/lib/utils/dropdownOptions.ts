@@ -79,32 +79,36 @@ export function removeDropdownOption(
 }
 
 /**
+ * Field labels mapping - single source of truth for display names
+ */
+export const FIELD_LABELS: Record<string, string> = {
+  pronouns: 'Pronouns',
+  gender_identity: 'Gender Identity',
+  romantic: 'Romantic Orientation',
+  sexual: 'Sexual Orientation',
+  relationship_type: 'Relationship Type',
+  sex: 'Sex',
+  accent: 'Accent',
+  nationality: 'Nationality',
+  ethnicity_race: 'Ethnicity/Race',
+  species: 'Species',
+  skin_tone: 'Skin Tone',
+  occupation: 'Occupation',
+  mbti: 'MBTI',
+  moral: 'Moral Alignment',
+  positive_traits: 'Positive Traits',
+  neutral_traits: 'Neutral Traits',
+  negative_traits: 'Negative Traits',
+  eye_color: 'Eye Color',
+  hair_color: 'Hair Color',
+  gender: 'Gender',
+};
+
+/**
  * Get field label/display name
  */
 export function getFieldLabel(field: DropdownField): string {
-  const labels: Record<string, string> = {
-    pronouns: 'Pronouns',
-    gender_identity: 'Gender Identity',
-    romantic: 'Romantic Orientation',
-    sexual: 'Sexual Orientation',
-    relationship_type: 'Relationship Type',
-    sex: 'Sex',
-    accent: 'Accent',
-    nationality: 'Nationality',
-    ethnicity_race: 'Ethnicity/Race',
-    species: 'Species',
-    skin_tone: 'Skin Tone',
-    occupation: 'Occupation',
-    mbti: 'MBTI',
-    moral: 'Moral Alignment',
-    positive_traits: 'Positive Traits',
-    neutral_traits: 'Neutral Traits',
-    negative_traits: 'Negative Traits',
-    eye_color: 'Eye Color',
-    hair_color: 'Hair Color',
-  };
-  
-  return labels[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return FIELD_LABELS[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 /**
@@ -157,4 +161,5 @@ export function getDropdownOptionsStats(): {
     fieldsWithOptions: fieldsWithOptions.sort((a, b) => b.count - a.count),
   };
 }
+
 

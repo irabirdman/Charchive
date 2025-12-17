@@ -34,7 +34,8 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
   const fieldName = register?.name || name || '';
   const fieldValue = formContext?.watch(fieldName) || '';
 
-  // Get options from csvOptionsData if optionsSource is provided
+  // Get options from generated cache (csvOptionsData.ts) if optionsSource is provided
+  // This file is auto-generated from the dropdown_options database table
   const selectOptions = useMemo(() => {
     if (options) {
       return options;

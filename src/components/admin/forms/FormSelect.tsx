@@ -30,7 +30,8 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
   }, ref) => {
     const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
 
-    // Get options from csvOptionsData if optionsSource is provided
+    // Get options from generated cache (csvOptionsData.ts) if optionsSource is provided
+    // This file is auto-generated from the dropdown_options database table
     const selectOptions = useMemo(() => {
       if (options) {
         return options;

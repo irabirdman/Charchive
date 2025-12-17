@@ -6,9 +6,37 @@ import { csvOptions } from '@/lib/utils/csvOptionsData';
 export default async function DropdownOptionsPage() {
   const supabase = await createClient();
 
-  // For now, we'll use csvOptions as the initial data
-  // In the future, this could load from a database table
-  const initialOptions = csvOptions;
+  // Fetch options from database, fallback to generated TypeScript file
+  let initialOptions = csvOptions;
+  
+  try {
+    const { data, error } = await supabase
+      .from('dropdown_options')
+      .select('field, option')
+      .order('field', { ascending: true })
+      .order('option', { ascending: true });
+
+    if (!error && data) {
+      // Group options by field
+      const dbOptions: Record<string, string[]> = {};
+      for (const row of data) {
+        if (!dbOptions[row.field]) {
+          dbOptions[row.field] = [];
+        }
+        dbOptions[row.field].push(row.option);
+      }
+      
+      // Sort options within each field
+      Object.keys(dbOptions).forEach(field => {
+        dbOptions[field].sort();
+      });
+      
+      initialOptions = dbOptions;
+    }
+  } catch (error) {
+    // Fallback to generated file if database query fails
+    console.warn('Failed to load options from database, using generated file:', error);
+  }
 
   return (
     <div>
@@ -33,6 +61,7 @@ export default async function DropdownOptionsPage() {
     </div>
   );
 }
+
 
 
 

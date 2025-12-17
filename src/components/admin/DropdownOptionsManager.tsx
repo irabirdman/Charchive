@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
+import { FIELD_LABELS } from '@/lib/utils/dropdownOptions';
 
 interface DropdownOptionsManagerProps {
   initialOptions?: Record<string, string[]>;
@@ -18,27 +19,7 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
   const [selectedItems, setSelectedItems] = useState<Record<string, Set<string>>>({});
   const [globalSearch, setGlobalSearch] = useState('');
 
-  const fieldLabels: Record<string, string> = {
-    pronouns: 'Pronouns',
-    gender_identity: 'Gender Identity',
-    romantic: 'Romantic Orientation',
-    sexual: 'Sexual Orientation',
-    relationship_type: 'Relationship Type',
-    sex: 'Sex',
-    accent: 'Accent',
-    nationality: 'Nationality',
-    ethnicity_race: 'Ethnicity/Race',
-    species: 'Species',
-    skin_tone: 'Skin Tone',
-    occupation: 'Occupation',
-    mbti: 'MBTI',
-    moral: 'Moral Alignment',
-    positive_traits: 'Positive Traits',
-    neutral_traits: 'Neutral Traits',
-    negative_traits: 'Negative Traits',
-    eye_color: 'Eye Color',
-    hair_color: 'Hair Color',
-  };
+  const fieldLabels = FIELD_LABELS;
 
   const toggleField = (field: string) => {
     setExpandedFields((prev) => {

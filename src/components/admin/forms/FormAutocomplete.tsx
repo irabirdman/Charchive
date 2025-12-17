@@ -64,7 +64,8 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLUListElement>(null);
 
-    // Get options from csvOptionsData if optionsSource is provided
+    // Get options from generated cache (csvOptionsData.ts) if optionsSource is provided
+    // This file is auto-generated from the dropdown_options database table
     const availableOptions = useMemo(() => {
       if (options) {
         return options;
