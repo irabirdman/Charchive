@@ -393,7 +393,7 @@ export default async function AdminDashboard() {
                     <span className="text-pink-400">Step 1:</span> Create the First Version
                   </h4>
                   <p className="text-sm text-gray-300">
-                    Create your OC normally by going to <strong className="text-gray-100">Admin → Characters → New OC</strong>. 
+                    Create your OC normally by going to <strong className="text-gray-100">Admin → OCs → New OC</strong>. 
                     Select the first world and fill in all the character details. The system will automatically create an OC Identity for this character.
                   </p>
                 </div>
@@ -406,7 +406,7 @@ export default async function AdminDashboard() {
                     To add another version of the same character in a different world:
                   </p>
                   <ol className="list-decimal list-inside text-sm text-gray-300 space-y-1 ml-2">
-                    <li>Go to <strong className="text-gray-100">Admin → Characters</strong> and find your character</li>
+                    <li>Go to <strong className="text-gray-100">Admin → OCs</strong> and find your character</li>
                     <li>Click on the version count link (e.g., "1 version") in the Versions column</li>
                     <li>This opens the <strong className="text-gray-100">Identity Manager</strong> page</li>
                     <li>Click the <strong className="text-gray-100">"➕ Add New Version"</strong> button</li>
@@ -435,7 +435,7 @@ export default async function AdminDashboard() {
                   href="/admin/ocs"
                   className="inline-flex items-center gap-2 text-sm md:text-base text-pink-400 hover:text-pink-300 font-medium"
                 >
-                  Go to Characters →
+                  Go to OCs →
                   <i className="fas fa-arrow-right"></i>
                 </AdminLink>
               </div>
