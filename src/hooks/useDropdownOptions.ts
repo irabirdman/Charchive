@@ -33,11 +33,20 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
     fetch('/api/admin/dropdown-options')
       .then(res => {
         if (!res.ok) {
+          // Don't throw for 401/403 - just use fallback silently
+          if (res.status === 401 || res.status === 403) {
+            console.log(`[useDropdownOptions] Auth not available for ${field}, using fallback`);
+            setDbOptions(null);
+            setIsLoading(false);
+            return null;
+          }
           throw new Error(`Failed to fetch options: ${res.statusText}`);
         }
         return res.json();
       })
       .then(data => {
+        if (!data) return; // Handled auth error above
+        
         if (data.options && data.options[field]) {
           setDbOptions(data.options[field]);
         } else {
@@ -55,11 +64,13 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
   }, [field]);
 
   // Return database options if available, otherwise fallback to generated file
+  // Always provide fallback immediately so components work while fetching
   const options = useMemo(() => {
-    if (dbOptions !== null) {
+    // If we have database options (not null and not empty), use them
+    if (dbOptions !== null && Array.isArray(dbOptions) && dbOptions.length > 0) {
       return dbOptions;
     }
-    // Fallback to generated file
+    // Fallback to generated file (always available, even while fetching)
     if (field && csvOptions[field]) {
       return csvOptions[field];
     }
@@ -72,4 +83,5 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
     error,
   };
 }
+
 

@@ -32,17 +32,17 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
     const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
 
     // Fetch options from database first, fallback to generated file
+    // The hook already handles the fallback, so we can use it directly
     const { options: dbOptions } = useDropdownOptions(optionsSource);
 
-    // Get options: use provided options, then database, then generated file
+    // Get options: use provided options, then database/generated file from hook
     const selectOptions = useMemo(() => {
       if (options) {
         return options;
       }
       if (optionsSource) {
-        // Use database options if available, otherwise fallback to generated file
-        const sourceOptions = dbOptions.length > 0 ? dbOptions : (csvOptions[optionsSource] || []);
-        return sourceOptions.map((value) => ({
+        // Hook already provides database options or fallback to generated file
+        return dbOptions.map((value) => ({
           value,
           label: value,
         }));

@@ -36,17 +36,17 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
   const fieldValue = formContext?.watch(fieldName) || '';
 
   // Fetch options from database first, fallback to generated file
+  // The hook already handles the fallback, so we can use it directly
   const { options: dbOptions } = useDropdownOptions(optionsSource);
 
-  // Get options: use provided options, then database, then generated file
+  // Get options: use provided options, then database/generated file from hook
   const selectOptions = useMemo(() => {
     if (options) {
       return options;
     }
     if (optionsSource) {
-      // Use database options if available, otherwise fallback to generated file
-      const sourceOptions = dbOptions.length > 0 ? dbOptions : (csvOptions[optionsSource] || []);
-      return sourceOptions.map((val) => ({
+      // Hook already provides database options or fallback to generated file
+      return dbOptions.map((val) => ({
         value: val,
         label: val,
       }));

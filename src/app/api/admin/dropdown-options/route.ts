@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { checkAuth } from '@/lib/auth/require-auth';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -70,12 +70,9 @@ ${Object.entries(options).map(([key, values]) =>
 
 export async function GET() {
   try {
-    const user = await checkAuth();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const supabase = createAdminClient();
+    // Use regular client for reading - RLS allows public read access
+    // This ensures options are always available even if auth fails
+    const supabase = await createClient();
 
     // Query all options from database
     const { data, error } = await supabase

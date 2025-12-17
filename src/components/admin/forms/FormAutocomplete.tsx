@@ -66,16 +66,17 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const suggestionsRef = useRef<HTMLUListElement>(null);
 
     // Fetch options from database first, fallback to generated file
+    // The hook already handles the fallback, so we can use it directly
     const { options: dbOptions } = useDropdownOptions(optionsSource);
 
-    // Get options: use provided options, then database, then generated file
+    // Get options: use provided options, then database/generated file from hook
     const availableOptions = useMemo(() => {
       if (options) {
         return options;
       }
       if (optionsSource) {
-        // Use database options if available, otherwise fallback to generated file
-        return dbOptions.length > 0 ? dbOptions : (csvOptions[optionsSource] || []);
+        // Hook already provides database options or fallback to generated file
+        return dbOptions;
       }
       return [];
     }, [options, optionsSource, dbOptions]);
