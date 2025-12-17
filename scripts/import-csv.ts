@@ -375,7 +375,7 @@ async function importOCs() {
       // First, try matching by slug
       const { data: bySlug } = await supabase
         .from('ocs')
-        .select('id, name, first_name, last_name')
+        .select('id, name, first_name, last_name, identity_id')
         .eq('slug', slug)
         .maybeSingle();
       
@@ -385,7 +385,7 @@ async function importOCs() {
         // Try matching by name
         const { data: byName } = await supabase
           .from('ocs')
-          .select('id, name, first_name, last_name')
+          .select('id, name, first_name, last_name, identity_id')
           .eq('name', name)
           .maybeSingle();
         
@@ -395,7 +395,7 @@ async function importOCs() {
           // Try matching by first_name + last_name combination
           const { data: byFirstLast } = await supabase
             .from('ocs')
-            .select('id, name, first_name, last_name')
+            .select('id, name, first_name, last_name, identity_id')
             .eq('first_name', firstName)
             .eq('last_name', lastName)
             .maybeSingle();
