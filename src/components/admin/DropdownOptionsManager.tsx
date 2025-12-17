@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 import { FIELD_LABELS } from '@/lib/utils/dropdownOptions';
+import { getColorHex } from '@/lib/utils/colorHexMap';
 
 interface DropdownOptionsManagerProps {
   initialOptions?: Record<string, string[]>;
@@ -18,6 +19,7 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [selectedItems, setSelectedItems] = useState<Record<string, Set<string>>>({});
   const [globalSearch, setGlobalSearch] = useState('');
+  const [addMessage, setAddMessage] = useState<{ field: string; message: string; type: 'success' | 'error' } | null>(null);
 
   const fieldLabels = FIELD_LABELS;
 
@@ -43,9 +45,23 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
       const normalizedCurrent = current.map(v => v.toLowerCase());
       if (normalizedCurrent.includes(trimmed.toLowerCase())) {
         console.log(`[Client] Option "${trimmed}" already exists in ${field} (case-insensitive match)`);
+        const fieldLabel = fieldLabels[field] || field;
+        setAddMessage({ 
+          field, 
+          message: `"${trimmed}" already exists in ${fieldLabel}`,
+          type: 'error' 
+        });
+        setTimeout(() => setAddMessage(null), 3000);
         return prev;
       }
       console.log(`[Client] Adding new option "${trimmed}" to field ${field}`);
+      const fieldLabel = fieldLabels[field] || field;
+      setAddMessage({ 
+        field, 
+        message: `Added "${trimmed}" to ${fieldLabel}`,
+        type: 'success' 
+      });
+      setTimeout(() => setAddMessage(null), 3000);
       return {
         ...prev,
         [field]: [...current, trimmed].sort(),
@@ -320,10 +336,25 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
               {isExpanded && (
                 <div className="border-t border-gray-700 p-4 space-y-4">
                   {/* Add New Option */}
+                  {addMessage && addMessage.field === field && (
+                    <div
+                      className={`p-2 rounded-md text-sm ${
+                        addMessage.type === 'success'
+                          ? 'bg-green-900/50 border border-green-700 text-green-300'
+                          : 'bg-red-900/50 border border-red-700 text-red-300'
+                      }`}
+                    >
+                      {addMessage.message}
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Add new option..."
+                      placeholder={
+                        field === 'hair_color' || field === 'eye_color'
+                          ? 'Add new option (e.g., "Blue; Light" or "Red; Dark")...'
+                          : 'Add new option...'
+                      }
                       className="flex-1 px-3 py-2 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -401,7 +432,27 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
                                     />
                                   </td>
                                   <td className="px-4 py-2 text-gray-200">
-                                    {value}
+                                    {(field === 'hair_color' || field === 'eye_color') ? (() => {
+                                      const hexColor = getColorHex(value);
+                                      if (hexColor) {
+                                        return (
+                                          <div className="flex items-center gap-3">
+                                            <div
+                                              className="w-6 h-6 rounded border-2 border-gray-500 flex-shrink-0"
+                                              style={{ backgroundColor: hexColor }}
+                                              title={hexColor}
+                                            />
+                                            <span className="flex-1">{value}</span>
+                                            <span className="text-xs text-gray-400 font-mono flex-shrink-0">
+                                              {hexColor}
+                                            </span>
+                                          </div>
+                                        );
+                                      }
+                                      return <span>{value}</span>;
+                                    })() : (
+                                      <span>{value}</span>
+                                    )}
                                   </td>
                                   <td className="px-4 py-2 w-16 text-right">
                                     <button

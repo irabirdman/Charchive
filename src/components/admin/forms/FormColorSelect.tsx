@@ -187,42 +187,49 @@ export function FormColorSelect({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    setSearchQuery(value); // Update search query for autocomplete
+    setShowDropdown(true); // Show dropdown when typing
     
-    // If it's a valid hex color, update hex and clear original color name
-    if (isValidHexColor(value)) {
-      setSelectedHex(value);
-      setOriginalColorName('');
-      setValue(name, value, { shouldValidate: true });
-    } else if (hasColorHex(value)) {
-      // If it's a recognized color name, set both name and hex
+    // Check if it's a recognized color name
+    if (value && hasColorHex(value)) {
       const hex = getColorHex(value);
       if (hex) {
         setSelectedHex(hex);
         setOriginalColorName(value);
+        // Store as "Color Name|#hex" format
+        setValue(name, `${value}|${hex}`, { shouldValidate: true });
       } else {
         setSelectedHex('');
         setOriginalColorName(value);
+        setValue(name, value, { shouldValidate: true });
       }
-      setValue(name, value, { shouldValidate: true });
+    } else if (value.trim()) {
+      // Custom text value - keep the name, preserve hex if we have one
+      setOriginalColorName(value);
+      // If we have a hex, store as "Color Name|#hex", otherwise just the name
+      if (selectedHex && isValidHexColor(selectedHex)) {
+        setValue(name, `${value}|${selectedHex}`, { shouldValidate: true });
+      } else {
+        setValue(name, value, { shouldValidate: true });
+      }
     } else {
-      // Custom text value
+      // Empty value
       setSelectedHex('');
       setOriginalColorName('');
-      setValue(name, value, { shouldValidate: true });
+      setValue(name, '', { shouldValidate: true });
     }
   };
 
   const handleColorPickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const hex = e.target.value;
     setSelectedHex(hex);
-    // If we have an original color name, keep it in the form; otherwise store the hex
-    if (originalColorName) {
+    // If we have a color name (from inputValue), store as "Color Name|#hex"
+    // Otherwise, store just the hex
+    if (inputValue.trim()) {
       // Store as "Color Name|#hex" format to preserve both
-      setInputValue(originalColorName);
-      setValue(name, `${originalColorName}|${hex}`, { shouldValidate: true });
+      setValue(name, `${inputValue.trim()}|${hex}`, { shouldValidate: true });
     } else {
-      // No original color name, store the hex
-      setInputValue(hex);
+      // No color name, store just the hex
       setValue(name, hex, { shouldValidate: true });
     }
   };
@@ -230,24 +237,24 @@ export function FormColorSelect({
   const handleHexInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
     
-    // Add # if user types without it
-    if (value && !value.startsWith('#')) {
+    // Add # if user types without it and it looks like a hex
+    if (value && !value.startsWith('#') && /^[0-9A-Fa-f]{3,6}$/.test(value)) {
       value = '#' + value;
     }
     
     setSelectedHex(value);
     
-    // If we have an original color name, keep it; otherwise store the hex
-    if (originalColorName && isValidHexColor(value)) {
+    // If we have a color name (from inputValue), store as "Color Name|#hex"
+    // Otherwise, if it's a valid hex, store just the hex
+    if (inputValue.trim() && isValidHexColor(value)) {
       // Store as "Color Name|#hex" format to preserve both
-      setInputValue(originalColorName);
-      setValue(name, `${originalColorName}|${value}`, { shouldValidate: true });
-    } else {
-      // No original color name, store the hex
-      setInputValue(value);
-      if (isValidHexColor(value)) {
-        setValue(name, value, { shouldValidate: true });
-      }
+      setValue(name, `${inputValue.trim()}|${value}`, { shouldValidate: true });
+    } else if (isValidHexColor(value)) {
+      // Just hex, no color name
+      setValue(name, value, { shouldValidate: true });
+    } else if (inputValue.trim()) {
+      // Invalid hex but we have a color name, store just the name
+      setValue(name, inputValue.trim(), { shouldValidate: true });
     }
   };
 
@@ -262,15 +269,27 @@ export function FormColorSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close dropdown on Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showDropdown) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showDropdown]);
+
   // Get hex color for an option
   const getOptionHex = (optionValue: string): string | null => {
     return getColorHex(optionValue) || (isValidHexColor(optionValue) ? optionValue : null);
   };
 
-  // Filter options based on search query
+  // Filter options based on search query (use inputValue if searchQuery is empty)
   const filteredOptions = useMemo(() => {
-    if (!searchQuery.trim()) return selectOptions;
-    const query = searchQuery.toLowerCase();
+    const query = (searchQuery || inputValue || '').toLowerCase().trim();
+    if (!query) return selectOptions;
+    
     return selectOptions.filter(option => {
       const optionHex = getColorHex(option.value) || (isValidHexColor(option.value) ? option.value : null);
       return (
@@ -278,130 +297,108 @@ export function FormColorSelect({
         (optionHex && optionHex.toLowerCase().includes(query))
       );
     });
-  }, [selectOptions, searchQuery]);
+  }, [selectOptions, searchQuery, inputValue]);
 
   const baseClasses = 'w-full px-4 py-2.5 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed';
 
+  // Check if we should show color swatch
+  const displayHex = selectedHex || getOptionHex(inputValue);
+  const hasColorSwatch = displayHex && isValidHexColor(displayHex);
+
   return (
     <div className="space-y-2" ref={containerRef}>
-      {/* Custom dropdown with color swatches */}
+      {/* Editable input with autocomplete dropdown */}
       <div className="relative">
-        <button
-          type="button"
-          onClick={() => setShowDropdown(!showDropdown)}
-          disabled={disabled}
-          className={`${baseClasses} appearance-none pr-10 text-left flex items-center justify-between`}
-        >
-          <span className="flex items-center gap-2 flex-1 min-w-0">
-            {originalColorName || inputValue ? (
-              <>
-                {(() => {
-                  const displayHex = selectedHex || getOptionHex(originalColorName || inputValue);
-                  if (displayHex && isValidHexColor(displayHex)) {
-                    return (
+        <div className="relative flex items-center">
+          {/* Color swatch indicator */}
+          {hasColorSwatch && (
+            <div 
+              className="absolute left-3 w-5 h-5 rounded border-2 border-gray-600 pointer-events-none z-10"
+              style={{ backgroundColor: displayHex }}
+            />
+          )}
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => setShowDropdown(true)}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={`${baseClasses} pr-10 ${hasColorSwatch ? 'pl-10' : ''}`}
+          />
+          {/* Dropdown arrow button */}
+          <button
+            type="button"
+            onClick={() => setShowDropdown(!showDropdown)}
+            disabled={disabled}
+            className="absolute right-2 p-1 text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            <svg
+              className={`w-5 h-5 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Autocomplete dropdown menu with color swatches */}
+        {showDropdown && filteredOptions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-96 overflow-auto">
+            <div className="py-1">
+              {filteredOptions.map((option) => {
+                const optionHex = getOptionHex(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      handleSelectChange({ target: { value: option.value } } as React.ChangeEvent<HTMLSelectElement>);
+                      setShowDropdown(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-700 transition-colors text-gray-200"
+                  >
+                    {optionHex && isValidHexColor(optionHex) ? (
                       <>
                         <div 
-                          className="w-5 h-5 rounded border-2 border-gray-600 flex-shrink-0"
-                          style={{ backgroundColor: displayHex }}
+                          className="w-6 h-6 rounded border-2 border-gray-500 flex-shrink-0"
+                          style={{ backgroundColor: optionHex }}
                         />
-                        <span className="truncate">{originalColorName || inputValue}</span>
-                      </>
-                    );
-                  }
-                  return <span className="truncate">{originalColorName || inputValue}</span>;
-                })()}
-              </>
-            ) : (
-              <span className="text-gray-400">{placeholder}</span>
-            )}
-          </span>
-          <svg
-            className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-        
-        {/* Dropdown menu with color swatches */}
-        {showDropdown && (
-          <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg flex flex-col max-h-96">
-            {/* Search input */}
-            <div className="p-2 border-b border-gray-700">
-              <input
-                type="text"
-                placeholder="Search colors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full px-3 py-2 bg-gray-900/60 border border-gray-500/60 rounded text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50"
-                autoFocus
-              />
-            </div>
-            
-            {/* Options list */}
-            <div className="overflow-auto flex-1">
-              {filteredOptions.length > 0 ? (
-                <div className="py-1">
-                  {filteredOptions.map((option) => {
-                  const optionHex = getOptionHex(option.value);
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        handleSelectChange({ target: { value: option.value } } as React.ChangeEvent<HTMLSelectElement>);
-                        setShowDropdown(false);
-                        setSearchQuery('');
-                      }}
-                      className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-700 transition-colors text-gray-200"
-                    >
-                      {optionHex && isValidHexColor(optionHex) ? (
-                        <>
-                          <div 
-                            className="w-6 h-6 rounded border-2 border-gray-500 flex-shrink-0"
-                            style={{ backgroundColor: optionHex }}
-                          />
-                          <span className="flex-1">{option.label}</span>
-                          <span className="text-xs text-gray-400 font-mono flex-shrink-0">{optionHex}</span>
-                        </>
-                      ) : (
                         <span className="flex-1">{option.label}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              ) : (
-                <div className="px-4 py-8 text-center text-gray-400">
-                  {searchQuery ? 'No colors match your search' : 'No options available'}
-                </div>
-              )}
+                        <span className="text-xs text-gray-400 font-mono flex-shrink-0">{optionHex}</span>
+                      </>
+                    ) : (
+                      <span className="flex-1">{option.label}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Custom value input / Hex code input */}
+      {/* Hex code input and color picker */}
       <div className="flex gap-2">
         <input
           type="text"
-          value={selectedHex && isValidHexColor(selectedHex) ? selectedHex : (originalColorName || inputValue)}
-          onChange={handleInputChange}
-          placeholder="Or enter custom color / hex code (e.g., #FF5733)"
+          value={selectedHex}
+          onChange={handleHexInputChange}
+          placeholder="Hex color (e.g., #FF5733) - optional"
           disabled={disabled}
           style={{
             backgroundColor: selectedHex && isValidHexColor(selectedHex) ? selectedHex : undefined,
           }}
-          className={`${baseClasses} flex-1 ${selectedHex && isValidHexColor(selectedHex) ? getTextColor(selectedHex) + ' font-mono' : ''}`}
+          className={`${baseClasses} flex-1 font-mono ${selectedHex && isValidHexColor(selectedHex) ? getTextColor(selectedHex) : ''}`}
         />
         {/* Color picker button */}
         <button

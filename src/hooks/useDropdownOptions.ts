@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 
-type DropdownField = keyof typeof csvOptions;
+type DropdownField = keyof typeof csvOptions | string; // Allow string for fields not in csvOptions
 
 interface UseDropdownOptionsResult {
   options: string[];

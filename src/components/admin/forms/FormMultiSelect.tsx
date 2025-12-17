@@ -10,7 +10,7 @@ interface FormMultiSelectProps {
   error?: string;
   helpText?: string;
   options?: Array<{ value: string; label: string }>;
-  optionsSource?: keyof typeof csvOptions;
+  optionsSource?: keyof typeof csvOptions | string; // Allow string for fields not in csvOptions
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -29,6 +29,7 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
   name,
 }, ref) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [customInput, setCustomInput] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   
   const formContext = useFormContext();
@@ -39,26 +40,40 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
   // The hook already handles the fallback, so we can use it directly
   const { options: dbOptions } = useDropdownOptions(optionsSource);
 
-  // Get options: use provided options, then database/generated file from hook
-  const selectOptions = useMemo(() => {
-    if (options) {
-      return options;
-    }
-    if (optionsSource) {
-      // Hook already provides database options or fallback to generated file
-      return dbOptions.map((val) => ({
-        value: val,
-        label: val,
-      }));
-    }
-    return [];
-  }, [options, optionsSource, dbOptions]);
-
   // Parse current value (comma-separated string) into array
   const selectedValues = useMemo(() => {
     if (!fieldValue || typeof fieldValue !== 'string') return [];
     return fieldValue.split(',').map(v => v.trim()).filter(Boolean);
   }, [fieldValue]);
+
+  // Get options: use provided options, then database/generated file from hook
+  // Also include custom values from selectedValues that aren't in the options
+  const selectOptions = useMemo(() => {
+    const baseOptions: Array<{ value: string; label: string }> = [];
+    
+    if (options) {
+      baseOptions.push(...options);
+    } else if (optionsSource) {
+      // Hook already provides database options or fallback to generated file
+      baseOptions.push(...dbOptions.map((val) => ({
+        value: val,
+        label: val,
+      })));
+    }
+    
+    // Add custom values from selectedValues that aren't in base options
+    const baseValues = new Set(baseOptions.map(opt => opt.value.toLowerCase()));
+    selectedValues.forEach(val => {
+      if (val && !baseValues.has(val.toLowerCase())) {
+        baseOptions.push({
+          value: val,
+          label: val,
+        });
+      }
+    });
+    
+    return baseOptions;
+  }, [options, optionsSource, dbOptions, selectedValues]);
 
   // Filter options based on search query
   const filteredOptions = useMemo(() => {
@@ -68,6 +83,44 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
       option.label.toLowerCase().includes(query)
     );
   }, [selectOptions, searchQuery]);
+
+  // Handle adding custom trait
+  const handleAddCustom = () => {
+    if (!customInput.trim() || disabled) return;
+    
+    const trimmed = customInput.trim();
+    // Check if already selected
+    if (selectedValues.includes(trimmed)) {
+      setCustomInput('');
+      return;
+    }
+    
+    // Add to selected values
+    const newSelectedValues = [...selectedValues, trimmed];
+    const newValue = newSelectedValues.join(',');
+    
+    // Create a synthetic event for react-hook-form
+    const syntheticEvent = {
+      target: { 
+        value: newValue, 
+        name: fieldName,
+        type: 'select-multiple',
+      },
+      type: 'change',
+    } as any;
+    
+    // Call register onChange if provided
+    if (register?.onChange) {
+      register.onChange(syntheticEvent);
+    }
+    
+    // Also update form value directly
+    if (formContext && fieldName) {
+      formContext.setValue(fieldName, newValue, { shouldDirty: true });
+    }
+    
+    setCustomInput('');
+  };
 
   // Handle option toggle
   const handleOptionToggle = (value: string) => {
@@ -120,6 +173,32 @@ export const FormMultiSelect = forwardRef<HTMLSelectElement, FormMultiSelectProp
 
   return (
     <div ref={containerRef} onBlur={handleBlur} className={className} tabIndex={-1}>
+      {/* Add Custom Trait */}
+      <div className="mb-2 flex gap-2">
+        <input
+          type="text"
+          value={customInput}
+          onChange={(e) => setCustomInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleAddCustom();
+            }
+          }}
+          placeholder="Add custom trait..."
+          disabled={disabled}
+          className="flex-1 px-3 py-2 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <button
+          type="button"
+          onClick={handleAddCustom}
+          disabled={disabled || !customInput.trim()}
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Add
+        </button>
+      </div>
+
       {/* Search Bar */}
       <div className="mb-2">
         <input
