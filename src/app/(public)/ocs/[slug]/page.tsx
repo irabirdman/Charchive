@@ -14,7 +14,7 @@ import { getEffectiveFieldDefinitions, getFieldValue } from '@/lib/fields/worldF
 import type { WorldFieldDefinition } from '@/types/oc';
 import { TagList } from '@/components/wiki/TagList';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
-import { extractColorHex, extractColorName, getColorHex } from '@/lib/utils/colorHexMap';
+import { extractColorHex, extractColorName, getColorHex } from '@/lib/utils/colorHexUtils';
 import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
 
 export async function generateMetadata({
@@ -586,7 +586,7 @@ export default async function OCDetailPage({
                         )}
                         {oc.eye_color && (() => {
                           const colorName = extractColorName(oc.eye_color);
-                          const hexCode = extractColorHex(oc.eye_color) || getColorHex(colorName);
+                          const hexCode = extractColorHex(oc.eye_color) || getColorHex('eye_color', colorName);
                           return (
                             <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
                               <div className="text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Eye Color</div>
@@ -605,7 +605,7 @@ export default async function OCDetailPage({
                         })()}
                         {oc.hair_color && (() => {
                           const colorName = extractColorName(oc.hair_color);
-                          const hexCode = extractColorHex(oc.hair_color) || getColorHex(colorName);
+                          const hexCode = extractColorHex(oc.hair_color) || getColorHex('hair_color', colorName);
                           return (
                             <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
                               <div className="text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Hair Color</div>
@@ -624,7 +624,7 @@ export default async function OCDetailPage({
                         })()}
                         {oc.skin_tone && (() => {
                           const colorName = extractColorName(oc.skin_tone);
-                          const hexCode = extractColorHex(oc.skin_tone) || getColorHex(colorName);
+                          const hexCode = extractColorHex(oc.skin_tone) || getColorHex('skin_tone', colorName);
                           return (
                             <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
                               <div className="text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Skin Tone</div>

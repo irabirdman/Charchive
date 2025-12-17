@@ -3,10 +3,21 @@
 import { useState, useEffect, useMemo } from 'react';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 
+// Import colorHexCodes with fallback (may not exist until generate script runs)
+let colorHexCodes: Record<string, Record<string, string>> = {};
+try {
+  const colorHexCodesModule = require('@/lib/utils/csvOptionsData');
+  colorHexCodes = colorHexCodesModule.colorHexCodes || {};
+} catch {
+  // Fallback if colorHexCodes doesn't exist yet
+  colorHexCodes = {};
+}
+
 type DropdownField = keyof typeof csvOptions | string; // Allow string for fields not in csvOptions
 
 interface UseDropdownOptionsResult {
   options: string[];
+  hexCodes: Record<string, string>; // option -> hex_code
   isLoading: boolean;
   error: Error | null;
 }
@@ -17,6 +28,7 @@ interface UseDropdownOptionsResult {
  */
 export function useDropdownOptions(field: DropdownField | undefined): UseDropdownOptionsResult {
   const [dbOptions, setDbOptions] = useState<string[] | null>(null);
+  const [dbHexCodes, setDbHexCodes] = useState<Record<string, string> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -59,6 +71,12 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
         if (data.options && data.options[field]) {
           console.log(`[useDropdownOptions] Setting dbOptions for "${field}":`, data.options[field].length, 'options');
           setDbOptions(data.options[field]);
+          // Set hex codes if available
+          if (data.hexCodes && data.hexCodes[field]) {
+            setDbHexCodes(data.hexCodes[field]);
+          } else {
+            setDbHexCodes({});
+          }
         } else {
           // Field not found in database, will use fallback
           console.warn(`[useDropdownOptions] Field "${field}" not found in database response`);
@@ -69,11 +87,18 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
             if (matchingKey) {
               console.log(`[useDropdownOptions] Found field with different casing: "${matchingKey}" (looking for "${field}")`);
               setDbOptions(data.options[matchingKey]);
+              if (data.hexCodes && data.hexCodes[matchingKey]) {
+                setDbHexCodes(data.hexCodes[matchingKey]);
+              } else {
+                setDbHexCodes({});
+              }
             } else {
               setDbOptions(null);
+              setDbHexCodes(null);
             }
           } else {
             setDbOptions(null);
+            setDbHexCodes(null);
           }
         }
         setIsLoading(false);
@@ -82,6 +107,7 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
         console.warn(`[useDropdownOptions] Failed to fetch ${field} from database, using fallback:`, err);
         setError(err);
         setDbOptions(null);
+        setDbHexCodes(null);
         setIsLoading(false);
       });
   }, [field]);
@@ -103,8 +129,21 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
     return [];
   }, [dbOptions, field]);
 
+  // Return hex codes from database or fallback to generated file
+  const hexCodes = useMemo(() => {
+    if (dbHexCodes !== null) {
+      return dbHexCodes;
+    }
+    // Fallback to generated file
+    if (field && colorHexCodes && colorHexCodes[field]) {
+      return colorHexCodes[field];
+    }
+    return {};
+  }, [dbHexCodes, field]);
+
   return {
     options,
+    hexCodes,
     isLoading,
     error,
   };

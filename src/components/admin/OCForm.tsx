@@ -1265,6 +1265,14 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       const selectedWorld = worlds.find(w => w.id === worldId);
       if (selectedWorld) {
         const templateType = getTemplateTypeFromWorldSlug(selectedWorld.slug) as TemplateType;
+        // Debug logging to help identify issues
+        if (templateType === 'none' && selectedWorld.name.toLowerCase().includes('dragon')) {
+          console.warn('Template type not found for world:', {
+            name: selectedWorld.name,
+            slug: selectedWorld.slug,
+            templateType
+          });
+        }
         // Always set template_type when world changes
         // Use shouldDirty: false when editing to avoid marking form as dirty
         setValue('template_type', templateType, { shouldDirty: !oc });

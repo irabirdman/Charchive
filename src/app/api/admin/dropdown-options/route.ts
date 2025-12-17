@@ -14,10 +14,10 @@ async function regenerateTypeScriptFile(supabase: any, requestId: string) {
   try {
     console.log(`[${requestId}] Regenerating TypeScript file from database...`);
     
-    // Query all options from database
+    // Query all options from database (including hex_code for colors)
     const { data, error } = await supabase
       .from('dropdown_options')
-      .select('field, option')
+      .select('field, option, hex_code')
       .order('field', { ascending: true })
       .order('option', { ascending: true });
 
@@ -26,14 +26,23 @@ async function regenerateTypeScriptFile(supabase: any, requestId: string) {
       return false;
     }
 
-    // Group options by field
+    // Group options by field, and include hex codes
     const options: Record<string, string[]> = {};
+    const hexCodes: Record<string, Record<string, string>> = {}; // field -> option -> hex_code
     if (data) {
       for (const row of data) {
         if (!options[row.field]) {
           options[row.field] = [];
         }
         options[row.field].push(row.option);
+        
+        // Store hex code if present
+        if (row.hex_code) {
+          if (!hexCodes[row.field]) {
+            hexCodes[row.field] = {};
+          }
+          hexCodes[row.field][row.option] = row.hex_code;
+        }
       }
     }
 
@@ -53,6 +62,9 @@ async function regenerateTypeScriptFile(supabase: any, requestId: string) {
 // Last generated: ${new Date().toISOString()}
 
 export const csvOptions: Record<string, string[]> = ${JSON.stringify(options, null, 2)};
+
+// Hex codes for color options (field -> option -> hex_code)
+export const colorHexCodes: Record<string, Record<string, string>> = ${JSON.stringify(hexCodes, null, 2)};
 
 // Individual exports for convenience
 ${Object.entries(options).map(([key, values]) => 
@@ -106,8 +118,9 @@ export async function GET() {
       sample: positiveTraitsData?.slice(0, 3),
     });
 
-    // Group options by field
+    // Group options by field, and include hex codes for colors
     const options: Record<string, string[]> = {};
+    const hexCodes: Record<string, Record<string, string>> = {}; // field -> option -> hex_code
     
     if (data) {
       // Debug: log all unique fields
@@ -127,6 +140,14 @@ export async function GET() {
           options[row.field] = [];
         }
         options[row.field].push(row.option);
+        
+        // Store hex code if present
+        if (row.hex_code) {
+          if (!hexCodes[row.field]) {
+            hexCodes[row.field] = {};
+          }
+          hexCodes[row.field][row.option] = row.hex_code;
+        }
       }
     }
 
@@ -137,7 +158,7 @@ export async function GET() {
       console.log('[API] positive_traits count:', options['positive_traits'].length);
     }
 
-    return NextResponse.json({ options });
+    return NextResponse.json({ options, hexCodes });
   } catch (error) {
     console.error('Error fetching dropdown options:', error);
     return NextResponse.json(
@@ -164,8 +185,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     console.log(`[${requestId}] Request body keys:`, Object.keys(body));
     console.log(`[${requestId}] Request body has options:`, !!body.options);
+    console.log(`[${requestId}] Request body has hexCodes:`, !!body.hexCodes);
     
-    const { options } = body;
+    const { options, hexCodes } = body;
 
     if (!options || typeof options !== 'object') {
       console.error(`[${requestId}] Invalid options data - type:`, typeof options, 'value:', options);
@@ -202,11 +224,11 @@ export async function PUT(request: NextRequest) {
     }
     console.log(`[${requestId}] All field names are valid`);
 
-    // Get current options from database for comparison
+    // Get current options from database for comparison (including hex codes)
     console.log(`[${requestId}] Fetching current options from database...`);
     const { data: currentData, error: fetchError } = await supabase
       .from('dropdown_options')
-      .select('field, option');
+      .select('field, option, hex_code');
 
     if (fetchError) {
       console.error(`[${requestId}] Error fetching current options:`, fetchError);
@@ -218,15 +240,24 @@ export async function PUT(request: NextRequest) {
     }
     console.log(`[${requestId}] Fetched ${currentData?.length || 0} current options from database`);
 
-    // Group current options by field
+    // Group current options by field, and track hex codes
     console.log(`[${requestId}] Grouping current options by field...`);
     const currentOptions: Record<string, Set<string>> = {};
+    const currentHexCodes: Record<string, Record<string, string>> = {}; // field -> option -> hex_code
     if (currentData) {
       for (const row of currentData) {
         if (!currentOptions[row.field]) {
           currentOptions[row.field] = new Set();
         }
         currentOptions[row.field].add(row.option);
+        
+        // Track hex codes
+        if (row.hex_code) {
+          if (!currentHexCodes[row.field]) {
+            currentHexCodes[row.field] = {};
+          }
+          currentHexCodes[row.field][row.option] = row.hex_code;
+        }
       }
     }
     const currentFieldsCount = Object.keys(currentOptions).length;
@@ -275,10 +306,19 @@ export async function PUT(request: NextRequest) {
       const exactNewItems = newValues.filter(val => !currentValues.has(val.trim()));
       const exactRemovedItems = Array.from(currentValues).filter(val => !newSet.has(val.trim()));
       
+      // Check if hex codes changed for existing options
+      const hexCodesChanged = newValues.some(val => {
+        const trimmed = val.trim();
+        const newHex = hexCodes?.[field]?.[trimmed] || null;
+        const currentHex = currentHexCodes[field]?.[trimmed] || null;
+        return newHex !== currentHex;
+      });
+      
       const isDifferent = 
         currentValues.size !== newSet.size ||
         exactNewItems.length > 0 ||
-        exactRemovedItems.length > 0;
+        exactRemovedItems.length > 0 ||
+        hexCodesChanged;
 
       console.log(`[${requestId}] Field ${field} comparison details:`);
       console.log(`[${requestId}]   - Exact new items (case-sensitive):`, exactNewItems);
@@ -293,6 +333,9 @@ export async function PUT(request: NextRequest) {
         }
         if (exactRemovedItems.length > 0) {
           console.log(`[${requestId}]   ✗ Removing ${exactRemovedItems.length} item(s):`, exactRemovedItems);
+        }
+        if (hexCodesChanged) {
+          console.log(`[${requestId}]   ⚠ Hex codes changed for existing options`);
         }
         if (currentValues.size !== newSet.size) {
           console.log(`[${requestId}]   Size change: ${currentValues.size} → ${newSet.size}`);
@@ -352,11 +395,16 @@ export async function PUT(request: NextRequest) {
         // Insert new options
         if (newOptions.length > 0) {
           console.log(`[${requestId}]   Preparing ${newOptions.length} options for insertion...`);
-          const insertData = newOptions.map(option => ({
-            field,
-            option: option.trim(),
-            updated_at: new Date().toISOString(),
-          })).filter(item => item.option.length > 0); // Filter out empty options
+          const insertData = newOptions.map(option => {
+            const trimmedOption = option.trim();
+            const hexCode = hexCodes?.[field]?.[trimmedOption] || null;
+            return {
+              field,
+              option: trimmedOption,
+              hex_code: hexCode,
+              updated_at: new Date().toISOString(),
+            };
+          }).filter(item => item.option.length > 0); // Filter out empty options
 
           console.log(`[${requestId}]   After filtering empty options: ${insertData.length} options to insert`);
           

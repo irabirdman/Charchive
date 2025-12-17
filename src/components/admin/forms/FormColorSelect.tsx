@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { UseFormRegisterReturn, UseFormSetValue, useFormContext } from 'react-hook-form';
-import { csvOptions } from '@/lib/utils/csvOptionsData';
-import { getColorHex, hasColorHex, colorHexMap } from '@/lib/utils/colorHexMap';
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface FormColorSelectProps {
   register: UseFormRegisterReturn;
@@ -79,38 +78,45 @@ export function FormColorSelect({
   // Watch the current value from the form
   const currentValue = watch(name);
 
-  // Get options ONLY from colorHexMap (colors with hex values)
-  // Filters by field type: eye_color/hair_color get semicolon variants, skin_tone gets non-semicolon entries
+  // Get options and hex codes from database/JSON
+  const { options: dbOptions, hexCodes } = useDropdownOptions(optionsSource || name);
+
+  // Helper to get hex code for a color name
+  const getColorHex = (colorName: string): string | null => {
+    return hexCodes[colorName] || null;
+  };
+
+  // Helper to check if color has hex code
+  const hasColorHex = (colorName: string): boolean => {
+    return colorName in hexCodes;
+  };
+
+  // Get options from database/JSON, filtered by field type
   const selectOptions = useMemo(() => {
     if (options) {
       return options;
     }
     
-    // Only include colors from colorHexMap
-    const colorOptions: string[] = [];
-    
-    Object.keys(colorHexMap).forEach((colorName) => {
+    // Filter options based on field type
+    const filtered = dbOptions.filter((colorName) => {
       if (name === 'eye_color' || name === 'hair_color') {
         // For eye/hair colors, include entries with semicolons (e.g., "Red; Dark", "Blue; Cobalt")
-        if (colorName.includes(';')) {
-          colorOptions.push(colorName);
-        }
+        return colorName.includes(';');
       } else if (name === 'skin_tone') {
-        // For skin tones, include entries without semicolons (skin tone entries don't have semicolons)
-        if (!colorName.includes(';')) {
-          colorOptions.push(colorName);
-        }
+        // For skin tones, include entries without semicolons
+        return !colorName.includes(';');
       }
+      return true;
     });
     
-    // Convert to array, sort, and map to option format
-    return colorOptions
+    // Convert to array and map to option format
+    return filtered
       .sort()
       .map((value) => ({
         value,
         label: value,
       }));
-  }, [options, name]);
+  }, [options, dbOptions, name]);
 
   // Initialize input value from form
   useEffect(() => {

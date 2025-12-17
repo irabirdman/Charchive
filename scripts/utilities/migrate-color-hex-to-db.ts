@@ -1,8 +1,31 @@
-// Color name to hex mapping for hair and eye colors
-// When a color is selected, this provides the default hex value
-// Users can adjust the hex while keeping the original color name
+import { config } from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
 
-export const colorHexMap: Record<string, string> = {
+// Load environment variables from .env file
+config({ path: path.resolve(process.cwd(), '.env') });
+
+// Run with: npx tsx scripts/utilities/migrate-color-hex-to-db.ts
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+  console.error('Required: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY)');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
+
+// Color hex map data (from the deleted colorHexMap.ts)
+const colorHexMap: Record<string, string> = {
   // BLACK
   'Black; Soft': '#1a1a1a',
   'Black; Jet': '#000000',
@@ -13,7 +36,6 @@ export const colorHexMap: Record<string, string> = {
   'Black; Charcoal': '#1c1c1c',
   'Black; Ash': '#2a2a2a',
   'Black; Black/Silver': '#1a1a2a',
-
   // BROWN
   'Brown; Light': '#a0826d',
   'Brown; Medium': '#6b4423',
@@ -38,7 +60,6 @@ export const colorHexMap: Record<string, string> = {
   'Brown; Copper': '#b87333',
   'Brown; Soft Copper': '#cd7f32',
   'Brown; Rose': '#8b5a5a',
-
   // BLONDE
   'Blonde; Light': '#faf0be',
   'Blonde; Medium': '#f5deb3',
@@ -59,7 +80,6 @@ export const colorHexMap: Record<string, string> = {
   'Blonde; White': '#faf0e6',
   'Blonde; Silver': '#c0c0c0',
   'Blonde; Frosted': '#e6e6fa',
-
   // RED
   'Red; Light': '#ff6b6b',
   'Red; Dark': '#8b0000',
@@ -81,7 +101,6 @@ export const colorHexMap: Record<string, string> = {
   'Red; Blood': '#8b0000',
   'Red; Fire': '#ff4500',
   'Red; Raspberry': '#e30b5d',
-
   // ORANGE
   'Orange; Light': '#ffb347',
   'Orange; Dark': '#ff8c00',
@@ -94,7 +113,6 @@ export const colorHexMap: Record<string, string> = {
   'Orange; Rust': '#b7410e',
   'Orange; Burnt': '#cc5500',
   'Orange; Vermilion': '#e34234',
-
   // YELLOW
   'Yellow; Light': '#ffff99',
   'Yellow; Dark': '#cccc00',
@@ -102,7 +120,6 @@ export const colorHexMap: Record<string, string> = {
   'Yellow; Lemon': '#fff700',
   'Yellow; Mustard': '#ffdb58',
   'Yellow; Saffron': '#f4c430',
-
   // GOLD
   'Gold; Light': '#ffd700',
   'Gold; Dark': '#b8860b',
@@ -112,7 +129,6 @@ export const colorHexMap: Record<string, string> = {
   'Gold; Amber': '#ffbf00',
   'Gold; Honey': '#f0c674',
   'Gold; Metallic': '#d4af37',
-
   // BLUE
   'Blue; Light': '#add8e6',
   'Blue; Dark': '#00008b',
@@ -139,7 +155,6 @@ export const colorHexMap: Record<string, string> = {
   'Blue; Storm': '#4f6d7a',
   'Blue; Ultramarine': '#120a8f',
   'Blue; Indigo': '#4b0082',
-
   // GREEN
   'Green; Light': '#90ee90',
   'Green; Dark': '#006400',
@@ -162,7 +177,6 @@ export const colorHexMap: Record<string, string> = {
   'Green; Aquatic': '#00ced1',
   'Green; Peacock': '#33a1c9',
   'Green; Neon': '#39ff14',
-
   // PURPLE
   'Purple; Light': '#d8bfd8',
   'Purple; Dark': '#4b0082',
@@ -183,7 +197,6 @@ export const colorHexMap: Record<string, string> = {
   'Purple; Indigo': '#4b0082',
   'Purple; Magenta': '#ff00ff',
   'Purple; Raspberry': '#e30b5d',
-
   // PINK
   'Pink; Light': '#ffb6c1',
   'Pink; Dark': '#c71585',
@@ -203,7 +216,6 @@ export const colorHexMap: Record<string, string> = {
   'Pink; Magenta': '#ff00ff',
   'Pink; Pastel': '#ffb6c1',
   'Pink; Neon': '#ff1493',
-
   // GRAY
   'Gray; Light': '#d3d3d3',
   'Gray; Dark': '#696969',
@@ -221,7 +233,6 @@ export const colorHexMap: Record<string, string> = {
   'Gray; Pearl': '#e8e0d9',
   'Gray; Metallic': '#8c8c8c',
   'Gray; Platinum': '#e5e4e2',
-
   // SILVER
   'Silver; Light': '#c0c0c0',
   'Silver; Dark': '#808080',
@@ -232,7 +243,6 @@ export const colorHexMap: Record<string, string> = {
   'Silver; Platinum': '#e5e4e2',
   'Silver; Ice': '#b0e0e6',
   'Silver; White': '#c0c0c0',
-
   // WHITE
   'White; Soft': '#fafafa',
   'White; Pure': '#ffffff',
@@ -246,139 +256,132 @@ export const colorHexMap: Record<string, string> = {
   'White; Ice': '#b0e0e6',
   'White; Ghost': '#f8f8ff',
   'White; Beige': '#f5f5dc',
-
   // HETEROCHROMIA (EYES ONLY)
-  'Heterochromia; L Blue / R Brown': '#4169e1', // Using left eye color
-  'Heterochromia; L Brown / R Blue': '#8b4513', // Using left eye color
-  'Heterochromia; L Green / R Brown': '#228b22', // Using left eye color
-  'Heterochromia; L Brown / R Green': '#8b4513', // Using left eye color
-  'Heterochromia; L Blue / R Green': '#4169e1', // Using left eye color
-  'Heterochromia; L Green / R Blue': '#228b22', // Using left eye color
-  'Heterochromia; L Gray / R Blue': '#808080', // Using left eye color
-  'Heterochromia; L Gray / R Green': '#808080', // Using left eye color
-  'Heterochromia; L Gray / R Brown': '#808080', // Using left eye color
-  'Heterochromia; L Gold / R Brown': '#ffd700', // Using left eye color
-  'Heterochromia; L Gold / R Green': '#ffd700', // Using left eye color
-  'Heterochromia; L Gold / R Blue': '#ffd700', // Using left eye color
-  'Heterochromia; L Hazel / R Blue': '#8b7355', // Using left eye color
-  'Heterochromia; L Hazel / R Green': '#8b7355', // Using left eye color
-  'Heterochromia; Sectoral': '#808080', // Neutral gray for sectoral
-  'Heterochromia; Central': '#808080', // Neutral gray for central
-
+  'Heterochromia; L Blue / R Brown': '#4169e1',
+  'Heterochromia; L Brown / R Blue': '#8b4513',
+  'Heterochromia; L Green / R Brown': '#228b22',
+  'Heterochromia; L Brown / R Green': '#8b4513',
+  'Heterochromia; L Blue / R Green': '#4169e1',
+  'Heterochromia; L Green / R Blue': '#228b22',
+  'Heterochromia; L Gray / R Blue': '#808080',
+  'Heterochromia; L Gray / R Green': '#808080',
+  'Heterochromia; L Gray / R Brown': '#808080',
+  'Heterochromia; L Gold / R Brown': '#ffd700',
+  'Heterochromia; L Gold / R Green': '#ffd700',
+  'Heterochromia; L Gold / R Blue': '#ffd700',
+  'Heterochromia; L Hazel / R Blue': '#8b7355',
+  'Heterochromia; L Hazel / R Green': '#8b7355',
+  'Heterochromia; Sectoral': '#808080',
+  'Heterochromia; Central': '#808080',
   // SKIN TONES - Realistic human skin colors
-  'Albino': '#fff8f0', // Very pale, almost white with slight pink undertone
-  'Amber': '#d4a574', // Warm golden-brown, medium tone
-  'Ashen': '#c9b99b', // Grayish, pale tone with cool undertones
-  'Black': '#3d2817', // Deep dark brown, rich and warm
-  'Bronze': '#cd7f32', // Metallic bronze-brown, warm medium-dark
-  'Brown': '#8b4513', // Medium brown, classic tan
-  'Caramel': '#af6e4d', // Light brown with golden undertones, warm
-  'Chestnut': '#954535', // Rich brown with red undertones
-  'Copper': '#b87333', // Warm reddish-brown, medium tone
-  'Dark Brown': '#5c4033', // Dark brown, deep and rich
-  'Deep Brown': '#3d2817', // Very dark brown, almost black
-  'Ebony': '#2a1f17', // Deepest dark brown/black, cool undertones
-  'Fair': '#f5deb3', // Light beige, common fair skin tone
-  'Golden': '#d4a574', // Golden-yellow undertone, warm medium
-  'Honey': '#d4a574', // Warm golden-brown, similar to amber
-  'Ivory': '#fffff0', // Very pale, off-white with slight yellow
-  'Light': '#f5deb3', // Light beige, common light skin
-  'Light Beige': '#f5f5dc', // Very light beige, pale tone
-  'Mahogany': '#c04000', // Rich reddish-brown, deep warm tone
-  'Medium': '#d2b48c', // Medium tan/beige, neutral undertones
-  'Olive': '#bab86c', // Yellow-green undertone, Mediterranean skin
-  'Pale': '#f5deb3', // Light, pale beige, fair skin
-  'Porcelain': '#fef5e7', // Very pale, almost white with slight warmth
-  'Rosy': '#e8b4a0', // Light with pink undertones, fair with blush
-  'Ruddy': '#c08080', // Reddish, flushed appearance, warm undertones
-  'Sable': '#6b4423', // Dark brown, rich and warm
-  'Sienna': '#a0522d', // Reddish-brown, warm medium-dark
-  'Tan': '#d2b48c', // Medium tan, sun-kissed appearance
+  'Albino': '#fff8f0',
+  'Amber': '#d4a574',
+  'Ashen': '#c9b99b',
+  'Black': '#3d2817',
+  'Bronze': '#cd7f32',
+  'Brown': '#8b4513',
+  'Caramel': '#af6e4d',
+  'Chestnut': '#954535',
+  'Copper': '#b87333',
+  'Dark Brown': '#5c4033',
+  'Deep Brown': '#3d2817',
+  'Ebony': '#2a1f17',
+  'Fair': '#f5deb3',
+  'Golden': '#d4a574',
+  'Honey': '#d4a574',
+  'Ivory': '#fffff0',
+  'Light': '#f5deb3',
+  'Light Beige': '#f5f5dc',
+  'Mahogany': '#c04000',
+  'Medium': '#d2b48c',
+  'Olive': '#bab86c',
+  'Pale': '#f5deb3',
+  'Porcelain': '#fef5e7',
+  'Rosy': '#e8b4a0',
+  'Ruddy': '#c08080',
+  'Sable': '#6b4423',
+  'Sienna': '#a0522d',
+  'Tan': '#d2b48c',
 };
 
-/**
- * Get hex color for a color name
- * Returns the hex value if found, or null if not found
- */
-export function getColorHex(colorName: string): string | null {
-  return colorHexMap[colorName] || null;
-}
+async function migrateColorHexToDb() {
+  console.log('Starting color hex code migration to database...');
+  console.log(`Color hex map contains ${Object.keys(colorHexMap).length} entries`);
 
-/**
- * Check if a color name exists in the mapping
- */
-export function hasColorHex(colorName: string): boolean {
-  return colorName in colorHexMap;
-}
+  // Map color fields
+  const colorFields = ['eye_color', 'hair_color', 'skin_tone'];
+  let updated = 0;
+  let errors = 0;
+  let skipped = 0;
 
-/**
- * Extract color name from stored value (removes hex codes)
- * Handles multiple formats:
- * - "#hex Color Name" -> "Color Name"
- * - "Color Name|#hex" -> "Color Name"
- * - "Color Name #hex" -> "Color Name"
- * - "Color Name" -> "Color Name" (unchanged)
- */
-export function extractColorName(storedValue: string | null | undefined): string {
-  if (!storedValue) return '';
-  return extractColorNameOnly(storedValue);
-}
+  for (const field of colorFields) {
+    console.log(`\nProcessing ${field}...`);
+    
+    // Get all options for this field from database
+    const { data: existingOptions, error: fetchError } = await supabase
+      .from('dropdown_options')
+      .select('id, option, hex_code')
+      .eq('field', field);
 
-/**
- * Extract hex from stored value
- * Handles multiple formats:
- * - "#hex Color Name" (hex at beginning)
- * - "Color Name|#hex" (hex after pipe)
- * - "Color Name #hex" (hex at end)
- * Returns hex if found, or null
- */
-export function extractColorHex(storedValue: string | null | undefined): string | null {
-  if (!storedValue) return null;
-  
-  // Try format: "#hex Color Name" (hex at beginning)
-  const hexAtStartMatch = storedValue.match(/^(#[0-9A-Fa-f]{6})\s+/);
-  if (hexAtStartMatch) {
-    return hexAtStartMatch[1];
-  }
-  
-  // Try format: "Color Name|#hex" (hex after pipe)
-  if (storedValue.includes('|')) {
-    const parts = storedValue.split('|');
-    const hex = parts[parts.length - 1].trim();
-    if (hex && hex.startsWith('#')) {
-      return hex;
+    if (fetchError) {
+      console.error(`Error fetching ${field} options:`, fetchError);
+      errors++;
+      continue;
+    }
+
+    if (!existingOptions || existingOptions.length === 0) {
+      console.log(`No options found for ${field}, skipping...`);
+      continue;
+    }
+
+    console.log(`Found ${existingOptions.length} options for ${field}`);
+
+    // Update each option with hex code from colorHexMap
+    for (const row of existingOptions) {
+      const colorName = row.option;
+      const hexCode = colorHexMap[colorName];
+
+      if (hexCode && row.hex_code !== hexCode) {
+        console.log(`  Updating "${colorName}" with hex ${hexCode}`);
+        
+        const { error: updateError } = await supabase
+          .from('dropdown_options')
+          .update({ hex_code: hexCode })
+          .eq('id', row.id);
+
+        if (updateError) {
+          console.error(`    Error updating ${colorName}:`, updateError);
+          errors++;
+        } else {
+          updated++;
+        }
+      } else if (!hexCode) {
+        console.log(`  No hex code found for "${colorName}" in colorHexMap`);
+        skipped++;
+      } else {
+        console.log(`  "${colorName}" already has correct hex code`);
+      }
     }
   }
-  
-  // Try format: "Color Name #hex" (hex at end)
-  const hexAtEndMatch = storedValue.match(/\s+(#[0-9A-Fa-f]{6})$/);
-  if (hexAtEndMatch) {
-    return hexAtEndMatch[1];
+
+  console.log('\nMigration complete!');
+  console.log(`- Updated: ${updated} options with hex codes`);
+  console.log(`- Skipped: ${skipped} options without hex codes in map`);
+  if (errors > 0) {
+    console.log(`- Errors: ${errors} failed updates`);
   }
   
-  return null;
-}
-
-/**
- * Extract color name from stored value (removes hex codes)
- * Handles multiple formats and removes hex codes
- */
-export function extractColorNameOnly(storedValue: string | null | undefined): string {
-  if (!storedValue) return '';
-  
-  let colorName = storedValue;
-  
-  // Remove hex at beginning: "#hex Color Name" -> "Color Name"
-  colorName = colorName.replace(/^#[0-9A-Fa-f]{6}\s+/, '');
-  
-  // Remove hex after pipe: "Color Name|#hex" -> "Color Name"
-  if (colorName.includes('|')) {
-    colorName = colorName.split('|')[0].trim();
+  if (updated > 0) {
+    console.log('\nNext step: Run npx tsx scripts/utilities/generate-dropdown-options.ts to update JSON backup');
   }
-  
-  // Remove hex at end: "Color Name #hex" -> "Color Name"
-  colorName = colorName.replace(/\s+#[0-9A-Fa-f]{6}$/, '');
-  
-  return colorName.trim();
 }
 
+migrateColorHexToDb()
+  .then(() => {
+    console.log('\nDone!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Migration failed:', error);
+    process.exit(1);
+  });

@@ -17,7 +17,8 @@ interface DynamicFieldProps {
  */
 export function DynamicField({ fieldDef, fieldPath, disabled = false, error }: DynamicFieldProps) {
   const { register, formState, control } = useFormContext();
-  const fieldError = error || formState.errors[fieldPath]?.message;
+  const errorMessage = formState.errors[fieldPath]?.message;
+  const fieldError = error || (typeof errorMessage === 'string' ? errorMessage : undefined);
 
   switch (fieldDef.type) {
     case 'text':

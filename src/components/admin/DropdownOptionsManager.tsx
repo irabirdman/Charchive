@@ -3,16 +3,25 @@
 import { useState, useMemo } from 'react';
 import { csvOptions } from '@/lib/utils/csvOptionsData';
 import { FIELD_LABELS } from '@/lib/utils/dropdownOptions';
-import { getColorHex } from '@/lib/utils/colorHexMap';
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface DropdownOptionsManagerProps {
   initialOptions?: Record<string, string[]>;
+  initialHexCodes?: Record<string, Record<string, string>>;
 }
 
-export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManagerProps) {
+export function DropdownOptionsManager({ initialOptions, initialHexCodes }: DropdownOptionsManagerProps) {
   const [options, setOptions] = useState<Record<string, string[]>>(
     initialOptions || csvOptions
   );
+  const [hexCodes, setHexCodes] = useState<Record<string, Record<string, string>>>(
+    initialHexCodes || {}
+  );
+
+  // Helper to get hex code for a color
+  const getColorHex = (field: string, value: string): string | null => {
+    return hexCodes[field]?.[value] || null;
+  };
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
@@ -159,9 +168,10 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
     console.log('[Client] Options data:', options);
 
     try {
-      const requestBody = { options };
+      const requestBody = { options, hexCodes };
       console.log('[Client] Sending PUT request to /api/admin/dropdown-options');
       console.log('[Client] Request body size:', JSON.stringify(requestBody).length, 'bytes');
+      console.log('[Client] Hex codes being sent:', Object.keys(hexCodes).length, 'fields with hex codes');
       
       const response = await fetch('/api/admin/dropdown-options', {
         method: 'PUT',
@@ -192,6 +202,10 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
             if (refreshData.options) {
               console.log('[Client] Refreshed options from server:', Object.keys(refreshData.options).length, 'fields');
               setOptions(refreshData.options);
+            }
+            if (refreshData.hexCodes) {
+              console.log('[Client] Refreshed hex codes from server');
+              setHexCodes(refreshData.hexCodes);
             }
           }
         } catch (refreshError) {
@@ -432,8 +446,8 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
                                     />
                                   </td>
                                   <td className="px-4 py-2 text-gray-200">
-                                    {(field === 'hair_color' || field === 'eye_color') ? (() => {
-                                      const hexColor = getColorHex(value);
+                                    {(field === 'hair_color' || field === 'eye_color' || field === 'skin_tone') ? (() => {
+                                      const hexColor = getColorHex(field, value);
                                       if (hexColor) {
                                         return (
                                           <div className="flex items-center gap-3">

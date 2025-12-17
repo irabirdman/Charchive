@@ -27,10 +27,10 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 async function generateDropdownOptions() {
   console.log('Generating dropdown options TypeScript file from database...');
 
-  // Query all options from database
+  // Query all options from database (including hex_code for colors)
   const { data, error } = await supabase
     .from('dropdown_options')
-    .select('field, option')
+    .select('field, option, hex_code')
     .order('field', { ascending: true })
     .order('option', { ascending: true });
 
@@ -43,8 +43,9 @@ async function generateDropdownOptions() {
     console.warn('No options found in database. Generating empty file.');
   }
 
-  // Group options by field
+  // Group options by field, and include hex codes
   const options: Record<string, string[]> = {};
+  const hexCodes: Record<string, Record<string, string>> = {}; // field -> option -> hex_code
 
   if (data) {
     for (const row of data) {
@@ -52,6 +53,14 @@ async function generateDropdownOptions() {
         options[row.field] = [];
       }
       options[row.field].push(row.option);
+      
+      // Store hex code if present
+      if (row.hex_code) {
+        if (!hexCodes[row.field]) {
+          hexCodes[row.field] = {};
+        }
+        hexCodes[row.field][row.option] = row.hex_code;
+      }
     }
   }
 
@@ -71,6 +80,9 @@ async function generateDropdownOptions() {
 // Last generated: ${new Date().toISOString()}
 
 export const csvOptions: Record<string, string[]> = ${JSON.stringify(options, null, 2)};
+
+// Hex codes for color options (field -> option -> hex_code)
+export const colorHexCodes: Record<string, Record<string, string>> = ${JSON.stringify(hexCodes, null, 2)};
 
 // Individual exports for convenience
 ${Object.entries(options).map(([key, values]) => 

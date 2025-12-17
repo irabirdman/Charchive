@@ -7,6 +7,8 @@ export function getTemplateTypeFromWorldSlug(slug: string): string {
     'shaman-king': 'shaman-king',
     'zelda': 'zelda',
     'dragon-ball-z': 'dragonball',
+    'dragonball': 'dragonball', // Handle alternative slug format
+    'dragon-ball': 'dragonball', // Handle alternative slug format
     'pokemon': 'pokemon',
     'nier': 'nier',
     'kismet': 'original',
@@ -17,5 +19,5 @@ export function getTemplateTypeFromWorldSlug(slug: string): string {
     'none': 'none',
     'not-accessible': 'none',
   };
-  return templateMap[slug] || 'none';
+  return templateMap[slug.toLowerCase()] || 'none';
 }

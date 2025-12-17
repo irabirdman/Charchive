@@ -8,12 +8,13 @@ export default async function DropdownOptionsPage() {
 
   // Always fetch from database first, fallback to generated TypeScript file
   let initialOptions = csvOptions;
+  let initialHexCodes: Record<string, Record<string, string>> = {};
   
   try {
     console.log('[Server] Fetching dropdown options from database...');
     const { data, error } = await supabase
       .from('dropdown_options')
-      .select('field, option')
+      .select('field, option, hex_code')
       .order('field', { ascending: true })
       .order('option', { ascending: true });
 
@@ -21,13 +22,22 @@ export default async function DropdownOptionsPage() {
       console.error('[Server] Error fetching from database:', error);
       console.warn('[Server] Falling back to generated file');
     } else if (data) {
-      // Group options by field
+      // Group options by field, and include hex codes
       const dbOptions: Record<string, string[]> = {};
+      const dbHexCodes: Record<string, Record<string, string>> = {};
       for (const row of data) {
         if (!dbOptions[row.field]) {
           dbOptions[row.field] = [];
         }
         dbOptions[row.field].push(row.option);
+        
+        // Store hex code if present
+        if (row.hex_code) {
+          if (!dbHexCodes[row.field]) {
+            dbHexCodes[row.field] = {};
+          }
+          dbHexCodes[row.field][row.option] = row.hex_code;
+        }
       }
       
       // Sort options within each field
@@ -38,6 +48,7 @@ export default async function DropdownOptionsPage() {
       const totalOptions = Object.values(dbOptions).reduce((sum, opts) => sum + opts.length, 0);
       console.log(`[Server] Loaded ${Object.keys(dbOptions).length} fields with ${totalOptions} total options from database`);
       initialOptions = dbOptions;
+      initialHexCodes = dbHexCodes;
     } else {
       console.warn('[Server] No data returned from database, using generated file');
     }
@@ -64,7 +75,7 @@ export default async function DropdownOptionsPage() {
       </div>
 
       <div className="bg-gray-800 rounded-lg shadow p-6 border border-gray-700">
-        <DropdownOptionsManager initialOptions={initialOptions} />
+        <DropdownOptionsManager initialOptions={initialOptions} initialHexCodes={initialHexCodes} />
       </div>
     </div>
   );
