@@ -128,28 +128,51 @@ export function DropdownOptionsManager({ initialOptions }: DropdownOptionsManage
     setIsSaving(true);
     setSaveMessage(null);
 
+    // Log what we're about to send
+    const fieldsCount = Object.keys(options).length;
+    const totalOptions = Object.values(options).reduce((sum, opts) => sum + opts.length, 0);
+    console.log('[Client] Starting save operation...');
+    console.log('[Client] Fields to save:', fieldsCount);
+    console.log('[Client] Total options:', totalOptions);
+    console.log('[Client] Options data:', options);
+
     try {
+      const requestBody = { options };
+      console.log('[Client] Sending PUT request to /api/admin/dropdown-options');
+      console.log('[Client] Request body size:', JSON.stringify(requestBody).length, 'bytes');
+      
       const response = await fetch('/api/admin/dropdown-options', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ options }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('[Client] Response status:', response.status, response.statusText);
+      console.log('[Client] Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('[Client] Error response data:', errorData);
         const errorMessage = errorData.error || 'Failed to save options';
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('[Client] Success response:', data);
       setSaveMessage({ type: 'success', text: data.message || 'Options saved successfully!' });
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
-      console.error('Error saving options:', error);
+      console.error('[Client] Error saving options:', error);
+      if (error instanceof Error) {
+        console.error('[Client] Error name:', error.name);
+        console.error('[Client] Error message:', error.message);
+        console.error('[Client] Error stack:', error.stack);
+      }
       const errorMessage = error instanceof Error ? error.message : 'Failed to save options. Please try again.';
       setSaveMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsSaving(false);
+      console.log('[Client] Save operation completed');
     }
   };
 
