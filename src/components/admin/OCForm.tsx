@@ -1271,6 +1271,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         };
         const templateType = getTemplateTypeFromWorldSlug(worldFromList.slug, worldForTemplate as World) as TemplateType;
         setValue('template_type', templateType, { shouldDirty: !oc });
+        setValue('series_type', worldFromList.series_type || 'original', { shouldDirty: !oc });
         
         setSelectedWorld(prev => {
           if (!prev || prev.id !== worldId) {
@@ -1297,6 +1298,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         const templateType = getTemplateTypeFromWorldSlug(worldData.slug, worldData) as TemplateType;
         setSelectedWorld(worldData);
         setValue('template_type', templateType, { shouldDirty: false });
+        setValue('series_type', worldData.series_type, { shouldDirty: false });
       } else {
         console.error('[OCForm] Failed to fetch world data');
       }
@@ -1304,7 +1306,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
     loadWorld();
   }, [worldId, oc, setValue, worlds]);
 
-  // Auto-set template_type when world changes (both create and edit mode)
+  // Auto-set template_type and series_type when world changes (both create and edit mode)
   useEffect(() => {
     if (worldId) {
       // Use selectedWorld state if available (has full world data), otherwise fall back to worlds array
@@ -1312,6 +1314,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       if (worldToUse) {
         const templateType = getTemplateTypeFromWorldSlug(worldToUse.slug, worldToUse as Partial<World>) as TemplateType;
         setValue('template_type', templateType, { shouldDirty: !oc });
+        setValue('series_type', worldToUse.series_type || 'original', { shouldDirty: !oc });
       }
     }
   }, [worldId, worlds, selectedWorld, oc, setValue]);
