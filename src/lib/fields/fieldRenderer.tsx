@@ -1,8 +1,9 @@
 'use client';
 
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext, Controller } from 'react-hook-form';
 import type { WorldFieldDefinition } from '@/types/oc';
 import { validateFieldValue } from './worldFields';
+import { FormAutocomplete } from '@/components/admin/forms/FormAutocomplete';
 
 interface DynamicFieldProps {
   fieldDef: WorldFieldDefinition;
@@ -15,11 +16,41 @@ interface DynamicFieldProps {
  * Renders a single dynamic field based on its type
  */
 export function DynamicField({ fieldDef, fieldPath, disabled = false, error }: DynamicFieldProps) {
-  const { register, formState } = useFormContext();
+  const { register, formState, control } = useFormContext();
   const fieldError = error || formState.errors[fieldPath]?.message;
 
   switch (fieldDef.type) {
     case 'text':
+      // If field has options, use autocomplete with custom values allowed
+      if (fieldDef.options) {
+        return (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              {fieldDef.label}
+              {fieldDef.required && <span className="text-red-400 ml-1">*</span>}
+            </label>
+            {fieldDef.description && (
+              <p className="text-xs text-gray-400 mb-1">{fieldDef.description}</p>
+            )}
+            <Controller
+              name={fieldPath}
+              control={control}
+              render={({ field: controllerField }) => (
+                <FormAutocomplete
+                  {...controllerField}
+                  optionsSource={fieldDef.options}
+                  allowCustom={true}
+                  placeholder={`Type ${fieldDef.label.toLowerCase()}...`}
+                  disabled={disabled}
+                  error={fieldError}
+                />
+              )}
+            />
+            {fieldError && <p className="mt-1 text-sm text-red-400">{String(fieldError)}</p>}
+          </div>
+        );
+      }
+      // Regular text input for fields without options
       return (
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">

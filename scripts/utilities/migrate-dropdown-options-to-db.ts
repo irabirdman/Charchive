@@ -24,115 +24,42 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-interface CSVRow {
-  Field: string;
-  Option: string;
-}
-
-// Parse CSV line - handles quoted values
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = i < line.length - 1 ? line[i + 1] : '';
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        // Escaped quote
-        current += '"';
-        i++; // Skip next quote
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  result.push(current.trim());
-  return result;
-}
-
 async function migrateDropdownOptions() {
   console.log('Starting dropdown options migration...');
 
-  // Try to read from dropdown-options.csv first
-  const csvPath = path.join(process.cwd(), 'dropdown-options.csv');
+  // Read from generated TypeScript file (fallback JSON)
+  const tsPath = path.join(process.cwd(), 'src/lib/utils/csvOptionsData.ts');
   let options: Array<{ field: string; option: string }> = [];
 
-  if (fs.existsSync(csvPath)) {
-    console.log(`Reading from ${csvPath}...`);
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const lines = csvContent.trim().split('\n');
+  if (!fs.existsSync(tsPath)) {
+    console.error('csvOptionsData.ts not found');
+    console.error('Please run: npx tsx scripts/utilities/generate-dropdown-options.ts first');
+    process.exit(1);
+  }
 
-    if (lines.length < 2) {
-      console.error('CSV file is empty or has no data rows');
-      process.exit(1);
-    }
+  console.log('Reading from csvOptionsData.ts...');
+  const tsContent = fs.readFileSync(tsPath, 'utf-8');
+  // Extract the csvOptions object using regex
+  const match = tsContent.match(/export const csvOptions: Record<string, string\[\]> = ({[\s\S]*?});/);
+  
+  if (!match) {
+    console.error('Could not parse csvOptions from TypeScript file');
+    process.exit(1);
+  }
 
-    // Parse header
-    const headers = parseCSVLine(lines[0]);
-    const fieldIndex = headers.indexOf('Field');
-    const optionIndex = headers.indexOf('Option');
-
-    if (fieldIndex === -1 || optionIndex === -1) {
-      console.error('CSV file must have "Field" and "Option" columns');
-      process.exit(1);
-    }
-
-    // Parse data rows
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = parseCSVLine(line);
-      const field = values[fieldIndex]?.trim();
-      const option = values[optionIndex]?.trim();
-
-      if (field && option) {
+  try {
+    const csvOptions = eval(`(${match[1]})`) as Record<string, string[]>;
+    
+    for (const [field, fieldOptions] of Object.entries(csvOptions)) {
+      for (const option of fieldOptions) {
         options.push({ field, option });
       }
     }
 
-    console.log(`Found ${options.length} options in CSV file`);
-  } else {
-    // Fallback: read from generated TypeScript file
-    console.log('CSV file not found, reading from csvOptionsData.ts...');
-    const tsPath = path.join(process.cwd(), 'src/lib/utils/csvOptionsData.ts');
-    
-    if (!fs.existsSync(tsPath)) {
-      console.error('Neither dropdown-options.csv nor csvOptionsData.ts found');
-      process.exit(1);
-    }
-
-    const tsContent = fs.readFileSync(tsPath, 'utf-8');
-    // Extract the csvOptions object using regex
-    const match = tsContent.match(/export const csvOptions: Record<string, string\[\]> = ({[\s\S]*?});/);
-    
-    if (!match) {
-      console.error('Could not parse csvOptions from TypeScript file');
-      process.exit(1);
-    }
-
-    try {
-      const csvOptions = eval(`(${match[1]})`) as Record<string, string[]>;
-      
-      for (const [field, fieldOptions] of Object.entries(csvOptions)) {
-        for (const option of fieldOptions) {
-          options.push({ field, option });
-        }
-      }
-
-      console.log(`Found ${options.length} options in TypeScript file`);
-    } catch (error) {
-      console.error('Error parsing TypeScript file:', error);
-      process.exit(1);
-    }
+    console.log(`Found ${options.length} options in TypeScript file`);
+  } catch (error) {
+    console.error('Error parsing TypeScript file:', error);
+    process.exit(1);
   }
 
   if (options.length === 0) {

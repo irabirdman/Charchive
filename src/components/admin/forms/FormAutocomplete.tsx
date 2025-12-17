@@ -31,9 +31,11 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     value,
     onChange,
     onBlur,
-    allowCustom = false,
+    allowCustom, // Don't default - will be set based on optionsSource below
     ...props
   }, ref) => {
+    // Default allowCustom to true when optionsSource is provided (unless explicitly set to false)
+    const finalAllowCustom = allowCustom !== undefined ? allowCustom : (optionsSource ? true : false);
     // Handle both register and Controller field props
     let registerOnChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | undefined;
     let registerOnBlur: ((e: React.FocusEvent<HTMLInputElement>) => void) | undefined;
@@ -92,7 +94,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
         .slice(0, 10); // Limit to 10 suggestions
       
       // If allowCustom is true and input doesn't exactly match any option, add "Add [value]" option
-      if (allowCustom && inputValue.trim()) {
+      if (finalAllowCustom && inputValue.trim()) {
         const exactMatch = availableOptions.some(opt => opt.toLowerCase() === lowerInput);
         if (!exactMatch) {
           return [...matching, `Add "${inputValue.trim()}"`];
@@ -100,7 +102,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
       }
       
       return matching;
-    }, [inputValue, availableOptions, allowCustom]);
+    }, [inputValue, availableOptions, finalAllowCustom]);
 
     // Calculate dropdown position (above or below)
     useEffect(() => {
@@ -162,7 +164,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
     const handleSelectSuggestion = (suggestion: string) => {
       // If it's a "Add [value]" option, extract the actual value
       let finalValue = suggestion;
-      if (allowCustom && suggestion.startsWith('Add "') && suggestion.endsWith('"')) {
+      if (finalAllowCustom && suggestion.startsWith('Add "') && suggestion.endsWith('"')) {
         finalValue = suggestion.slice(5, -1); // Remove 'Add "' prefix and '"' suffix
       }
       
@@ -202,7 +204,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
           e.preventDefault();
           if (highlightedIndex >= 0 && highlightedIndex < filteredSuggestions.length) {
             handleSelectSuggestion(filteredSuggestions[highlightedIndex]);
-          } else if (allowCustom && inputValue.trim()) {
+          } else if (finalAllowCustom && inputValue.trim()) {
             // If no suggestion is highlighted but allowCustom is true, use the input value
             const exactMatch = availableOptions.some(opt => opt.toLowerCase() === inputValue.toLowerCase());
             if (!exactMatch) {
@@ -293,7 +295,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
             }`}
           >
             {filteredSuggestions.map((suggestion, index) => {
-              const isAddOption = allowCustom && suggestion.startsWith('Add "');
+              const isAddOption = finalAllowCustom && suggestion.startsWith('Add "');
               return (
                 <li
                   key={suggestion}

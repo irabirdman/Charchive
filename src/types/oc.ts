@@ -24,6 +24,7 @@ export interface WorldFieldDefinition {
   description?: string;
   required?: boolean;
   defaultValue?: string | number | string[];
+  options?: string; // Field key in dropdown_options table for autocomplete (e.g., "accent", "ethnicity_race", "species")
 }
 
 export interface FieldSet {

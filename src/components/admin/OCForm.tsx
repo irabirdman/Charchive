@@ -36,7 +36,7 @@ function TemplateFieldsSection({
   watch,
   isSubmitting,
 }: {
-  template: { name: string; fields: Array<{ key: string; label: string; type: 'text' | 'array' | 'number' }> };
+  template: { name: string; fields: TemplateField[] };
   templateType: string;
   control: any;
   register: any;
@@ -85,15 +85,8 @@ function TemplateFieldsSection({
             );
           } else {
             // Default to text input
-            // Check if this field should use autocomplete based on common patterns
-            const useAutocomplete = field.key === 'region' || field.key === 'trainer_class' || field.key === 'species';
-            const optionsSource = useAutocomplete ? (
-              field.key === 'region' ? 'region' :
-              field.key === 'trainer_class' ? 'trainer_class' :
-              field.key === 'species' ? 'species' : undefined
-            ) : undefined;
-            
-            if (useAutocomplete && optionsSource) {
+            // If field has options property, use autocomplete with custom values allowed
+            if (field.options) {
               return (
                 <div key={field.key}>
                   <FormLabel htmlFor={fieldPath}>
@@ -106,7 +99,8 @@ function TemplateFieldsSection({
                     render={({ field: controllerField }) => (
                       <FormAutocomplete
                         {...controllerField}
-                        optionsSource={optionsSource}
+                        optionsSource={field.options}
+                        allowCustom={true}
                         placeholder={`Type ${field.label.toLowerCase()}...`}
                         disabled={isSubmitting}
                       />

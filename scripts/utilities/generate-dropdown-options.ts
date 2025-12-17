@@ -61,8 +61,12 @@ async function generateDropdownOptions() {
   });
 
   // Generate TypeScript file content
+  // This file serves as a fallback when database is unavailable
+  // The useDropdownOptions hook fetches from database first, then falls back to this file
   const fileContent = `// Auto-generated file - do not edit manually
 // Generated from: dropdown_options table in database
+// This file is a FALLBACK - the database is the primary source of truth
+// The useDropdownOptions hook fetches from database first, then falls back to this file
 // Run: npx tsx scripts/utilities/generate-dropdown-options.ts
 // Last generated: ${new Date().toISOString()}
 
