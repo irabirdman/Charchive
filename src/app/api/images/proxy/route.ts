@@ -31,10 +31,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  logger.debug('ImageProxy', 'Attempting to fetch Google Drive image', {
-    fileId: driveFileId,
-    originalUrl: url,
-  });
+  // Only log failures, not successful attempts
 
   // Try multiple URL formats in order of reliability
   const urls = url 
@@ -54,8 +51,6 @@ export async function GET(request: NextRequest) {
     attemptCount++;
     let timeoutId: NodeJS.Timeout | null = null;
     try {
-      logger.debug('ImageProxy', `Attempt ${attemptCount}/${urls.length}`, { url: imageUrl, fileId: driveFileId });
-      
       // Create abort controller for timeout
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
@@ -73,40 +68,18 @@ export async function GET(request: NextRequest) {
       });
       
       if (timeoutId) clearTimeout(timeoutId);
-      const fetchDuration = Date.now() - fetchStartTime;
 
       // Check if response is actually an image
       const contentType = response.headers.get('content-type') || '';
       const isImage = contentType.startsWith('image/');
-      const contentLength = response.headers.get('content-length');
       const finalUrl = response.url; // Get final URL after redirects
-      
-      logger.debug('ImageProxy', `Response received`, {
-        url: imageUrl,
-        finalUrl,
-        status: response.status,
-        contentType,
-        contentLength,
-        duration: `${fetchDuration}ms`,
-        fileId: driveFileId,
-      });
       
       if (response.ok && isImage) {
         const imageBuffer = await response.arrayBuffer();
         
         // Verify it's actually image data (not HTML error page)
         if (imageBuffer.byteLength > 100) {
-          const totalDuration = Date.now() - startTime;
-          logger.success('ImageProxy', 'Successfully fetched image', {
-            fileId: driveFileId,
-            url: imageUrl,
-            finalUrl,
-            size: `${(imageBuffer.byteLength / 1024).toFixed(2)} KB`,
-            contentType,
-            totalDuration: `${totalDuration}ms`,
-            attempt: attemptCount,
-          });
-          
+          // Success - return image without logging
           // Return the image with appropriate headers
           return new NextResponse(imageBuffer, {
             status: 200,
@@ -120,7 +93,6 @@ export async function GET(request: NextRequest) {
         } else {
           const errorMsg = `Response too small (${imageBuffer.byteLength} bytes) - likely not an image`;
           errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
-          logger.warn('ImageProxy', errorMsg, { url: imageUrl, fileId: driveFileId, size: imageBuffer.byteLength });
         }
       } else {
         // Check if we got redirected to a login page or error page
@@ -136,47 +108,17 @@ export async function GET(request: NextRequest) {
             if (isLoginPage) {
               const errorMsg = 'File not publicly accessible (redirected to login/access page)';
               errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
-              logger.error('ImageProxy', errorMsg, {
-                url: imageUrl,
-                finalUrl,
-                fileId: driveFileId,
-                status: response.status,
-                contentType,
-                responsePreview: text.substring(0, 200),
-              });
             } else {
               const errorMsg = `Non-image response received`;
               errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
-              logger.warn('ImageProxy', errorMsg, {
-                url: imageUrl,
-                finalUrl,
-                fileId: driveFileId,
-                status: response.status,
-                contentType,
-                responsePreview: text.substring(0, 200),
-              });
             }
           } catch (textError) {
             const errorMsg = `Failed to read response text`;
             errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
-            logger.warn('ImageProxy', errorMsg, {
-              url: imageUrl,
-              fileId: driveFileId,
-              status: response.status,
-              contentType,
-              textError: textError instanceof Error ? textError.message : String(textError),
-            });
           }
         } else {
           const errorMsg = `Unexpected response`;
           errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
-          logger.warn('ImageProxy', errorMsg, {
-            url: imageUrl,
-            fileId: driveFileId,
-            status: response.status,
-            contentType,
-            isImage,
-          });
         }
       }
     } catch (error) {
@@ -185,14 +127,6 @@ export async function GET(request: NextRequest) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorName = error instanceof Error ? error.name : 'UnknownError';
       errors.push({ url: imageUrl, error: `${errorName}: ${errorMessage}` });
-      
-      logger.warn('ImageProxy', 'Fetch error', {
-        url: imageUrl,
-        fileId: driveFileId,
-        attempt: attemptCount,
-        error: errorMessage,
-        errorName,
-      });
       continue;
     }
   }

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { GoogleDriveImage } from '@/components/oc/GoogleDriveImage';
 
 interface OC {
   id: string;
@@ -292,16 +293,29 @@ export function OCList({ ocs, templates }: OCListProps) {
                 className="bg-gray-700/90 rounded-lg shadow-lg border border-gray-600/70 overflow-hidden hover:border-pink-500/50 transition-colors"
               >
                 {/* Image/Icon Header */}
-                <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900">
-                  {oc.image_url || oc.icon_url ? (
-                    <img
-                      src={oc.image_url || oc.icon_url || ''}
-                      alt={oc.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
+                  {oc.icon_url || oc.image_url ? (
+                    (oc.icon_url || oc.image_url)?.includes('drive.google.com') ? (
+                      <GoogleDriveImage
+                        src={oc.icon_url || oc.image_url || ''}
+                        alt={oc.name}
+                        className="w-full h-full"
+                        style={{ 
+                          objectFit: oc.icon_url ? 'contain' : 'cover',
+                          objectPosition: 'center'
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={oc.icon_url || oc.image_url || ''}
+                        alt={oc.name}
+                        className={`w-full h-full ${oc.icon_url ? 'object-contain' : 'object-cover'}`}
+                        style={{ objectPosition: 'center' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-4xl text-gray-600">👤</div>
