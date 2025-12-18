@@ -15,24 +15,13 @@ export default async function AdminOCsPage() {
   const { data: ocs } = await supabase
     .from('ocs')
     .select(`
-      id,
-      name,
-      slug,
-      template_type,
-      is_public,
+      *,
       world:worlds(name),
-      identity_id,
       identity:oc_identities(
         id,
         name,
         versions:ocs(id)
-      ),
-      modular_fields,
-      extra_fields,
-      image_url,
-      icon_url,
-      created_at,
-      updated_at
+      )
     `)
     .order('name', { ascending: true });
 

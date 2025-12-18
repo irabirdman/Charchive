@@ -43,13 +43,52 @@ function calculateCompletion(oc: OC, templates: Templates): { filled: number; to
   let filled = 0;
   let total = 0;
 
-  // Count basic fields we know are always present
-  const basicFields = ['name', 'slug', 'image_url', 'icon_url'];
-  basicFields.forEach(field => {
+  // All OC fields from the database (excluding system/metadata fields)
+  const ocFields = [
+    // Overview
+    'first_name', 'last_name', 'aliases', 'species', 'sex', 'gender', 'pronouns',
+    'age', 'date_of_birth', 'occupation', 'affiliations', 'romantic_orientation',
+    'sexual_orientation', 'star_sign',
+    // Identity Background
+    'ethnicity', 'place_of_origin', 'current_residence', 'languages',
+    // Personality Overview
+    'personality_summary', 'alignment',
+    // Personality Metrics (1-10 scale)
+    'sociability', 'communication_style', 'judgment', 'emotional_resilience',
+    'courage', 'risk_behavior', 'honesty', 'discipline', 'temperament', 'humor',
+    // Personality Traits
+    'positive_traits', 'neutral_traits', 'negative_traits',
+    // Abilities
+    'abilities', 'skills', 'aptitudes', 'strengths', 'limits', 'conditions',
+    // Appearance
+    'standard_look', 'alternate_looks', 'accessories', 'visual_motifs',
+    'appearance_changes', 'height', 'weight', 'build', 'eye_color', 'hair_color',
+    'skin_tone', 'features', 'appearance_summary',
+    // Relationships
+    'family', 'friends_allies', 'rivals_enemies', 'romantic', 'other_relationships',
+    // History
+    'origin', 'formative_years', 'major_life_events', 'history_summary',
+    // Preferences & Habits
+    'likes', 'dislikes',
+    // Media
+    'gallery', 'image_url', 'icon_url', 'seiyuu', 'voice_actor', 'theme_song',
+    'inspirations', 'design_notes', 'name_meaning_etymology', 'creator_notes',
+    // Trivia
+    'trivia',
+    // Development
+    'development_status',
+  ];
+
+  // Count all OC fields
+  ocFields.forEach(field => {
     total++;
     const value = (oc as any)[field];
     if (value !== null && value !== undefined && value !== '') {
-      filled++;
+      if (Array.isArray(value) && value.length > 0) {
+        filled++;
+      } else if (!Array.isArray(value)) {
+        filled++;
+      }
     }
   });
 
