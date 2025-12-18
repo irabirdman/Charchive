@@ -46,7 +46,7 @@ export function LoreCard({ lore }: LoreCardProps) {
               alt={lore.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
+              className="object-cover object-top"
               unoptimized={lore.banner_image_url.includes('drive.google.com') || isGoogleSitesUrl(lore.banner_image_url)}
             />
           ) : (

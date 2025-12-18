@@ -45,7 +45,7 @@ export function OCCard({ oc }: OCCardProps) {
               <GoogleDriveImage
                 src={oc.image_url}
                 alt={oc.name}
-                className="object-cover w-full h-full"
+                className="object-cover object-top w-full h-full"
                 style={{ position: 'absolute', inset: 0 }}
               />
             ) : (
@@ -54,7 +54,7 @@ export function OCCard({ oc }: OCCardProps) {
                 alt={oc.name}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
+                className="object-cover object-top"
                 unoptimized={isGoogleSitesUrl(oc.image_url)}
               />
             )
