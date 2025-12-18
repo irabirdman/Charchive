@@ -16,22 +16,59 @@ export function CharacterFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [worlds, setWorlds] = useState<World[]>([]);
+  const [genderOptions, setGenderOptions] = useState<string[]>([]);
+  const [sexOptions, setSexOptions] = useState<string[]>([]);
 
   const search = searchParams.get('search') || '';
   const worldId = searchParams.get('world') || '';
   const seriesType = searchParams.get('series_type') || '';
+  const gender = searchParams.get('gender') || '';
+  const sex = searchParams.get('sex') || '';
 
   useEffect(() => {
     async function fetchWorlds() {
       const supabase = createClient();
       const { data } = await supabase
-        .from('worlds')
         .select('id, name')
+        .from('worlds')
         .eq('is_public', true)
         .order('name');
       if (data) setWorlds(data);
     }
     fetchWorlds();
+  }, []);
+
+  useEffect(() => {
+    async function fetchFilterOptions() {
+      const supabase = createClient();
+      
+      // Fetch unique gender values
+      const { data: genderData } = await supabase
+        .from('ocs')
+        .select('gender')
+        .eq('is_public', true)
+        .not('gender', 'is', null)
+        .not('gender', 'eq', '');
+      
+      // Fetch unique sex values
+      const { data: sexData } = await supabase
+        .from('ocs')
+        .select('sex')
+        .eq('is_public', true)
+        .not('sex', 'is', null)
+        .not('sex', 'eq', '');
+      
+      if (genderData) {
+        const uniqueGenders = Array.from(new Set(genderData.map(item => item.gender).filter(Boolean))) as string[];
+        setGenderOptions(uniqueGenders.sort());
+      }
+      
+      if (sexData) {
+        const uniqueSexes = Array.from(new Set(sexData.map(item => item.sex).filter(Boolean))) as string[];
+        setSexOptions(uniqueSexes.sort());
+      }
+    }
+    fetchFilterOptions();
   }, []);
 
   const updateFilter = (key: string, value: string) => {
@@ -48,7 +85,7 @@ export function CharacterFilters() {
     router.push('/ocs');
   };
 
-  const hasActiveFilters = !!(search || worldId || seriesType);
+  const hasActiveFilters = !!(search || worldId || seriesType || gender || sex);
 
   return (
     <FilterContainer
@@ -87,6 +124,32 @@ export function CharacterFilters() {
         ]}
         focusColor="pink"
       />
+
+      {genderOptions.length > 0 && (
+        <FilterSelect
+          label="Gender"
+          value={gender}
+          onChange={(value) => updateFilter('gender', value)}
+          options={[
+            { value: '', label: 'All Genders' },
+            ...genderOptions.map((g) => ({ value: g, label: g })),
+          ]}
+          focusColor="pink"
+        />
+      )}
+
+      {sexOptions.length > 0 && (
+        <FilterSelect
+          label="Sex"
+          value={sex}
+          onChange={(value) => updateFilter('sex', value)}
+          options={[
+            { value: '', label: 'All Sexes' },
+            ...sexOptions.map((s) => ({ value: s, label: s })),
+          ]}
+          focusColor="pink"
+        />
+      )}
     </FilterContainer>
   );
 }

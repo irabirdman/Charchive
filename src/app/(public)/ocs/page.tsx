@@ -47,6 +47,8 @@ export default async function OCsPage({ searchParams }: OCsPageProps) {
   const search = typeof searchParams.search === 'string' ? searchParams.search : '';
   const worldId = typeof searchParams.world === 'string' ? searchParams.world : '';
   const seriesType = typeof searchParams.series_type === 'string' ? searchParams.series_type : '';
+  const gender = typeof searchParams.gender === 'string' ? searchParams.gender : '';
+  const sex = typeof searchParams.sex === 'string' ? searchParams.sex : '';
 
   // Build query
   let query = supabase
@@ -64,6 +66,12 @@ export default async function OCsPage({ searchParams }: OCsPageProps) {
   }
   if (seriesType) {
     query = query.eq('series_type', seriesType);
+  }
+  if (gender) {
+    query = query.eq('gender', gender);
+  }
+  if (sex) {
+    query = query.eq('sex', sex);
   }
 
   const { data: ocs } = await query.order('name', { ascending: true });
