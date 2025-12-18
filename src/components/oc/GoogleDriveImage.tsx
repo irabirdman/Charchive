@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getGoogleDriveImageUrls } from '@/lib/utils/googleDriveImage';
+import { getGoogleDriveFileId } from '@/lib/utils/googleDriveImage';
 
 interface GoogleDriveImageProps {
   src: string;
@@ -18,39 +18,46 @@ export function GoogleDriveImage({
   style,
   fallbackSrc = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/960px-Placeholder_view_vector.svg.png'
 }: GoogleDriveImageProps) {
-  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string>(src);
   const [hasError, setHasError] = useState(false);
-  
-  const urls = src.includes('drive.google.com') 
-    ? getGoogleDriveImageUrls(src)
-    : [src];
-  
-  const currentUrl = urls[currentUrlIndex] || fallbackSrc;
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setCurrentUrlIndex(0);
+    // Reset state when src changes
     setHasError(false);
+    setIsLoading(true);
+
+    // If it's a Google Drive URL, use the proxy API
+    if (src.includes('drive.google.com')) {
+      const fileId = getGoogleDriveFileId(src);
+      if (fileId) {
+        // Use the proxy API to bypass CORS
+        const proxyUrl = `/api/images/proxy?fileId=${encodeURIComponent(fileId)}&url=${encodeURIComponent(src)}`;
+        setImageUrl(proxyUrl);
+      } else {
+        // Fallback to original URL if we can't extract file ID
+        setImageUrl(src);
+      }
+    } else {
+      // Not a Google Drive URL, use as-is
+      setImageUrl(src);
+    }
   }, [src]);
 
   const handleError = () => {
-    if (currentUrlIndex < urls.length - 1) {
-      // Try next URL format
-      setCurrentUrlIndex(currentUrlIndex + 1);
-    } else {
-      // All URLs failed, show fallback
-      setHasError(true);
-      console.error('Failed to load Google Drive image. Tried URLs:', urls);
-      console.error('Original URL:', src);
-    }
+    setHasError(true);
+    setIsLoading(false);
+    console.error('Failed to load image:', src);
   };
 
   const handleLoad = () => {
     setHasError(false);
+    setIsLoading(false);
   };
 
   return (
     <img
-      src={hasError ? fallbackSrc : currentUrl}
+      src={hasError ? fallbackSrc : imageUrl}
       alt={alt}
       className={className}
       style={style}
@@ -59,6 +66,8 @@ export function GoogleDriveImage({
     />
   );
 }
+
+
 
 
 

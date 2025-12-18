@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { convertGoogleDriveUrl, isGoogleSitesUrl } from '@/lib/utils/googleDriveImage';
+import { convertGoogleDriveUrl, isGoogleSitesUrl, getProxyUrl, getGoogleDriveFileId } from '@/lib/utils/googleDriveImage';
 import { GoogleDriveImage } from '@/components/oc/GoogleDriveImage';
 
 interface OCGalleryProps {
@@ -108,18 +108,15 @@ export function OCGallery({ images, ocName }: OCGalleryProps) {
 
   // Get multiple URL formats to try as fallbacks
   const getImageUrls = (url: string): string[] => {
-    const converted = convertGoogleDriveUrl(url);
-    const fileId = getGoogleDriveFileId(url);
-    
-    const urls = [converted];
-    
-    // Add thumbnail format as fallback (often more reliable)
-    if (fileId) {
-      urls.push(`https://drive.google.com/thumbnail?id=${fileId}&sz=w1920-h1080`);
-      urls.push(`https://drive.google.com/thumbnail?id=${fileId}`);
+    // If it's a Google Drive URL, use the proxy API
+    if (url.includes('drive.google.com')) {
+      const proxyUrl = getProxyUrl(url);
+      // Return proxy URL as the primary option
+      return [proxyUrl];
     }
     
-    return urls;
+    // For non-Google Drive URLs, return as-is
+    return [url];
   };
 
   const imageUrls = selectedImage ? getImageUrls(selectedImage) : [];

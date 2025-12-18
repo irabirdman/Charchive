@@ -82,6 +82,26 @@ export function isGoogleSitesUrl(url: string | null | undefined): boolean {
   return url.includes('lh3.googleusercontent.com/sitesv');
 }
 
+/**
+ * Converts a Google Drive URL to use our proxy API to bypass CORS
+ * Returns the original URL if it's not a Google Drive URL
+ * @param url - The Google Drive URL or any other URL
+ * @returns The proxy URL for Google Drive images, or the original URL
+ */
+export function getProxyUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  
+  if (url.includes('drive.google.com')) {
+    const fileId = getGoogleDriveFileId(url);
+    if (fileId) {
+      return `/api/images/proxy?fileId=${encodeURIComponent(fileId)}&url=${encodeURIComponent(url)}`;
+    }
+  }
+  
+  return url;
+}
+
+
 
 
 
