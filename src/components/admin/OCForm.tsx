@@ -28,6 +28,44 @@ import { StoryAliasSelector } from './StoryAliasSelector';
 import { optionalUuid, optionalUrl } from '@/lib/utils/zodSchemas';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 
+// Component to preview images from URLs
+function ImagePreview({ url, maxHeight = '200px', className = '' }: { url: string; maxHeight?: string; className?: string }) {
+  const [imageError, setImageError] = useState(false);
+  const [isValidUrl, setIsValidUrl] = useState(false);
+
+  useEffect(() => {
+    // Reset error state when URL changes
+    setImageError(false);
+    // Check if URL is valid
+    try {
+      const urlObj = new URL(url);
+      setIsValidUrl(urlObj.protocol === 'http:' || urlObj.protocol === 'https:');
+    } catch {
+      setIsValidUrl(false);
+    }
+  }, [url]);
+
+  if (!url || !isValidUrl) {
+    return null;
+  }
+
+  return (
+    <div className={`mt-2 ${className}`}>
+      <img
+        src={url}
+        alt="Preview"
+        className="rounded-lg border border-gray-600/60 max-w-full"
+        style={{ maxHeight }}
+        onError={() => setImageError(true)}
+        onLoad={() => setImageError(false)}
+      />
+      {imageError && (
+        <p className="text-sm text-red-400 mt-1">Failed to load image. Please check the URL.</p>
+      )}
+    </div>
+  );
+}
+
 // Component to render template-specific fields from oc_templates
 // These are saved to modular_fields to match the display logic
 function TemplateFieldsSection({
@@ -1124,6 +1162,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   const firstName = watch('first_name');
   const lastName = watch('last_name');
   const dateOfBirth = watch('date_of_birth');
+
+  // Watch image fields for previews
+  const imageUrl = watch('image_url');
+  const iconUrl = watch('icon_url');
+  const gallery = watch('gallery') || [];
 
   // Field arrays for languages and gallery
   const {
@@ -2802,23 +2845,26 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </FormLabel>
           <div className="space-y-2">
             {galleryFields.map((field, index) => (
-              <div key={field.id} className="flex flex-col sm:flex-row gap-2">
-                <FormInput
-                  {...register(`gallery.${index}`)}
-                  type="url"
-                  placeholder="Image URL"
-                  disabled={isSubmitting}
-                  className="flex-1"
-                />
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => removeGallery(index)}
-                  disabled={isSubmitting}
-                  className="w-full sm:w-auto"
-                >
-                  Remove
-                </FormButton>
+              <div key={field.id} className="space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <FormInput
+                    {...register(`gallery.${index}`)}
+                    type="url"
+                    placeholder="Image URL"
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  />
+                  <FormButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() => removeGallery(index)}
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto"
+                  >
+                    Remove
+                  </FormButton>
+                </div>
+                <ImagePreview url={gallery[index] || ''} maxHeight="200px" />
               </div>
             ))}
             <FormButton
@@ -2842,6 +2888,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             placeholder="Primary image URL"
             disabled={isSubmitting}
           />
+          <ImagePreview url={imageUrl || ''} maxHeight="300px" />
         </div>
 
         <div>
@@ -2854,6 +2901,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
             placeholder="Icon or avatar URL"
             disabled={isSubmitting}
           />
+          <ImagePreview url={iconUrl || ''} maxHeight="150px" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
