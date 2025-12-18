@@ -67,7 +67,7 @@ export async function generateMetadata({
       images: oc.image_url
         ? [
             {
-              url: oc.image_url,
+              url: convertGoogleDriveUrl(oc.image_url),
               alt: oc.name,
               width: 1200,
               height: 630,
@@ -86,7 +86,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: `${oc.name} | Ruutulian`,
       description,
-      images: oc.image_url ? [oc.image_url] : [`${baseUrl}/icon.png`],
+      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}/icon.png`],
     },
     alternates: {
       canonical: url,

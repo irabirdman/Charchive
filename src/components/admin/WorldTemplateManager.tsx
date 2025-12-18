@@ -5,29 +5,11 @@ import { useRouter } from 'next/navigation';
 import { type TemplateField, type TemplateDefinition } from '@/lib/templates/ocTemplates';
 import { getTemplateTypeFromWorldSlug } from '@/lib/templates/worldTemplateMap';
 import type { World } from '@/types/oc';
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface WorldTemplateManagerProps {
   world: World;
 }
-
-// Predefined field categories matching OCForm sections
-const PREDEFINED_CATEGORIES = [
-  'Core Identity',
-  'Overview',
-  'Identity Background',
-  'Appearance',
-  'Personality Overview',
-  'Personality Metrics',
-  'Personality Traits',
-  'Abilities',
-  'Relationships',
-  'History',
-  'Preferences & Habits',
-  'Media',
-  'Trivia',
-  'Development',
-  'Settings',
-] as const;
 
 export function WorldTemplateManager({ world }: WorldTemplateManagerProps) {
   const router = useRouter();
@@ -52,10 +34,13 @@ export function WorldTemplateManager({ world }: WorldTemplateManagerProps) {
     return Array.from(categories).sort();
   };
 
-  // Get available categories (predefined + existing)
+  // Fetch field categories from database
+  const { options: predefinedCategories } = useDropdownOptions('field_categories');
+
+  // Get available categories (from database + existing in templates)
   const getAvailableCategories = (): string[] => {
     const existing = getExistingCategories();
-    const predefined = Array.from(PREDEFINED_CATEGORIES);
+    const predefined = predefinedCategories || [];
     const allCategories = new Set([...predefined, ...existing]);
     return Array.from(allCategories).sort();
   };

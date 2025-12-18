@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FilterContainer } from './FilterContainer';
 import { FilterInput } from './FilterInput';
@@ -18,6 +18,8 @@ export function CharacterFilters() {
   const [worlds, setWorlds] = useState<World[]>([]);
   const [genderOptions, setGenderOptions] = useState<string[]>([]);
   const [sexOptions, setSexOptions] = useState<string[]>([]);
+  const [searchInput, setSearchInput] = useState<string>('');
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const search = searchParams.get('search') || '';
   const worldId = searchParams.get('world') || '';
@@ -25,12 +27,17 @@ export function CharacterFilters() {
   const gender = searchParams.get('gender') || '';
   const sex = searchParams.get('sex') || '';
 
+  // Sync search input with URL param on mount or when URL changes externally
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
   useEffect(() => {
     async function fetchWorlds() {
       const supabase = createClient();
       const { data } = await supabase
-        .select('id, name')
         .from('worlds')
+        .select('id, name')
         .eq('is_public', true)
         .order('name');
       if (data) setWorlds(data);
@@ -71,6 +78,34 @@ export function CharacterFilters() {
     fetchFilterOptions();
   }, []);
 
+  // Debounced search update
+  useEffect(() => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Only update URL if search input differs from URL param
+    if (searchInput !== search) {
+      debounceTimerRef.current = setTimeout(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchInput.trim()) {
+          params.set('search', searchInput.trim());
+        } else {
+          params.delete('search');
+        }
+        router.push(`/ocs?${params.toString()}`);
+      }, 300); // 300ms debounce delay
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchInput, search, searchParams, router]);
+
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
@@ -82,6 +117,7 @@ export function CharacterFilters() {
   };
 
   const clearFilters = () => {
+    setSearchInput('');
     router.push('/ocs');
   };
 
@@ -95,8 +131,8 @@ export function CharacterFilters() {
     >
       <FilterInput
         label="Search"
-        value={search}
-        onChange={(value) => updateFilter('search', value)}
+        value={searchInput}
+        onChange={(value) => setSearchInput(value)}
         placeholder="Name..."
         focusColor="pink"
       />

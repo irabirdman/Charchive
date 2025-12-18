@@ -6,25 +6,7 @@ import { getTemplates, type TemplateField, type TemplateDefinition } from '@/lib
 import type { World, WorldFieldDefinitions, FieldSet, WorldFieldDefinition } from '@/types/oc';
 import { slugify } from '@/lib/utils/slugify';
 import { getTemplateTypeFromWorldSlug } from '@/lib/templates/worldTemplateMap';
-
-// Predefined field categories matching OCForm sections
-const PREDEFINED_CATEGORIES = [
-  'Core Identity',
-  'Overview',
-  'Identity Background',
-  'Appearance',
-  'Personality Overview',
-  'Personality Metrics',
-  'Personality Traits',
-  'Abilities',
-  'Relationships',
-  'History',
-  'Preferences & Habits',
-  'Media',
-  'Trivia',
-  'Development',
-  'Settings',
-] as const;
+import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 
 interface TemplateRecord {
   id: string;
@@ -81,10 +63,13 @@ export function TemplatesAndFieldsManager({ worlds: initialWorlds }: TemplatesAn
     return Array.from(categories).sort();
   };
 
-  // Get available categories (predefined + existing)
+  // Fetch field categories from database
+  const { options: predefinedCategories } = useDropdownOptions('field_categories');
+
+  // Get available categories (from database + existing in templates)
   const getAvailableCategories = (): string[] => {
     const existing = getExistingCategories();
-    const predefined = Array.from(PREDEFINED_CATEGORIES);
+    const predefined = predefinedCategories || [];
     const allCategories = new Set([...predefined, ...existing]);
     return Array.from(allCategories).sort();
   };
