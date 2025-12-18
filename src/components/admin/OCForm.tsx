@@ -1092,6 +1092,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [shouldNavigateAfterSave, setShouldNavigateAfterSave] = useState(false);
   const [worlds, setWorlds] = useState<Array<{ id: string; name: string; slug: string; series_type?: 'canon' | 'original' }>>([]);
   const [selectedWorld, setSelectedWorld] = useState<World | null>(null);
   const [lastSavedWorldId, setLastSavedWorldId] = useState<string | null>(null);
@@ -1606,12 +1607,18 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       setSuccess(true);
 
       // If creating a new character, redirect to the list after showing success message
-      // If updating, stay on the edit page and update the form with saved data
+      // If updating, navigate if shouldNavigateAfterSave is true, otherwise stay on the edit page
       if (!oc) {
         setTimeout(() => {
           router.push('/admin/ocs');
           router.refresh();
         }, 1000);
+      } else if (shouldNavigateAfterSave) {
+        // Navigate back to list after save
+        setTimeout(() => {
+          router.push('/admin/ocs');
+          router.refresh();
+        }, 500);
       } else {
         // Update the form with the saved data to reflect changes immediately
         if (ocData) {
@@ -1660,6 +1667,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       setError(err instanceof Error ? err.message : 'Failed to save OC. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setShouldNavigateAfterSave(false); // Reset flag after submission completes
     }
   };
 
@@ -1752,6 +1760,18 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       ? `Please fix the following errors:\n${errorMessages.join('\n')}`
       : 'Please fix the form errors before submitting.');
   };
+
+  const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setShouldNavigateAfterSave(true);
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
+
+  const handleSaveProgress = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setShouldNavigateAfterSave(false);
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
 
   return (
     <>
@@ -3037,18 +3057,40 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           >
             Cancel
           </FormButton>
-          <FormButton
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto"
-            onClick={(e) => {
-              // Don't prevent default - let the form submit normally
-            }}
-          >
-            {oc ? 'Update Character' : 'Create Character'}
-          </FormButton>
+          {oc ? (
+            <>
+              <FormButton
+                type="button"
+                variant="secondary"
+                onClick={handleSaveProgress}
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                Save Progress
+              </FormButton>
+              <FormButton
+                type="button"
+                variant="primary"
+                onClick={handleSaveAndClose}
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                Save and Close
+              </FormButton>
+            </>
+          ) : (
+            <FormButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Create Character
+            </FormButton>
+          )}
         </div>
       </div>
       </form>
