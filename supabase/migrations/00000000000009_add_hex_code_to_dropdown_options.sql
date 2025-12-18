@@ -11,3 +11,4 @@ COMMENT ON COLUMN dropdown_options.hex_code IS 'Optional hex color code (e.g., #
 CREATE INDEX IF NOT EXISTS idx_dropdown_options_hex_code ON dropdown_options(hex_code) WHERE hex_code IS NOT NULL;
 
 
+
