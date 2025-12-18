@@ -28,10 +28,25 @@ import { StoryAliasSelector } from './StoryAliasSelector';
 import { optionalUuid, optionalUrl } from '@/lib/utils/zodSchemas';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 
+// Helper function to convert Google Drive sharing URLs to direct image URLs
+function convertGoogleDriveUrl(url: string): string {
+  // Pattern: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  const drivePattern = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const match = url.match(drivePattern);
+  
+  if (match && match[1]) {
+    // Convert to direct image URL
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  }
+  
+  return url;
+}
+
 // Component to preview images from URLs
 function ImagePreview({ url, maxHeight = '200px', className = '' }: { url: string; maxHeight?: string; className?: string }) {
   const [imageError, setImageError] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
     // Reset error state when URL changes
@@ -39,9 +54,17 @@ function ImagePreview({ url, maxHeight = '200px', className = '' }: { url: strin
     // Check if URL is valid
     try {
       const urlObj = new URL(url);
-      setIsValidUrl(urlObj.protocol === 'http:' || urlObj.protocol === 'https:');
+      const isValid = urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+      setIsValidUrl(isValid);
+      
+      if (isValid) {
+        // Convert Google Drive URLs to direct image URLs
+        const convertedUrl = convertGoogleDriveUrl(url);
+        setImageUrl(convertedUrl);
+      }
     } catch {
       setIsValidUrl(false);
+      setImageUrl('');
     }
   }, [url]);
 
@@ -52,7 +75,7 @@ function ImagePreview({ url, maxHeight = '200px', className = '' }: { url: strin
   return (
     <div className={`mt-2 ${className}`}>
       <img
-        src={url}
+        src={imageUrl}
         alt="Preview"
         className="rounded-lg border border-gray-600/60 max-w-full"
         style={{ maxHeight }}
