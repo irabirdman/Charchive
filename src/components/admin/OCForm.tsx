@@ -582,7 +582,7 @@ const ocSchema = z.object({
   // System fields
   name: z.string().min(1, 'Name is required'),
   slug: z.string().min(1, 'Slug is required'),
-  world_id: z.string().uuid('Invalid world'),
+  world_id: optionalUuid,
   series_type: z.enum(['canon', 'original']).optional(),
   template_type: z.enum([
     'naruto',
@@ -1841,7 +1841,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
           </div>
 
           <div>
-            <FormLabel htmlFor="world_id" required>
+            <FormLabel htmlFor="world_id">
               World
             </FormLabel>
             <Controller
@@ -1858,8 +1858,9 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
                   disabled={isSubmitting}
                   onChange={(e) => {
                     const newWorldId = e.target.value;
-                    const selectedWorld = worlds.find(w => w.id === newWorldId);
-                    field.onChange(e);
+                    // Convert empty string to null for optional field
+                    const value = newWorldId === '' ? null : newWorldId;
+                    field.onChange(value);
                   }}
                 />
               )}

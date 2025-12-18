@@ -24,16 +24,40 @@ export async function POST(request: Request) {
     });
 
     // Validate required fields
-    const validationError = validateRequiredFields(body, ['name', 'slug', 'world_id']);
+    const validationError = validateRequiredFields(body, ['name', 'slug']);
     if (validationError) {
       logger.error('OC', 'Validation error', { validationError });
       return validationError;
     }
 
-    // Check if slug is unique per world
-    const existingOC = await checkSlugUniqueness(supabase, 'ocs', body.slug, 'world_id', body.world_id);
-    if (existingOC) {
-      return errorResponse(`A character with slug "${body.slug}" already exists in this world.`);
+    // Normalize world_id: convert empty string to null
+    if (body.world_id === '' || body.world_id === null) {
+      body.world_id = null;
+    }
+
+    // Check if slug is unique per world (or globally if world_id is null)
+    if (body.world_id) {
+      const existingOC = await checkSlugUniqueness(supabase, 'ocs', body.slug, 'world_id', body.world_id);
+      if (existingOC) {
+        return errorResponse(`A character with slug "${body.slug}" already exists in this world.`);
+      }
+    } else {
+      // If world_id is null, check uniqueness globally among OCs with null world_id
+      const { data: existingOC, error: checkError } = await supabase
+        .from('ocs')
+        .select('id')
+        .eq('slug', body.slug)
+        .is('world_id', null)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is what we want
+        throw checkError;
+      }
+      
+      if (existingOC) {
+        return errorResponse(`A character with slug "${body.slug}" already exists.`);
+      }
     }
 
     // Create identity if not provided (for new OCs)
@@ -74,8 +98,8 @@ export async function POST(request: Request) {
       ocData.story_alias_id = null;
     }
 
-    // Validate story_alias_id if provided (and not null)
-    if (ocData.story_alias_id) {
+    // Validate story_alias_id if provided (and not null) and world_id is set
+    if (ocData.story_alias_id && ocData.world_id) {
       const { data: storyAlias, error: aliasError } = await supabase
         .from('story_aliases')
         .select('id, world_id')

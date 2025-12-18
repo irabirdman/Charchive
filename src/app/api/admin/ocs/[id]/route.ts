@@ -32,14 +32,24 @@ export async function PUT(
     });
 
     // Validate required fields
-    const validationError = validateRequiredFields(body, ['name', 'slug', 'world_id']);
+    const validationError = validateRequiredFields(body, ['name', 'slug']);
     if (validationError) {
       logger.error('OC', 'Validation error', { ocId: id, validationError });
       return validationError;
     }
 
-    // Validate story_alias_id if provided (and not null/empty)
-    if (body.story_alias_id && body.story_alias_id !== '' && body.story_alias_id !== null) {
+    // Normalize world_id: convert empty string to null
+    if (body.world_id === '' || body.world_id === null) {
+      body.world_id = null;
+    }
+
+    // Normalize story_alias_id: convert empty string to null
+    if (body.story_alias_id === '' || body.story_alias_id === null) {
+      body.story_alias_id = null;
+    }
+
+    // Validate story_alias_id if provided (and not null/empty) and world_id is set
+    if (body.story_alias_id && body.world_id) {
       const { data: storyAlias, error: aliasError } = await supabase
         .from('story_aliases')
         .select('id, world_id')
@@ -53,11 +63,6 @@ export async function PUT(
       if (storyAlias.world_id !== body.world_id) {
         return errorResponse('Story alias must belong to the same world as the OC');
       }
-    }
-
-    // Normalize story_alias_id: convert empty string to null
-    if (body.story_alias_id === '') {
-      body.story_alias_id = null;
     }
 
     // Remove any fields that shouldn't be updated (like nested relationships)
