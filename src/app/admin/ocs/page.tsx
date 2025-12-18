@@ -26,7 +26,13 @@ export default async function AdminOCsPage() {
         id,
         name,
         versions:ocs(id)
-      )
+      ),
+      modular_fields,
+      extra_fields,
+      image_url,
+      icon_url,
+      created_at,
+      updated_at
     `)
     .order('name', { ascending: true });
 

@@ -17,10 +17,16 @@ interface OC {
     name: string;
     versions: { id: string }[];
   } | null | any;
+  modular_fields?: Record<string, any> | null;
+  extra_fields?: Record<string, any> | null;
+  image_url?: string | null;
+  icon_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Templates {
-  [key: string]: { name: string };
+  [key: string]: { name: string; fields?: Array<{ key: string; label: string }> };
 }
 
 interface OCListProps {
@@ -28,9 +34,86 @@ interface OCListProps {
   templates: Templates;
 }
 
+type SortOption = 'name' | 'completion' | 'updated' | 'created' | 'world';
+type FilterOption = 'all' | 'public' | 'private' | 'incomplete' | 'complete';
+
+// Calculate completion percentage for an OC
+function calculateCompletion(oc: OC, templates: Templates): { filled: number; total: number; percentage: number } {
+  let filled = 0;
+  let total = 0;
+
+  // Count basic fields we know are always present
+  const basicFields = ['name', 'slug', 'image_url', 'icon_url'];
+  basicFields.forEach(field => {
+    total++;
+    const value = (oc as any)[field];
+    if (value !== null && value !== undefined && value !== '') {
+      filled++;
+    }
+  });
+
+  // Count template-specific fields (these are stored in modular_fields)
+  if (oc.template_type && templates[oc.template_type]?.fields) {
+    templates[oc.template_type].fields!.forEach(field => {
+      total++;
+      const value = oc.modular_fields?.[field.key];
+      if (value !== null && value !== undefined && value !== '') {
+        if (Array.isArray(value) && value.length > 0) {
+          filled++;
+        } else if (!Array.isArray(value)) {
+          filled++;
+        }
+      }
+    });
+  }
+
+  // Count other modular_fields (world-specific fields, etc.)
+  // Only count fields that aren't already counted as template fields
+  if (oc.modular_fields && typeof oc.modular_fields === 'object') {
+    const templateFieldKeys = new Set(
+      oc.template_type && templates[oc.template_type]?.fields
+        ? templates[oc.template_type].fields!.map(f => f.key)
+        : []
+    );
+
+    Object.entries(oc.modular_fields).forEach(([key, value]) => {
+      // Skip if this is a template field (already counted above)
+      if (!templateFieldKeys.has(key)) {
+        total++;
+        if (value !== null && value !== undefined && value !== '') {
+          if (Array.isArray(value) && value.length > 0) {
+            filled++;
+          } else if (!Array.isArray(value)) {
+            filled++;
+          }
+        }
+      }
+    });
+  }
+
+  // Count extra_fields
+  if (oc.extra_fields && typeof oc.extra_fields === 'object') {
+    Object.entries(oc.extra_fields).forEach(([key, value]) => {
+      total++;
+      if (value !== null && value !== undefined && value !== '') {
+        if (Array.isArray(value) && value.length > 0) {
+          filled++;
+        } else if (!Array.isArray(value)) {
+          filled++;
+        }
+      }
+    });
+  }
+
+  const percentage = total > 0 ? Math.round((filled / total) * 100) : 0;
+  return { filled, total, percentage };
+}
+
 export function OCList({ ocs, templates }: OCListProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, name: string) => {
@@ -57,220 +140,280 @@ export function OCList({ ocs, templates }: OCListProps) {
     }
   };
 
-  const filteredOCs = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return ocs;
+  // Calculate completion for all OCs
+  const ocsWithCompletion = useMemo(() => {
+    return ocs.map(oc => ({
+      ...oc,
+      completion: calculateCompletion(oc, templates),
+    }));
+  }, [ocs, templates]);
+
+  // Filter and sort OCs
+  const filteredAndSortedOCs = useMemo(() => {
+    let filtered = ocsWithCompletion;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((oc) => {
+        const name = oc.name?.toLowerCase() || '';
+        const slug = oc.slug?.toLowerCase() || '';
+        const worldName = (oc.world as any)?.name?.toLowerCase() || '';
+        const templateName = templates[oc.template_type || '']?.name?.toLowerCase() || '';
+        const templateType = oc.template_type?.toLowerCase() || '';
+
+        return (
+          name.includes(query) ||
+          slug.includes(query) ||
+          worldName.includes(query) ||
+          templateName.includes(query) ||
+          templateType.includes(query)
+        );
+      });
     }
 
-    const query = searchQuery.toLowerCase();
-    return ocs.filter((oc) => {
-      const name = oc.name?.toLowerCase() || '';
-      const slug = oc.slug?.toLowerCase() || '';
-      const worldName = (oc.world as any)?.name?.toLowerCase() || '';
-      const templateName = templates[oc.template_type || '']?.name?.toLowerCase() || '';
-      const templateType = oc.template_type?.toLowerCase() || '';
+    // Apply status filter
+    if (filterBy === 'public') {
+      filtered = filtered.filter(oc => oc.is_public);
+    } else if (filterBy === 'private') {
+      filtered = filtered.filter(oc => !oc.is_public);
+    } else if (filterBy === 'complete') {
+      filtered = filtered.filter(oc => oc.completion.percentage >= 80);
+    } else if (filterBy === 'incomplete') {
+      filtered = filtered.filter(oc => oc.completion.percentage < 80);
+    }
 
-      return (
-        name.includes(query) ||
-        slug.includes(query) ||
-        worldName.includes(query) ||
-        templateName.includes(query) ||
-        templateType.includes(query)
-      );
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'completion':
+          return b.completion.percentage - a.completion.percentage;
+        case 'updated':
+          const aUpdated = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+          const bUpdated = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+          return bUpdated - aUpdated;
+        case 'created':
+          const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return bCreated - aCreated;
+        case 'world':
+          const aWorld = (a.world as any)?.name || '';
+          const bWorld = (b.world as any)?.name || '';
+          return aWorld.localeCompare(bWorld);
+        default:
+          return 0;
+      }
     });
-  }, [ocs, templates, searchQuery]);
+
+    return sorted;
+  }, [ocsWithCompletion, searchQuery, sortBy, filterBy, templates]);
+
+  // Get unique worlds for filtering
+  const uniqueWorlds = useMemo(() => {
+    const worlds = new Set<string>();
+    ocs.forEach(oc => {
+      if (oc.world && (oc.world as any).name) {
+        worlds.add((oc.world as any).name);
+      }
+    });
+    return Array.from(worlds).sort();
+  }, [ocs]);
 
   return (
     <>
-      <div className="mb-6">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by name, slug, world, or template..."
-          className="w-full px-4 py-2 bg-gray-700/90 border border-gray-600/70 rounded-md text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-        />
-      </div>
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
+        <div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, slug, world, or template..."
+            className="w-full px-4 py-2 bg-gray-700/90 border border-gray-600/70 rounded-md text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          />
+        </div>
 
-      {filteredOCs.length > 0 ? (
-        <>
-          {/* Desktop Table View */}
-          <div className="hidden md:block bg-gray-700/90 rounded-lg shadow-lg overflow-hidden border border-gray-600/70">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-600/80">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                    World
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                    Template
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                    Versions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                    Public
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-gray-700/50 divide-y divide-gray-600/50">
-                {filteredOCs.map((oc) => {
-                  const identity = oc.identity as any;
-                  const versions = identity?.versions || [];
-                  const versionCount = versions.length || 1;
-                  const hasMultipleVersions = versionCount > 1;
-
-                  return (
-                    <tr key={oc.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-100">{oc.name}</div>
-                        <div className="text-sm text-gray-400">{oc.slug}</div>
-                        {hasMultipleVersions && (
-                          <div className="text-xs text-blue-400 mt-1">
-                            Part of multi-fandom identity
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {oc.world ? (oc.world as any).name : '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900/50 text-pink-300 border border-pink-700">
-                          {templates[oc.template_type || '']?.name || oc.template_type || 'None'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {identity?.id ? (
-                          <Link
-                            href={`/admin/oc-identities/${identity.id}`}
-                            className="text-blue-400 hover:text-blue-300 underline"
-                          >
-                            {versionCount} version{versionCount !== 1 ? 's' : ''}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500">1 version</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {oc.is_public ? (
-                          <span className="text-green-400">Yes</span>
-                        ) : (
-                          <span className="text-gray-500">No</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link
-                          href={`/admin/ocs/${oc.id}`}
-                          className="text-pink-400 hover:text-pink-300 mr-4"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(oc.id, oc.name)}
-                          disabled={deletingId === oc.id}
-                          className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {deletingId === oc.id ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-300 whitespace-nowrap">Filter:</label>
+            <select
+              value={filterBy}
+              onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+              className="px-3 py-1.5 bg-gray-700/90 border border-gray-600/70 rounded-md text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            >
+              <option value="all">All</option>
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+              <option value="complete">Complete (80%+)</option>
+              <option value="incomplete">Incomplete (&lt;80%)</option>
+            </select>
           </div>
 
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-4">
-            {filteredOCs.map((oc) => {
-              const identity = oc.identity as any;
-              const versions = identity?.versions || [];
-              const versionCount = versions.length || 1;
-              const hasMultipleVersions = versionCount > 1;
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-300 whitespace-nowrap">Sort by:</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="px-3 py-1.5 bg-gray-700/90 border border-gray-600/70 rounded-md text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            >
+              <option value="name">Name</option>
+              <option value="completion">Completion</option>
+              <option value="updated">Last Updated</option>
+              <option value="created">Date Created</option>
+              <option value="world">World</option>
+            </select>
+          </div>
 
-              return (
-                <div
-                  key={oc.id}
-                  className="bg-gray-700/90 rounded-lg shadow-lg border border-gray-600/70 p-4"
-                >
-                  <div className="mb-3">
-                    <div className="text-base font-medium text-gray-100 mb-1">{oc.name}</div>
-                    <div className="text-sm text-gray-400 truncate mb-2">{oc.slug}</div>
-                    {hasMultipleVersions && (
-                      <div className="text-xs text-blue-400 mb-2">
-                        Part of multi-fandom identity
-                      </div>
+          <div className="text-sm text-gray-400 ml-auto">
+            Showing {filteredAndSortedOCs.length} of {ocs.length} characters
+          </div>
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      {filteredAndSortedOCs.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredAndSortedOCs.map((oc) => {
+            const identity = oc.identity as any;
+            const versions = identity?.versions || [];
+            const versionCount = versions.length || 1;
+            const hasMultipleVersions = versionCount > 1;
+            const completion = oc.completion;
+            const completionColor = 
+              completion.percentage >= 80 ? 'text-green-400' :
+              completion.percentage >= 50 ? 'text-yellow-400' :
+              'text-red-400';
+
+            return (
+              <div
+                key={oc.id}
+                className="bg-gray-700/90 rounded-lg shadow-lg border border-gray-600/70 overflow-hidden hover:border-pink-500/50 transition-colors"
+              >
+                {/* Image/Icon Header */}
+                <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900">
+                  {oc.image_url || oc.icon_url ? (
+                    <img
+                      src={oc.image_url || oc.icon_url || ''}
+                      alt={oc.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-4xl text-gray-600">👤</div>
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2">
+                    {oc.is_public ? (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-900/70 text-green-300 border border-green-700">
+                        Public
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-800/70 text-gray-400 border border-gray-700">
+                        Private
+                      </span>
                     )}
                   </div>
-                  <div className="space-y-2 mb-3">
+                </div>
+
+                {/* Card Content */}
+                <div className="p-4">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-semibold text-gray-100 mb-1 line-clamp-1">
+                      {oc.name}
+                    </h3>
+                    <p className="text-xs text-gray-400 truncate mb-2">{oc.slug}</p>
+                    
+                    {/* Completion Progress */}
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-gray-400">Completion</span>
+                        <span className={completionColor}>
+                          {completion.percentage}% ({completion.filled}/{completion.total})
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${
+                            completion.percentage >= 80 ? 'bg-green-500' :
+                            completion.percentage >= 50 ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${completion.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="space-y-2 mb-3 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">World:</span>
-                      <span className="text-sm text-gray-300">
+                      <span className="text-gray-400 text-xs">World:</span>
+                      <span className="text-gray-300 truncate">
                         {oc.world ? (oc.world as any).name : '—'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">Template:</span>
+                      <span className="text-gray-400 text-xs">Template:</span>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900/50 text-pink-300 border border-pink-700">
                         {templates[oc.template_type || '']?.name || oc.template_type || 'None'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">Versions:</span>
-                      {identity?.id ? (
-                        <Link
-                          href={`/admin/oc-identities/${identity.id}`}
-                          className="text-blue-400 hover:text-blue-300 text-sm underline"
-                        >
-                          {versionCount} version{versionCount !== 1 ? 's' : ''}
-                        </Link>
-                      ) : (
-                        <span className="text-sm text-gray-500">1 version</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">Public:</span>
-                      {oc.is_public ? (
-                        <span className="text-green-400 text-sm">Yes</span>
-                      ) : (
-                        <span className="text-gray-500 text-sm">No</span>
-                      )}
-                    </div>
+                    {hasMultipleVersions && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 text-xs">Versions:</span>
+                        {identity?.id ? (
+                          <Link
+                            href={`/admin/oc-identities/${identity.id}`}
+                            className="text-blue-400 hover:text-blue-300 text-xs underline"
+                          >
+                            {versionCount} version{versionCount !== 1 ? 's' : ''}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500 text-xs">1 version</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="pt-3 border-t border-gray-600/50 flex gap-4">
+
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-gray-600/50 flex gap-2">
                     <Link
                       href={`/admin/ocs/${oc.id}`}
-                      className="inline-block text-pink-400 hover:text-pink-300 text-sm font-medium"
+                      className="flex-1 px-3 py-2 text-sm font-medium text-center bg-pink-600 hover:bg-pink-500 text-white rounded-md transition-colors"
                     >
-                      Edit →
+                      Edit
                     </Link>
                     <button
                       onClick={() => handleDelete(oc.id, oc.name)}
                       disabled={deletingId === oc.id}
-                      className="text-red-400 hover:text-red-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {deletingId === oc.id ? 'Deleting...' : 'Delete'}
+                      {deletingId === oc.id ? '...' : 'Delete'}
                     </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </>
-      ) : searchQuery ? (
+              </div>
+            );
+          })}
+        </div>
+      ) : searchQuery || filterBy !== 'all' ? (
         <div className="bg-gray-700/90 rounded-lg shadow-lg p-12 text-center border border-gray-600/70">
-          <p className="text-gray-400 mb-4">No characters found matching "{searchQuery}".</p>
+          <p className="text-gray-400 mb-4">
+            No characters found matching your criteria.
+          </p>
           <button
-            onClick={() => setSearchQuery('')}
+            onClick={() => {
+              setSearchQuery('');
+              setFilterBy('all');
+            }}
             className="text-pink-400 hover:text-pink-300"
           >
-            Clear search
+            Clear filters
           </button>
         </div>
       ) : (
@@ -287,5 +430,3 @@ export function OCList({ ocs, templates }: OCListProps) {
     </>
   );
 }
-
-
