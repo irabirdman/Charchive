@@ -36,7 +36,7 @@ interface OCListProps {
 }
 
 type SortOption = 'name' | 'completion' | 'updated' | 'created' | 'world';
-type FilterOption = 'all' | 'public' | 'private' | 'incomplete' | 'complete';
+type FilterOption = 'all' | 'public' | 'private' | 'incomplete' | 'complete' | 'no-image';
 
 // Calculate completion percentage for an OC
 function calculateCompletion(oc: OC, templates: Templates): { filled: number; total: number; percentage: number } {
@@ -221,6 +221,8 @@ export function OCList({ ocs, templates }: OCListProps) {
       filtered = filtered.filter(oc => oc.completion.percentage >= 80);
     } else if (filterBy === 'incomplete') {
       filtered = filtered.filter(oc => oc.completion.percentage < 80);
+    } else if (filterBy === 'no-image') {
+      filtered = filtered.filter(oc => !oc.image_url && !oc.icon_url);
     }
 
     // Apply sorting
@@ -288,6 +290,7 @@ export function OCList({ ocs, templates }: OCListProps) {
               <option value="private">Private</option>
               <option value="complete">Complete (80%+)</option>
               <option value="incomplete">Incomplete (&lt;80%)</option>
+              <option value="no-image">No Image</option>
             </select>
           </div>
 
@@ -416,21 +419,19 @@ export function OCList({ ocs, templates }: OCListProps) {
                         {templates[oc.template_type || '']?.name || oc.template_type || 'None'}
                       </span>
                     </div>
-                    {hasMultipleVersions && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-xs">Versions:</span>
-                        {identity?.id ? (
-                          <Link
-                            href={`/admin/oc-identities/${identity.id}`}
-                            className="text-blue-400 hover:text-blue-300 text-xs underline"
-                          >
-                            {versionCount} version{versionCount !== 1 ? 's' : ''}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500 text-xs">1 version</span>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 text-xs">Versions:</span>
+                      {identity?.id ? (
+                        <Link
+                          href={`/admin/oc-identities/${identity.id}`}
+                          className="text-blue-400 hover:text-blue-300 text-xs underline"
+                        >
+                          {versionCount} version{versionCount !== 1 ? 's' : ''}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-300 text-xs">1 version</span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Actions */}
