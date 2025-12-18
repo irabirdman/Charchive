@@ -24,12 +24,13 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
       href: isAuthenticated ? '/admin' : '/admin/login',
       label: isAuthenticated ? 'Admin' : 'Login',
       prefetch: false,
+      isAuthLink: true, // Mark this as the auth link
     },
   ];
 
-  // Filter out login/admin link on main page
+  // Filter out login/admin link on main page (home page area)
   const navLinks = isMainPage
-    ? allNavLinks.filter((link) => link.href !== '/admin/login' && link.href !== '/admin')
+    ? allNavLinks.filter((link) => !(link as any).isAuthLink)
     : allNavLinks;
 
   const toggleMenu = () => {

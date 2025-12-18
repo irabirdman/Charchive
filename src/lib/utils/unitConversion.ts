@@ -62,6 +62,49 @@ export function convertHeightToMetric(height: string | null | undefined): string
 }
 
 /**
+ * Converts metric height (cm) to imperial (feet and inches)
+ * Handles formats like:
+ * - "178 cm" -> "5'10\""
+ * - "178cm" -> "5'10\""
+ * - "178" (assumed cm) -> "5'10\""
+ */
+export function convertHeightToImperial(height: string | null | undefined): string {
+  if (!height) return '';
+
+  const trimmed = height.trim();
+  if (!trimmed) return '';
+
+  let cm = 0;
+
+  // Try parsing cm format: "178 cm" or "178cm"
+  const cmMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*cm$/i);
+  if (cmMatch) {
+    cm = parseFloat(cmMatch[1]);
+  }
+  // Try parsing just a number (assume cm if reasonable)
+  else {
+    const numberMatch = trimmed.match(/^(\d+(?:\.\d+)?)$/);
+    if (numberMatch) {
+      const num = parseFloat(numberMatch[1]);
+      // If number is reasonable for cm (between 50 and 300), assume cm
+      if (num >= 50 && num <= 300) {
+        cm = num;
+      }
+    }
+  }
+
+  if (cm > 0) {
+    const totalInches = cm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return `${feet}'${inches}"`;
+  }
+
+  // If parsing failed, return original
+  return trimmed;
+}
+
+/**
  * Converts imperial weight to metric (kg)
  * Handles formats like:
  * - "150 lbs" or "150lb" -> 68 kg
@@ -103,8 +146,50 @@ export function convertWeightToMetric(weight: string | null | undefined): string
 }
 
 /**
+ * Converts metric weight (kg) to imperial (lbs)
+ * Handles formats like:
+ * - "68 kg" -> "150 lbs"
+ * - "68kg" -> "150 lbs"
+ * - "68" (assumed kg) -> "150 lbs"
+ */
+export function convertWeightToImperial(weight: string | null | undefined): string {
+  if (!weight) return '';
+
+  const trimmed = weight.trim();
+  if (!trimmed) return '';
+
+  let kg = 0;
+
+  // Try parsing kg format: "68 kg" or "68kg"
+  const kgMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*kg$/i);
+  if (kgMatch) {
+    kg = parseFloat(kgMatch[1]);
+  }
+  // Try parsing just a number (assume kg if reasonable)
+  else {
+    const numberMatch = trimmed.match(/^(\d+(?:\.\d+)?)$/);
+    if (numberMatch) {
+      const num = parseFloat(numberMatch[1]);
+      // If number is reasonable for kg (between 20 and 250), assume kg
+      if (num >= 20 && num <= 250) {
+        kg = num;
+      }
+    }
+  }
+
+  if (kg > 0) {
+    const lbs = Math.round(kg / 0.453592);
+    return `${lbs} lbs`;
+  }
+
+  // If parsing failed, return original
+  return trimmed;
+}
+
+/**
  * Formats height with both imperial and metric
- * Returns format: "imperial / metric"
+ * Returns format: "imperial / metric" or "metric / imperial"
+ * Always shows both units regardless of input format
  */
 export function formatHeightWithMetric(height: string | null | undefined): string {
   if (!height) return '';
@@ -112,19 +197,31 @@ export function formatHeightWithMetric(height: string | null | undefined): strin
   const trimmed = height.trim();
   if (!trimmed) return '';
 
-  const metric = convertHeightToMetric(trimmed);
+  const isMetric = trimmed.toLowerCase().includes('cm');
   
-  // If already in metric format or conversion failed, return as-is
-  if (metric === trimmed || metric.toLowerCase().includes('cm')) {
+  if (isMetric) {
+    // Input is in metric, convert to imperial
+    const imperial = convertHeightToImperial(trimmed);
+    // If conversion succeeded, show both; otherwise just show original
+    if (imperial !== trimmed && !imperial.toLowerCase().includes('cm')) {
+      return `${trimmed} / ${imperial}`;
+    }
+    return trimmed;
+  } else {
+    // Input is in imperial, convert to metric
+    const metric = convertHeightToMetric(trimmed);
+    // If conversion succeeded, show both; otherwise just show original
+    if (metric !== trimmed && metric.toLowerCase().includes('cm')) {
+      return `${trimmed} / ${metric}`;
+    }
     return trimmed;
   }
-
-  return `${trimmed} / ${metric}`;
 }
 
 /**
  * Formats weight with both imperial and metric
- * Returns format: "imperial / metric"
+ * Returns format: "imperial / metric" or "metric / imperial"
+ * Always shows both units regardless of input format
  */
 export function formatWeightWithMetric(weight: string | null | undefined): string {
   if (!weight) return '';
@@ -132,13 +229,24 @@ export function formatWeightWithMetric(weight: string | null | undefined): strin
   const trimmed = weight.trim();
   if (!trimmed) return '';
 
-  const metric = convertWeightToMetric(trimmed);
+  const isMetric = trimmed.toLowerCase().includes('kg');
   
-  // If already in metric format or conversion failed, return as-is
-  if (metric === trimmed || metric.toLowerCase().includes('kg')) {
+  if (isMetric) {
+    // Input is in metric, convert to imperial
+    const imperial = convertWeightToImperial(trimmed);
+    // If conversion succeeded, show both; otherwise just show original
+    if (imperial !== trimmed && !imperial.toLowerCase().includes('kg')) {
+      return `${trimmed} / ${imperial}`;
+    }
+    return trimmed;
+  } else {
+    // Input is in imperial, convert to metric
+    const metric = convertWeightToMetric(trimmed);
+    // If conversion succeeded, show both; otherwise just show original
+    if (metric !== trimmed && metric.toLowerCase().includes('kg')) {
+      return `${trimmed} / ${metric}`;
+    }
     return trimmed;
   }
-
-  return `${trimmed} / ${metric}`;
 }
 
