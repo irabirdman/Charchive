@@ -1130,7 +1130,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [shouldNavigateAfterSave, setShouldNavigateAfterSave] = useState(false);
+  const shouldNavigateAfterSaveRef = useRef(false);
   const [worlds, setWorlds] = useState<Array<{ id: string; name: string; slug: string; series_type?: 'canon' | 'original' }>>([]);
   const [selectedWorld, setSelectedWorld] = useState<World | null>(null);
   const [lastSavedWorldId, setLastSavedWorldId] = useState<string | null>(null);
@@ -1650,13 +1650,13 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       setSuccess(true);
 
       // If creating a new character, redirect to the list after showing success message
-      // If updating, navigate if shouldNavigateAfterSave is true, otherwise stay on the edit page
+      // If updating, navigate if shouldNavigateAfterSaveRef.current is true, otherwise stay on the edit page
       if (!oc) {
         setTimeout(() => {
           router.push('/admin/ocs');
           router.refresh();
         }, 1000);
-      } else if (shouldNavigateAfterSave) {
+      } else if (shouldNavigateAfterSaveRef.current) {
         // Navigate back to list after save
         setTimeout(() => {
           router.push('/admin/ocs');
@@ -1710,7 +1710,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
       setError(err instanceof Error ? err.message : 'Failed to save OC. Please try again.');
     } finally {
       setIsSubmitting(false);
-      setShouldNavigateAfterSave(false); // Reset flag after submission completes
+      shouldNavigateAfterSaveRef.current = false; // Reset flag after submission completes
     }
   };
 
@@ -1806,13 +1806,13 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
   const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setShouldNavigateAfterSave(true);
+    shouldNavigateAfterSaveRef.current = true;
     handleSubmit(onSubmit, onError)();
   }, [handleSubmit, onSubmit, onError]);
 
   const handleSaveProgress = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setShouldNavigateAfterSave(false);
+    shouldNavigateAfterSaveRef.current = false;
     handleSubmit(onSubmit, onError)();
   }, [handleSubmit, onSubmit, onError]);
 
