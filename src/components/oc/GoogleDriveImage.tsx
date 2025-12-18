@@ -41,13 +41,29 @@ function GoogleDriveImageComponent({
     }
   }, [imageUrl]);
 
-  const handleError = () => {
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // Prevent infinite error loops - only show error after first attempt
     errorCountRef.current += 1;
-    if (errorCountRef.current === 1 && !hasError) {
+    const img = e.currentTarget;
+    
+    // Check if the response was the transparent PNG fallback (1x1 pixel)
+    // This indicates the proxy returned an error fallback
+    if (img.naturalWidth === 1 && img.naturalHeight === 1 && !hasError) {
+      // This is the transparent PNG fallback from the proxy
       setHasError(true);
-      console.error('Failed to load image. Original URL:', src);
-      console.error('Proxy URL attempted:', imageUrl);
+      console.warn('Google Drive image not accessible. File may need to be shared publicly.', {
+        originalUrl: src,
+        proxyUrl: imageUrl,
+        fileId: src.includes('drive.google.com') ? src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] : null,
+      });
+    } else if (errorCountRef.current >= 2 && !hasError) {
+      // After 2 attempts, show fallback
+      setHasError(true);
+      console.error('Failed to load image after multiple attempts.', {
+        originalUrl: src,
+        proxyUrl: imageUrl,
+        attempts: errorCountRef.current,
+      });
     }
   };
 

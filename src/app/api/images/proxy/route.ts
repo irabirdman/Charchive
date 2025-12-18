@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleDriveFileId, getGoogleDriveImageUrls } from '@/lib/utils/googleDriveImage';
+import { logger } from '@/lib/logger';
 
 /**
  * API route to proxy Google Drive images
@@ -9,8 +10,10 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const url = searchParams.get('url');
   const fileId = searchParams.get('fileId');
+  const startTime = Date.now();
 
   if (!url && !fileId) {
+    logger.warn('ImageProxy', 'Missing url or fileId parameter', { url, fileId });
     return NextResponse.json(
       { error: 'Missing url or fileId parameter' },
       { status: 400 }
@@ -21,11 +24,17 @@ export async function GET(request: NextRequest) {
   const driveFileId = fileId || (url ? getGoogleDriveFileId(url) : null);
   
   if (!driveFileId) {
+    logger.warn('ImageProxy', 'Invalid Google Drive URL or file ID', { url, fileId });
     return NextResponse.json(
       { error: 'Invalid Google Drive URL or file ID' },
       { status: 400 }
     );
   }
+
+  logger.debug('ImageProxy', 'Attempting to fetch Google Drive image', {
+    fileId: driveFileId,
+    originalUrl: url,
+  });
 
   // Try multiple URL formats in order of reliability
   const urls = url 
@@ -37,16 +46,21 @@ export async function GET(request: NextRequest) {
         `https://drive.google.com/uc?export=view&id=${driveFileId}`,
       ];
 
-  const errors: string[] = [];
+  const errors: Array<{ url: string; error: string; status?: number; contentType?: string }> = [];
+  let attemptCount = 0;
 
   // Try each URL format until one works
   for (const imageUrl of urls) {
+    attemptCount++;
     let timeoutId: NodeJS.Timeout | null = null;
     try {
+      logger.debug('ImageProxy', `Attempt ${attemptCount}/${urls.length}`, { url: imageUrl, fileId: driveFileId });
+      
       // Create abort controller for timeout
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
+      const fetchStartTime = Date.now();
       const response = await fetch(imageUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -59,16 +73,40 @@ export async function GET(request: NextRequest) {
       });
       
       if (timeoutId) clearTimeout(timeoutId);
+      const fetchDuration = Date.now() - fetchStartTime;
 
       // Check if response is actually an image
       const contentType = response.headers.get('content-type') || '';
       const isImage = contentType.startsWith('image/');
+      const contentLength = response.headers.get('content-length');
+      const finalUrl = response.url; // Get final URL after redirects
+      
+      logger.debug('ImageProxy', `Response received`, {
+        url: imageUrl,
+        finalUrl,
+        status: response.status,
+        contentType,
+        contentLength,
+        duration: `${fetchDuration}ms`,
+        fileId: driveFileId,
+      });
       
       if (response.ok && isImage) {
         const imageBuffer = await response.arrayBuffer();
         
         // Verify it's actually image data (not HTML error page)
         if (imageBuffer.byteLength > 100) {
+          const totalDuration = Date.now() - startTime;
+          logger.success('ImageProxy', 'Successfully fetched image', {
+            fileId: driveFileId,
+            url: imageUrl,
+            finalUrl,
+            size: `${(imageBuffer.byteLength / 1024).toFixed(2)} KB`,
+            contentType,
+            totalDuration: `${totalDuration}ms`,
+            attempt: attemptCount,
+          });
+          
           // Return the image with appropriate headers
           return new NextResponse(imageBuffer, {
             status: 200,
@@ -80,31 +118,108 @@ export async function GET(request: NextRequest) {
             },
           });
         } else {
-          errors.push(`${imageUrl}: Response too small (${imageBuffer.byteLength} bytes)`);
+          const errorMsg = `Response too small (${imageBuffer.byteLength} bytes) - likely not an image`;
+          errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
+          logger.warn('ImageProxy', errorMsg, { url: imageUrl, fileId: driveFileId, size: imageBuffer.byteLength });
         }
       } else {
         // Check if we got redirected to a login page or error page
-        const text = await response.text().catch(() => '');
-        if (text.includes('accounts.google.com') || text.includes('Sign in')) {
-          errors.push(`${imageUrl}: Redirected to login (file may not be publicly accessible)`);
+        // Only read text for non-image responses to avoid consuming the body
+        if (!isImage && response.status !== 200) {
+          try {
+            const text = await response.text();
+            const isLoginPage = text.includes('accounts.google.com') || 
+                               text.includes('Sign in') || 
+                               text.includes('Access denied') ||
+                               text.includes('Request Access');
+            
+            if (isLoginPage) {
+              const errorMsg = 'File not publicly accessible (redirected to login/access page)';
+              errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
+              logger.error('ImageProxy', errorMsg, {
+                url: imageUrl,
+                finalUrl,
+                fileId: driveFileId,
+                status: response.status,
+                contentType,
+                responsePreview: text.substring(0, 200),
+              });
+            } else {
+              const errorMsg = `Non-image response received`;
+              errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
+              logger.warn('ImageProxy', errorMsg, {
+                url: imageUrl,
+                finalUrl,
+                fileId: driveFileId,
+                status: response.status,
+                contentType,
+                responsePreview: text.substring(0, 200),
+              });
+            }
+          } catch (textError) {
+            const errorMsg = `Failed to read response text`;
+            errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
+            logger.warn('ImageProxy', errorMsg, {
+              url: imageUrl,
+              fileId: driveFileId,
+              status: response.status,
+              contentType,
+              textError: textError instanceof Error ? textError.message : String(textError),
+            });
+          }
         } else {
-          errors.push(`${imageUrl}: Status ${response.status}, Content-Type: ${contentType}`);
+          const errorMsg = `Unexpected response`;
+          errors.push({ url: imageUrl, error: errorMsg, status: response.status, contentType });
+          logger.warn('ImageProxy', errorMsg, {
+            url: imageUrl,
+            fileId: driveFileId,
+            status: response.status,
+            contentType,
+            isImage,
+          });
         }
       }
     } catch (error) {
       // Clear timeout if still active
       if (timeoutId) clearTimeout(timeoutId);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      errors.push(`${imageUrl}: ${errorMessage}`);
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      errors.push({ url: imageUrl, error: `${errorName}: ${errorMessage}` });
+      
+      logger.warn('ImageProxy', 'Fetch error', {
+        url: imageUrl,
+        fileId: driveFileId,
+        attempt: attemptCount,
+        error: errorMessage,
+        errorName,
+      });
       continue;
     }
   }
 
-  // All URLs failed - return error with details
-  console.error('Failed to fetch Google Drive image:', {
+  // All URLs failed - log comprehensive error details
+  const totalDuration = Date.now() - startTime;
+  const isPublicAccessIssue = errors.some(e => 
+    e.error.includes('not publicly accessible') || 
+    e.error.includes('redirected to login') ||
+    e.error.includes('Access denied')
+  );
+
+  logger.error('ImageProxy', 'Failed to fetch Google Drive image after all attempts', {
     fileId: driveFileId,
     originalUrl: url,
-    errors,
+    totalAttempts: attemptCount,
+    totalDuration: `${totalDuration}ms`,
+    isPublicAccessIssue,
+    errors: errors.map(e => ({
+      url: e.url,
+      error: e.error,
+      status: e.status,
+      contentType: e.contentType,
+    })),
+    recommendation: isPublicAccessIssue 
+      ? 'File needs to be shared with "Anyone with the link" permission in Google Drive'
+      : 'Check if file exists and is accessible',
   });
 
   // Return a 1x1 transparent PNG as fallback instead of JSON
@@ -120,6 +235,8 @@ export async function GET(request: NextRequest) {
       'Content-Type': 'image/png',
       'Cache-Control': 'no-cache',
       'X-Image-Error': 'true', // Custom header to indicate this is a fallback
+      'X-Image-FileId': driveFileId, // Include file ID for debugging
+      'X-Image-IsPublicAccessIssue': isPublicAccessIssue ? 'true' : 'false',
     },
   });
 }
