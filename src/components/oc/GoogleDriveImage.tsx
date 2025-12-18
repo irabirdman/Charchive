@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { getGoogleDriveFileId, getProxyUrl } from '@/lib/utils/googleDriveImage';
+import { useState, useRef, useMemo, useEffect, memo } from 'react';
+import { getProxyUrl } from '@/lib/utils/googleDriveImage';
 
 interface GoogleDriveImageProps {
   src: string;
@@ -11,14 +11,14 @@ interface GoogleDriveImageProps {
   fallbackSrc?: string;
 }
 
-export function GoogleDriveImage({ 
+function GoogleDriveImageComponent({ 
   src, 
   alt, 
   className = '', 
   style,
   fallbackSrc = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/960px-Placeholder_view_vector.svg.png'
 }: GoogleDriveImageProps) {
-  // Calculate proxy URL immediately, not in useEffect
+  // Calculate proxy URL immediately, not in useEffect - memoize to prevent recalculation
   const imageUrl = useMemo(() => {
     if (src.includes('drive.google.com')) {
       return getProxyUrl(src);
@@ -26,42 +26,58 @@ export function GoogleDriveImage({
     return src;
   }, [src]);
 
+  // Track the current image URL to prevent unnecessary state changes
+  const currentImageUrlRef = useRef<string>(imageUrl);
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const errorCountRef = useRef<number>(0);
 
+  // Only update ref when imageUrl actually changes
   useEffect(() => {
-    // Reset state when src changes
-    setHasError(false);
-    setIsLoading(true);
-  }, [src]);
+    if (currentImageUrlRef.current !== imageUrl) {
+      currentImageUrlRef.current = imageUrl;
+      // Reset error state only when URL changes
+      setHasError(false);
+      errorCountRef.current = 0;
+    }
+  }, [imageUrl]);
 
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setHasError(true);
-    setIsLoading(false);
-    // Log both the original URL and the proxy URL for debugging
-    console.error('Failed to load image. Original URL:', src);
-    console.error('Proxy URL attempted:', imageUrl);
-    
-    // If the proxy failed, we might need to try a different approach
-    // For now, just show the fallback
+  const handleError = () => {
+    // Prevent infinite error loops - only show error after first attempt
+    errorCountRef.current += 1;
+    if (errorCountRef.current === 1 && !hasError) {
+      setHasError(true);
+      console.error('Failed to load image. Original URL:', src);
+      console.error('Proxy URL attempted:', imageUrl);
+    }
   };
 
   const handleLoad = () => {
-    setHasError(false);
-    setIsLoading(false);
+    // Successfully loaded - reset error state and count
+    if (hasError) {
+      setHasError(false);
+    }
+    errorCountRef.current = 0;
   };
+
+  // Use the current image URL, or fallback if there's an error
+  const displayUrl = hasError ? fallbackSrc : imageUrl;
 
   return (
     <img
-      src={hasError ? fallbackSrc : imageUrl}
+      src={displayUrl}
       alt={alt}
       className={className}
       style={style}
       onError={handleError}
       onLoad={handleLoad}
+      loading="lazy"
+      decoding="async"
     />
   );
 }
+
+// Memoize to prevent unnecessary re-renders when parent components update
+export const GoogleDriveImage = memo(GoogleDriveImageComponent);
 
 
 
