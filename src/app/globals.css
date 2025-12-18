@@ -11,6 +11,9 @@
 
 html {
   background: #0a0a0a;
+  /* Firefox scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1a1a1a;
 }
 
 body {
@@ -131,6 +134,7 @@ body {
 }
 
 /* Custom scrollbar for anime wiki feel */
+/* WebKit scrollbar styling (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 10px;
 }
