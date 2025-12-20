@@ -12,6 +12,7 @@ interface RelationshipEntry {
   oc_id?: string;
   oc_slug?: string;
   relationship_type?: string;
+  image_url?: string;
 }
 
 interface WorldRelationshipsProps {
@@ -70,6 +71,7 @@ export function WorldRelationships({ ocs }: WorldRelationshipsProps) {
       type: string;
       relationship?: string;
       relationship_type?: string;
+      image_url?: string;
     }> = [];
 
     // Create nodes for all OCs in database
@@ -123,6 +125,7 @@ export function WorldRelationships({ ocs }: WorldRelationshipsProps) {
               type: category,
               relationship: entry.relationship,
               relationship_type: entry.relationship_type,
+              image_url: entry.image_url,
             });
           } else {
             // External relationship (not linked to an OC in database)

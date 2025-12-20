@@ -515,7 +515,7 @@ function RelationshipEntryInput({
   register: any;
   setValue: any;
   watch: any;
-  defaultValue: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
+  defaultValue: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
   isSubmitting: boolean;
   label: string;
   enableOCAutocomplete?: boolean;
@@ -537,6 +537,7 @@ function RelationshipEntryInput({
             description: val.description || '',
             oc_id: val.oc_id || '',
             oc_slug: val.oc_slug || '',
+            image_url: val.image_url || '',
           });
         }
       });
@@ -665,12 +666,29 @@ function RelationshipEntryInput({
                 disabled={isSubmitting}
               />
             </div>
+            <div>
+              <FormLabel htmlFor={`${fieldPath}.${index}.image_url`}>
+                Image URL
+              </FormLabel>
+              <FormInput
+                {...register(`${fieldPath}.${index}.image_url`)}
+                placeholder="https://example.com/image.jpg"
+                disabled={isSubmitting}
+              />
+              {watch(`${fieldPath}.${index}.image_url`) && (
+                <ImagePreview 
+                  url={watch(`${fieldPath}.${index}.image_url`)} 
+                  maxHeight="150px"
+                  className="mt-2"
+                />
+              )}
+            </div>
           </div>
         ))}
         <FormButton
           type="button"
           variant="secondary"
-          onClick={() => append({ name: '', relationship: '', description: '', oc_id: '', oc_slug: '', relationship_type: undefined })}
+          onClick={() => append({ name: '', relationship: '', description: '', oc_id: '', oc_slug: '', relationship_type: undefined, image_url: '' })}
           disabled={isSubmitting}
         >
           <i className="fas fa-plus mr-2"></i>
@@ -682,7 +700,7 @@ function RelationshipEntryInput({
 }
 
 // Helper to parse relationship data (handles both old string format and new array format)
-function parseRelationshipData(value: string | null | undefined): Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }> {
+function parseRelationshipData(value: string | null | undefined): Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }> {
   if (!value) return [];
   
   // Try to parse as JSON array first (new format)
@@ -696,6 +714,7 @@ function parseRelationshipData(value: string | null | undefined): Array<{ name: 
         oc_id: item.oc_id?.trim() || undefined, // Don't use empty strings
         oc_slug: item.oc_slug?.trim() || undefined,
         relationship_type: item.relationship_type || undefined,
+        image_url: item.image_url?.trim() || undefined,
       }));
     }
   } catch {
@@ -808,6 +827,7 @@ const ocSchema = z.object({
           oc_id: item.oc_id?.trim() || undefined, // Convert empty strings to undefined
           oc_slug: item.oc_slug?.trim() || undefined,
           relationship_type: item.relationship_type || undefined,
+          image_url: item.image_url?.trim() || undefined,
         }));
     },
     z.array(z.object({
@@ -817,6 +837,7 @@ const ocSchema = z.object({
       oc_id: z.string().uuid().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
       oc_slug: z.string().optional(),
       relationship_type: z.enum(['lovers', 'crush', 'close_friend', 'friend', 'acquaintance', 'dislike', 'hate', 'neutral', 'family', 'rival', 'admire', 'other']).optional(),
+      image_url: optionalUrl,
     })).optional()
   ),
   friends_allies: z.preprocess(
@@ -829,6 +850,7 @@ const ocSchema = z.object({
           oc_id: item.oc_id?.trim() || undefined,
           oc_slug: item.oc_slug?.trim() || undefined,
           relationship_type: item.relationship_type || undefined,
+          image_url: item.image_url?.trim() || undefined,
         }));
     },
     z.array(z.object({
@@ -838,6 +860,7 @@ const ocSchema = z.object({
       oc_id: z.string().uuid().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
       oc_slug: z.string().optional(),
       relationship_type: z.enum(['lovers', 'crush', 'close_friend', 'friend', 'acquaintance', 'dislike', 'hate', 'neutral', 'family', 'rival', 'admire', 'other']).optional(),
+      image_url: optionalUrl,
     })).optional()
   ),
   rivals_enemies: z.preprocess(
@@ -850,6 +873,7 @@ const ocSchema = z.object({
           oc_id: item.oc_id?.trim() || undefined,
           oc_slug: item.oc_slug?.trim() || undefined,
           relationship_type: item.relationship_type || undefined,
+          image_url: item.image_url?.trim() || undefined,
         }));
     },
     z.array(z.object({
@@ -859,6 +883,7 @@ const ocSchema = z.object({
       oc_id: z.string().uuid().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
       oc_slug: z.string().optional(),
       relationship_type: z.enum(['lovers', 'crush', 'close_friend', 'friend', 'acquaintance', 'dislike', 'hate', 'neutral', 'family', 'rival', 'admire', 'other']).optional(),
+      image_url: optionalUrl,
     })).optional()
   ),
   romantic: z.preprocess(
@@ -871,6 +896,7 @@ const ocSchema = z.object({
           oc_id: item.oc_id?.trim() || undefined,
           oc_slug: item.oc_slug?.trim() || undefined,
           relationship_type: item.relationship_type || undefined,
+          image_url: item.image_url?.trim() || undefined,
         }));
     },
     z.array(z.object({
@@ -880,6 +906,7 @@ const ocSchema = z.object({
       oc_id: z.string().uuid().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
       oc_slug: z.string().optional(),
       relationship_type: z.enum(['lovers', 'crush', 'close_friend', 'friend', 'acquaintance', 'dislike', 'hate', 'neutral', 'family', 'rival', 'admire', 'other']).optional(),
+      image_url: optionalUrl,
     })).optional()
   ),
   other_relationships: z.preprocess(
@@ -892,6 +919,7 @@ const ocSchema = z.object({
           oc_id: item.oc_id?.trim() || undefined,
           oc_slug: item.oc_slug?.trim() || undefined,
           relationship_type: item.relationship_type || undefined,
+          image_url: item.image_url?.trim() || undefined,
         }));
     },
     z.array(z.object({
@@ -901,6 +929,7 @@ const ocSchema = z.object({
       oc_id: z.string().uuid().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
       oc_slug: z.string().optional(),
       relationship_type: z.enum(['lovers', 'crush', 'close_friend', 'friend', 'acquaintance', 'dislike', 'hate', 'neutral', 'family', 'rival', 'admire', 'other']).optional(),
+      image_url: optionalUrl,
     })).optional()
   ),
   
@@ -936,11 +965,11 @@ const ocSchema = z.object({
 type OCFormData = z.infer<typeof ocSchema>;
 
 interface ReverseRelationships {
-  family: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
-  friends_allies: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
-  rivals_enemies: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
-  romantic: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
-  other_relationships: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>;
+  family: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
+  friends_allies: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
+  rivals_enemies: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
+  romantic: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
+  other_relationships: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
 }
 
 interface OCFormProps {

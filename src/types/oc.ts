@@ -21,6 +21,7 @@ export interface RelationshipEntry {
   oc_id?: string;
   oc_slug?: string;
   relationship_type?: RelationshipType;
+  image_url?: string;
 }
 
 export type TemplateType =
