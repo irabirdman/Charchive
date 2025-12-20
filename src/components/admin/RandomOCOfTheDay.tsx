@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { OC } from '@/types/oc';
 
@@ -172,14 +173,8 @@ interface RandomOCOfTheDayProps {
   ocs: OC[];
 }
 
-export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
-  if (!ocs || ocs.length === 0) {
-    return null;
-  }
-
-  // Calculate progress for all OCs
-  const progressItems = ocs.map(calculateOCProgress);
-  
+// Function to select a random OC from the pool
+function selectRandomOC(progressItems: OCProgressItem[], useDateSeed: boolean = false): OCProgressItem {
   // Prefer OCs with lower completion (prioritize ones that need work)
   // But still allow some randomness
   const sortedByProgress = [...progressItems].sort((a, b) => a.percentage - b.percentage);
@@ -188,15 +183,32 @@ export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
   const needsWork = sortedByProgress.filter(item => item.percentage < 80);
   const pool = needsWork.length > 0 ? needsWork : sortedByProgress;
   
-  // Use date-based seed for consistent selection per day
-  const seed = getDaySeed();
+  // Use date-based seed for initial selection, or random for reshuffle
+  const seed = useDateSeed ? getDaySeed() : Date.now() + Math.random();
   const random = seededRandom(seed);
   
   // Pick a random OC from the pool (weighted towards lower completion)
   // Use first 30% of the pool (lowest completion) with higher probability
   const lowCompletionPool = pool.slice(0, Math.max(1, Math.floor(pool.length * 0.3)));
   const randomIndex = Math.floor(random() * (random() < 0.7 ? lowCompletionPool.length : pool.length));
-  const selectedItem = random() < 0.7 ? lowCompletionPool[randomIndex] : pool[randomIndex];
+  return random() < 0.7 ? lowCompletionPool[randomIndex] : pool[randomIndex];
+}
+
+export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
+  if (!ocs || ocs.length === 0) {
+    return null;
+  }
+
+  // Calculate progress for all OCs (memoized to avoid recalculating)
+  const progressItems = useMemo(() => ocs.map(calculateOCProgress), [ocs]);
+  
+  // Initialize with date-based seed, then allow reshuffling
+  const [selectedItem, setSelectedItem] = useState(() => selectRandomOC(progressItems, true));
+  
+  // Reshuffle function
+  const handleReshuffle = useCallback(() => {
+    setSelectedItem(selectRandomOC(progressItems, false));
+  }, [progressItems]);
 
   const getProgressColor = (percentage: number): string => {
     if (percentage >= 80) return 'bg-green-500';
@@ -225,6 +237,14 @@ export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
           <i className="fas fa-star text-lg sm:text-xl text-yellow-400 animate-pulse"></i>
           <h2 className="text-lg sm:text-xl font-bold text-gray-100">Random OC of the Day</h2>
           <span className="text-xs sm:text-sm text-pink-300 font-semibold">✨ You should work on this OC!</span>
+          <button
+            onClick={handleReshuffle}
+            className="ml-auto px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-colors shadow-md flex items-center gap-2 touch-manipulation"
+            title="Reshuffle to get a different random OC"
+          >
+            <i className="fas fa-redo"></i>
+            <span className="hidden sm:inline">Reshuffle</span>
+          </button>
         </div>
         
         <Link
@@ -276,6 +296,7 @@ export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
     </div>
   );
 }
+
 
 
 
