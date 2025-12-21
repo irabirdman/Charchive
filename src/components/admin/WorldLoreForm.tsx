@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -120,12 +120,14 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
     setValue,
     () => ({ timeline_event_id: timelineEvents[0]?.id || '' })
   );
+  const shouldNavigateAfterSaveRef = useRef(false);
   const { isSubmitting, error, success, submit } = useFormSubmission<WorldLoreFormData>({
     apiRoute: '/api/admin/world-lore',
     entity: lore,
     successRoute: '/admin/world-lore',
     showSuccessMessage: true,
     successMessage: 'Lore entry saved successfully!',
+    shouldNavigateRef: shouldNavigateAfterSaveRef,
     transformData: (data) => ({
       ...data,
       banner_image_url: data.banner_image_url || null,
@@ -197,6 +199,18 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
   const onError = (errors: any) => {
     console.error('Form validation errors:', errors);
   };
+
+  const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = true;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
+
+  const handleSaveProgress = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = false;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
 
 
   // Get field definitions from the world (not from lore's world_fields)
@@ -443,14 +457,6 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
 
         <div className="flex gap-4 pt-4">
           <FormButton
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-            disabled={isSubmitting}
-          >
-            {lore ? 'Update Lore Entry' : 'Create Lore Entry'}
-          </FormButton>
-          <FormButton
             type="button"
             variant="secondary"
             onClick={() => router.back()}
@@ -458,6 +464,37 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
           >
             Cancel
           </FormButton>
+          {lore ? (
+            <>
+              <FormButton
+                type="button"
+                variant="secondary"
+                onClick={handleSaveProgress}
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+              >
+                Save Progress
+              </FormButton>
+              <FormButton
+                type="button"
+                variant="primary"
+                onClick={handleSaveAndClose}
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+              >
+                Save and Close
+              </FormButton>
+            </>
+          ) : (
+            <FormButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Create Lore Entry
+            </FormButton>
+          )}
         </div>
       </form>
     </FormProvider>

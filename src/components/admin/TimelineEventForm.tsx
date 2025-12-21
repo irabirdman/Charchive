@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,6 +52,7 @@ interface TimelineEventFormProps {
 export function TimelineEventForm({ event, worldId }: TimelineEventFormProps) {
   const router = useRouter();
   const { worlds } = useWorlds();
+  const shouldNavigateAfterSaveRef = useRef(false);
   const { isSubmitting, error, submit } = useFormSubmission<EventFormData>({
     apiRoute: '/api/admin/timeline-events',
     entity: event,
@@ -62,6 +63,7 @@ export function TimelineEventForm({ event, worldId }: TimelineEventFormProps) {
       }
       return event ? `/admin/timeline-events/${event.id}` : '/admin/timeline-events';
     },
+    shouldNavigateRef: shouldNavigateAfterSaveRef,
   });
 
   const form = useForm<EventFormData>({
@@ -146,6 +148,22 @@ export function TimelineEventForm({ event, worldId }: TimelineEventFormProps) {
   const onSubmit = async (data: EventFormData) => {
     await submit(data);
   };
+
+  const onError = (errors: any) => {
+    console.error('Form validation errors:', errors);
+  };
+
+  const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = true;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
+
+  const handleSaveProgress = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = false;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
 
 
   return (
@@ -331,14 +349,6 @@ export function TimelineEventForm({ event, worldId }: TimelineEventFormProps) {
 
       <div className="flex gap-4">
         <FormButton
-          type="submit"
-          variant="primary"
-          isLoading={isSubmitting}
-          disabled={isSubmitting}
-        >
-          {event ? 'Update Event' : 'Create Event'}
-        </FormButton>
-        <FormButton
           type="button"
           variant="secondary"
           onClick={() => router.back()}
@@ -346,6 +356,37 @@ export function TimelineEventForm({ event, worldId }: TimelineEventFormProps) {
         >
           Cancel
         </FormButton>
+        {event ? (
+          <>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={handleSaveProgress}
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Save Progress
+            </FormButton>
+            <FormButton
+              type="button"
+              variant="primary"
+              onClick={handleSaveAndClose}
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Save and Close
+            </FormButton>
+          </>
+        ) : (
+          <FormButton
+            type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            Create Event
+          </FormButton>
+        )}
       </div>
     </form>
   );

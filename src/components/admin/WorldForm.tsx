@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -87,6 +87,7 @@ interface WorldFormProps {
 export function WorldForm({ world }: WorldFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const shouldNavigateAfterSaveRef = useRef(false);
   
   // Get story alias from URL query parameter
   const initialStoryAliasId = useMemo(() => {
@@ -162,6 +163,7 @@ export function WorldForm({ world }: WorldFormProps) {
     successRoute: world ? `/admin/worlds/${world.id}` : '/admin/worlds',
     showSuccessMessage: true,
     successMessage: 'World saved successfully!',
+    shouldNavigateRef: shouldNavigateAfterSaveRef,
     onSuccess: async (responseData, isUpdate) => {
       // If world was created and we have draft races, create them
       if (!isUpdate && draftRaces.length > 0 && responseData && responseData.id) {
@@ -553,9 +555,21 @@ export function WorldForm({ world }: WorldFormProps) {
         setCustomSuccess(true);
         // Reload story data and refresh
         await loadStoryData();
-        setTimeout(() => {
-          router.refresh();
-        }, 1000);
+        
+        // Handle navigation based on shouldNavigateAfterSaveRef
+        if (shouldNavigateAfterSaveRef.current) {
+          setTimeout(() => {
+            router.push('/admin/worlds');
+            router.refresh();
+          }, 500);
+        } else {
+          setTimeout(() => {
+            router.refresh();
+          }, 500);
+        }
+        
+        // Reset flag
+        shouldNavigateAfterSaveRef.current = false;
       } catch (err) {
         setCustomError(err instanceof Error ? err.message : 'Failed to save story data');
       } finally {
@@ -584,6 +598,17 @@ export function WorldForm({ world }: WorldFormProps) {
     router.back();
   }, [isDirty, router]);
 
+  const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = true;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
+
+  const handleSaveProgress = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    shouldNavigateAfterSaveRef.current = false;
+    handleSubmit(onSubmit, onError)();
+  }, [handleSubmit, onSubmit, onError]);
 
   return (
     <FormProvider {...methods}>
@@ -1316,18 +1341,37 @@ export function WorldForm({ world }: WorldFormProps) {
           >
             Cancel
           </FormButton>
-          <FormButton
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-            disabled={isSubmitting || isLoadingStoryData}
-          >
-            {selectedStoryAliasId 
-              ? 'Save Story World Data' 
-              : world 
-                ? 'Update World' 
-                : 'Create World'}
-          </FormButton>
+          {world ? (
+            <>
+              <FormButton
+                type="button"
+                variant="secondary"
+                onClick={handleSaveProgress}
+                isLoading={isSubmitting}
+                disabled={isSubmitting || isLoadingStoryData}
+              >
+                Save Progress
+              </FormButton>
+              <FormButton
+                type="button"
+                variant="primary"
+                onClick={handleSaveAndClose}
+                isLoading={isSubmitting}
+                disabled={isSubmitting || isLoadingStoryData}
+              >
+                Save and Close
+              </FormButton>
+            </>
+          ) : (
+            <FormButton
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+              disabled={isSubmitting || isLoadingStoryData}
+            >
+              Create World
+            </FormButton>
+          )}
         </div>
       </div>
       </form>

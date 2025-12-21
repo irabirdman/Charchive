@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type React from 'react';
 
 interface UseFormSubmissionOptions<T> {
   /**
@@ -34,12 +35,18 @@ interface UseFormSubmissionOptions<T> {
   /**
    * Optional callback after successful submission (before navigation)
    * Receives the response data and whether this was an update (true) or create (false)
+   * If this callback returns false, navigation will be skipped
    */
-  onSuccess?: (responseData: any, isUpdate: boolean) => void | Promise<void>;
+  onSuccess?: (responseData: any, isUpdate: boolean) => void | Promise<void> | boolean | Promise<boolean>;
   /**
    * Optional callback on error
    */
   onError?: (error: Error) => void;
+  /**
+   * Optional ref to control whether to navigate after save
+   * If provided, navigation will only happen if ref.current is true
+   */
+  shouldNavigateRef?: React.MutableRefObject<boolean>;
 }
 
 interface UseFormSubmissionResult<T> {
@@ -73,6 +80,7 @@ export function useFormSubmission<T = any>(
     successDelay = 1000,
     onSuccess,
     onError,
+    shouldNavigateRef,
   } = options;
 
   const router = useRouter();
@@ -112,26 +120,45 @@ export function useFormSubmission<T = any>(
       const isUpdate = !!entity;
 
       // Call onSuccess callback if provided
+      let shouldNavigate = true;
       if (onSuccess) {
-        await onSuccess(responseData, isUpdate);
+        const result = await onSuccess(responseData, isUpdate);
+        // If onSuccess returns false, skip navigation
+        if (result === false) {
+          shouldNavigate = false;
+        }
       }
 
-      // Determine the route to navigate to
-      const route = typeof successRoute === 'function' 
-        ? successRoute(responseData, isUpdate)
-        : successRoute;
+      // Check shouldNavigateRef if provided
+      if (shouldNavigateRef) {
+        shouldNavigate = shouldNavigateRef.current;
+        // Reset the ref after checking
+        shouldNavigateRef.current = false;
+      }
 
-      if (showSuccessMessage) {
-        // Wait before navigating to show success message
-        setTimeout(() => {
+      // Only navigate if shouldNavigate is true
+      if (shouldNavigate) {
+        // Determine the route to navigate to
+        const route = typeof successRoute === 'function' 
+          ? successRoute(responseData, isUpdate)
+          : successRoute;
+
+        if (showSuccessMessage) {
+          // Wait before navigating to show success message
+          setTimeout(() => {
+            setIsSubmitting(false);
+            router.push(route);
+            router.refresh();
+          }, successDelay);
+        } else {
+          // Navigate immediately
           setIsSubmitting(false);
           router.push(route);
           router.refresh();
-        }, successDelay);
+        }
       } else {
-        // Navigate immediately
+        // Don't navigate, just refresh the current page
         setIsSubmitting(false);
-        router.push(route);
         router.refresh();
       }
 
