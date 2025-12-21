@@ -235,9 +235,6 @@ export function WorldDetails({ world }: WorldDetailsProps) {
                             className="object-cover"
                             sizes="(max-width: 768px) 100vw, 50vw"
                             unoptimized={race.picture_url.includes('drive.google.com') || isGoogleSitesUrl(race.picture_url)}
-                            onError={(e) => {
-                              console.error('Failed to load race image:', race.picture_url);
-                            }}
                           />
                         </div>
                       )}
