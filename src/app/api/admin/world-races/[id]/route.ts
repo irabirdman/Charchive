@@ -55,8 +55,6 @@ export async function PUT(
       name,
       info,
       picture_url,
-      lifespan_development,
-      appearance_dress,
       position,
     } = body;
 
@@ -109,8 +107,6 @@ export async function PUT(
     if (name !== undefined) updateData.name = name;
     if (info !== undefined) updateData.info = info || null;
     if (picture_url !== undefined) updateData.picture_url = picture_url || null;
-    if (lifespan_development !== undefined) updateData.lifespan_development = lifespan_development || null;
-    if (appearance_dress !== undefined) updateData.appearance_dress = appearance_dress || null;
     if (position !== undefined) updateData.position = position;
 
     // Perform the update

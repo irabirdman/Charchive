@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS world_races (
   name TEXT NOT NULL,
   info TEXT,
   picture_url TEXT,
-  lifespan_development TEXT,
-  appearance_dress TEXT,
   
   -- Ordering
   position INTEGER NOT NULL DEFAULT 0,
@@ -39,6 +37,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop trigger if it exists, then create it
+DROP TRIGGER IF EXISTS trigger_update_world_races_updated_at ON world_races;
+
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER trigger_update_world_races_updated_at
   BEFORE UPDATE ON world_races
@@ -48,43 +49,35 @@ CREATE TRIGGER trigger_update_world_races_updated_at
 -- Add comments for documentation
 COMMENT ON TABLE world_races IS 'Stores structured race/species information for worlds. story_alias_id = null represents base world races.';
 COMMENT ON COLUMN world_races.name IS 'Name of the race/species';
-COMMENT ON COLUMN world_races.info IS 'General information about the race';
+COMMENT ON COLUMN world_races.info IS 'General information about the race (includes lifespan, development, appearance, dress, etc.)';
 COMMENT ON COLUMN world_races.picture_url IS 'URL to an image representing this race';
-COMMENT ON COLUMN world_races.lifespan_development IS 'Information about lifespan and development stages';
-COMMENT ON COLUMN world_races.appearance_dress IS 'Information about appearance and dress/cultural attire';
 COMMENT ON COLUMN world_races.position IS 'Ordering position for displaying races (lower numbers first)';
 COMMENT ON COLUMN world_races.story_alias_id IS 'Optional story alias ID for story-specific race variants. NULL = base world race.';
 
 -- Seed data example (commented out - uncomment and modify as needed)
 -- Note: Replace 'YOUR_WORLD_ID' with an actual world ID from your database
 /*
-INSERT INTO world_races (world_id, name, info, picture_url, lifespan_development, appearance_dress, position)
+INSERT INTO world_races (world_id, name, info, picture_url, position)
 VALUES 
   (
     'YOUR_WORLD_ID',
     'Humans',
-    'The most common and adaptable race in the world. Humans are known for their diversity, ambition, and ability to thrive in various environments.',
+    'The most common and adaptable race in the world. Humans are known for their diversity, ambition, and ability to thrive in various environments. They typically live 70-100 years, reaching physical maturity around 18-20 years of age. Humans display a wide variety of physical appearances based on their geographic and cultural origins. Clothing styles vary greatly by region, from simple rural garments to elaborate urban fashion.',
     'https://example.com/humans.jpg',
-    'Humans typically live 70-100 years, reaching physical maturity around 18-20 years of age. They age gradually and maintain their prime physical condition for several decades.',
-    'Humans display a wide variety of physical appearances based on their geographic and cultural origins. Clothing styles vary greatly by region, from simple rural garments to elaborate urban fashion. Common features include diverse skin tones, hair colors, and eye colors.',
     0
   ),
   (
     'YOUR_WORLD_ID',
     'Elves',
-    'A graceful and long-lived race with deep connections to nature and magic. Elves are known for their wisdom, beauty, and mastery of arcane arts.',
+    'A graceful and long-lived race with deep connections to nature and magic. Elves are known for their wisdom, beauty, and mastery of arcane arts. They can live for several centuries, with some reaching over 1000 years. They mature slowly, reaching adulthood around 100 years old, but maintain their youthful appearance for most of their lives. Elves are typically tall and slender with pointed ears and ethereal beauty. They favor elegant, flowing garments made from natural materials.',
     'https://example.com/elves.jpg',
-    'Elves can live for several centuries, with some reaching over 1000 years. They mature slowly, reaching adulthood around 100 years old, but maintain their youthful appearance for most of their lives.',
-    'Elves are typically tall and slender with pointed ears and ethereal beauty. They favor elegant, flowing garments made from natural materials. Their clothing often incorporates intricate patterns and symbols of their culture. Hair colors range from silver and gold to deep browns and blacks.',
     1
   ),
   (
     'YOUR_WORLD_ID',
     'Dwarves',
-    'A sturdy and industrious race known for their craftsmanship, mining skills, and strong sense of community. Dwarves are masters of metalwork and stone carving.',
+    'A sturdy and industrious race known for their craftsmanship, mining skills, and strong sense of community. Dwarves are masters of metalwork and stone carving. They live for 200-300 years, reaching maturity around 50 years old. Dwarves are shorter and stockier than humans, with broad shoulders and strong builds. They typically have thick beards and hair. Their clothing is practical and durable, often made from leather and metal.',
     'https://example.com/dwarves.jpg',
-    'Dwarves live for 200-300 years, reaching maturity around 50 years old. They age slowly and remain strong and capable well into their later years.',
-    'Dwarves are shorter and stockier than humans, with broad shoulders and strong builds. They typically have thick beards and hair. Their clothing is practical and durable, often made from leather and metal. Traditional dwarven attire includes heavy cloaks, tool belts, and ornate jewelry crafted from precious metals and gems.',
     2
   );
 */

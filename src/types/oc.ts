@@ -144,8 +144,6 @@ export interface WorldRace {
   name: string;
   info?: string | null;
   picture_url?: string | null;
-  lifespan_development?: string | null;
-  appearance_dress?: string | null;
   position: number;
   created_at: string;
   updated_at: string;

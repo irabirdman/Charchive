@@ -10,13 +10,19 @@ import { FormInput } from './forms/FormInput';
 import { FormTextarea } from './forms/FormTextarea';
 
 interface WorldRacesManagerProps {
-  worldId: string;
+  worldId?: string | null;
   storyAliasId?: string | null;
+  draftRaces?: Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>[];
+  onDraftRacesChange?: (races: Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>[]) => void;
 }
 
-export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerProps) {
+export function WorldRacesManager({ worldId, storyAliasId, draftRaces, onDraftRacesChange }: WorldRacesManagerProps) {
+  const isDraftMode = !worldId;
   const [races, setRaces] = useState<WorldRace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [draftRacesState, setDraftRacesState] = useState<Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>[]>(
+    draftRaces || []
+  );
+  const [isLoading, setIsLoading] = useState(!isDraftMode);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -30,8 +36,6 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     name: '',
     info: '',
     picture_url: '',
-    lifespan_development: '',
-    appearance_dress: '',
   });
 
   // Clear success message after 3 seconds
@@ -43,7 +47,7 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
   }, [success]);
 
   const fetchRaces = useCallback(async () => {
-    if (!worldId) return;
+    if (!worldId || isDraftMode) return;
 
     setIsLoading(true);
     setError(null);
@@ -74,15 +78,29 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     } finally {
       setIsLoading(false);
     }
-  }, [worldId, storyAliasId]);
+  }, [worldId, storyAliasId, isDraftMode]);
 
   useEffect(() => {
-    if (worldId) {
+    if (worldId && !isDraftMode) {
       fetchRaces();
     } else {
       setIsLoading(false);
     }
-  }, [worldId, storyAliasId, fetchRaces]);
+  }, [worldId, storyAliasId, fetchRaces, isDraftMode]);
+
+  // Sync draft races with parent
+  useEffect(() => {
+    if (isDraftMode && onDraftRacesChange) {
+      onDraftRacesChange(draftRacesState);
+    }
+  }, [draftRacesState, isDraftMode, onDraftRacesChange]);
+
+  // Initialize draft races from props
+  useEffect(() => {
+    if (isDraftMode && draftRaces) {
+      setDraftRacesState(draftRaces);
+    }
+  }, [isDraftMode, draftRaces]);
 
   async function handleCreate() {
     if (!formData.name.trim()) {
@@ -95,43 +113,67 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     setSuccess(null);
 
     try {
-      // Get the next position
-      const nextPosition = races.length > 0 
-        ? Math.max(...races.map(r => r.position)) + 1 
-        : 0;
+      if (isDraftMode) {
+        // Draft mode: add to local state
+        const nextPosition = draftRacesState.length > 0 
+          ? Math.max(...draftRacesState.map(r => r.position)) + 1 
+          : 0;
 
-      const response = await fetch('/api/admin/world-races', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          world_id: worldId,
+        const newRace: Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'> = {
           story_alias_id: storyAliasId || null,
           name: formData.name.trim(),
           info: formData.info.trim() || null,
           picture_url: formData.picture_url.trim() || null,
-          lifespan_development: formData.lifespan_development.trim() || null,
-          appearance_dress: formData.appearance_dress.trim() || null,
           position: nextPosition,
-        }),
-      });
+        };
 
-      const result = await response.json();
+        const updatedRaces = [...draftRacesState, newRace];
+        setDraftRacesState(updatedRaces);
+        if (onDraftRacesChange) {
+          onDraftRacesChange(updatedRaces);
+        }
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create race');
+        setFormData({ 
+          name: '', 
+          info: '', 
+          picture_url: ''
+        });
+        setSuccess('Race added!');
+      } else {
+        // Normal mode: create via API
+        const nextPosition = races.length > 0 
+          ? Math.max(...races.map(r => r.position)) + 1 
+          : 0;
+
+        const response = await fetch('/api/admin/world-races', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            world_id: worldId,
+            story_alias_id: storyAliasId || null,
+            name: formData.name.trim(),
+            info: formData.info.trim() || null,
+            picture_url: formData.picture_url.trim() || null,
+            position: nextPosition,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create race');
+        }
+
+        setFormData({ 
+          name: '', 
+          info: '', 
+          picture_url: ''
+        });
+        setSuccess('Race created successfully!');
+        await fetchRaces();
       }
-
-      setFormData({ 
-        name: '', 
-        info: '', 
-        picture_url: '', 
-        lifespan_development: '', 
-        appearance_dress: '' 
-      });
-      setSuccess('Race created successfully!');
-      await fetchRaces();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create race');
     } finally {
@@ -150,36 +192,60 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/admin/world-races/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          info: formData.info.trim() || null,
-          picture_url: formData.picture_url.trim() || null,
-          lifespan_development: formData.lifespan_development.trim() || null,
-          appearance_dress: formData.appearance_dress.trim() || null,
-        }),
-      });
+      if (isDraftMode) {
+        // Draft mode: update in local state
+        const index = draftRacesState.findIndex((r, i) => i.toString() === id);
+        if (index !== -1) {
+          const updatedRaces = [...draftRacesState];
+          updatedRaces[index] = {
+            ...updatedRaces[index],
+            name: formData.name.trim(),
+            info: formData.info.trim() || null,
+            picture_url: formData.picture_url.trim() || null,
+          };
+          setDraftRacesState(updatedRaces);
+          if (onDraftRacesChange) {
+            onDraftRacesChange(updatedRaces);
+          }
+          setEditingId(null);
+          setFormData({ 
+            name: '', 
+            info: '', 
+            picture_url: '', 
+            lifespan_development: '', 
+            appearance_dress: '' 
+          });
+          setSuccess('Race updated!');
+        }
+      } else {
+        // Normal mode: update via API
+        const response = await fetch(`/api/admin/world-races/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            info: formData.info.trim() || null,
+            picture_url: formData.picture_url.trim() || null,
+          }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to update race');
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to update race');
+        }
+
+        setEditingId(null);
+        setFormData({ 
+          name: '', 
+          info: '', 
+          picture_url: ''
+        });
+        setSuccess('Race updated successfully!');
+        await fetchRaces();
       }
-
-      setEditingId(null);
-      setFormData({ 
-        name: '', 
-        info: '', 
-        picture_url: '', 
-        lifespan_development: '', 
-        appearance_dress: '' 
-      });
-      setSuccess('Race updated successfully!');
-      await fetchRaces();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update race');
     } finally {
@@ -193,19 +259,34 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/admin/world-races/${id}`, {
-        method: 'DELETE',
-      });
+      if (isDraftMode) {
+        // Draft mode: remove from local state
+        const index = draftRacesState.findIndex((r, i) => i.toString() === id);
+        if (index !== -1) {
+          const updatedRaces = draftRacesState.filter((_, i) => i !== index);
+          setDraftRacesState(updatedRaces);
+          if (onDraftRacesChange) {
+            onDraftRacesChange(updatedRaces);
+          }
+          setDeleteConfirmId(null);
+          setSuccess('Race removed!');
+        }
+      } else {
+        // Normal mode: delete via API
+        const response = await fetch(`/api/admin/world-races/${id}`, {
+          method: 'DELETE',
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete race');
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to delete race');
+        }
+
+        setDeleteConfirmId(null);
+        setSuccess('Race deleted successfully!');
+        await fetchRaces();
       }
-
-      setDeleteConfirmId(null);
-      setSuccess('Race deleted successfully!');
-      await fetchRaces();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete race');
     } finally {
@@ -214,6 +295,20 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
   }
 
   async function handleMoveUp(id: string) {
+    if (isDraftMode) {
+      const index = parseInt(id);
+      if (index <= 0) return;
+      const updatedRaces = [...draftRacesState];
+      [updatedRaces[index - 1], updatedRaces[index]] = [updatedRaces[index], updatedRaces[index - 1]];
+      // Update positions
+      updatedRaces.forEach((r, i) => { r.position = i; });
+      setDraftRacesState(updatedRaces);
+      if (onDraftRacesChange) {
+        onDraftRacesChange(updatedRaces);
+      }
+      return;
+    }
+
     const race = races.find(r => r.id === id);
     if (!race || race.position === 0) return;
 
@@ -242,6 +337,20 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
   }
 
   async function handleMoveDown(id: string) {
+    if (isDraftMode) {
+      const index = parseInt(id);
+      if (index >= draftRacesState.length - 1) return;
+      const updatedRaces = [...draftRacesState];
+      [updatedRaces[index], updatedRaces[index + 1]] = [updatedRaces[index + 1], updatedRaces[index]];
+      // Update positions
+      updatedRaces.forEach((r, i) => { r.position = i; });
+      setDraftRacesState(updatedRaces);
+      if (onDraftRacesChange) {
+        onDraftRacesChange(updatedRaces);
+      }
+      return;
+    }
+
     const race = races.find(r => r.id === id);
     if (!race) return;
 
@@ -269,14 +378,13 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     }
   }
 
-  function startEdit(race: WorldRace) {
-    setEditingId(race.id);
+  function startEdit(race: WorldRace | Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>, index?: number) {
+    const editId = isDraftMode && index !== undefined ? index.toString() : (race as WorldRace).id;
+    setEditingId(editId);
     setFormData({
       name: race.name,
       info: race.info || '',
       picture_url: race.picture_url || '',
-      lifespan_development: race.lifespan_development || '',
-      appearance_dress: race.appearance_dress || '',
     });
   }
 
@@ -285,9 +393,7 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
     setFormData({ 
       name: '', 
       info: '', 
-      picture_url: '', 
-      lifespan_development: '', 
-      appearance_dress: '' 
+      picture_url: ''
     });
   }
 
@@ -331,8 +437,8 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
                 id="race-info"
                 value={formData.info}
                 onChange={(e) => setFormData({ ...formData, info: e.target.value })}
-                rows={3}
-                placeholder="General information about this race"
+                rows={6}
+                placeholder="General information about this race. Include details about lifespan, development, appearance, dress, and any other relevant characteristics."
                 disabled={isCreating}
               />
             </div>
@@ -344,28 +450,6 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
                 value={formData.picture_url}
                 onChange={(e) => setFormData({ ...formData, picture_url: e.target.value })}
                 placeholder="https://example.com/race-image.jpg"
-                disabled={isCreating}
-              />
-            </div>
-            <div>
-              <FormLabel htmlFor="race-lifespan">⏳ Lifespan & Development</FormLabel>
-              <FormTextarea
-                id="race-lifespan"
-                value={formData.lifespan_development}
-                onChange={(e) => setFormData({ ...formData, lifespan_development: e.target.value })}
-                rows={3}
-                placeholder="Information about lifespan, aging, growth stages, etc."
-                disabled={isCreating}
-              />
-            </div>
-            <div>
-              <FormLabel htmlFor="race-appearance">👁️ Appearance & Dress</FormLabel>
-              <FormTextarea
-                id="race-appearance"
-                value={formData.appearance_dress}
-                onChange={(e) => setFormData({ ...formData, appearance_dress: e.target.value })}
-                rows={3}
-                placeholder="Physical appearance, typical clothing, cultural attire, etc."
                 disabled={isCreating}
               />
             </div>
@@ -405,7 +489,8 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
                 id="edit-race-info"
                 value={formData.info}
                 onChange={(e) => setFormData({ ...formData, info: e.target.value })}
-                rows={3}
+                rows={6}
+                placeholder="General information about this race. Include details about lifespan, development, appearance, dress, and any other relevant characteristics."
                 disabled={isUpdating}
               />
             </div>
@@ -416,26 +501,6 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
                 type="url"
                 value={formData.picture_url}
                 onChange={(e) => setFormData({ ...formData, picture_url: e.target.value })}
-                disabled={isUpdating}
-              />
-            </div>
-            <div>
-              <FormLabel htmlFor="edit-race-lifespan">⏳ Lifespan & Development</FormLabel>
-              <FormTextarea
-                id="edit-race-lifespan"
-                value={formData.lifespan_development}
-                onChange={(e) => setFormData({ ...formData, lifespan_development: e.target.value })}
-                rows={3}
-                disabled={isUpdating}
-              />
-            </div>
-            <div>
-              <FormLabel htmlFor="edit-race-appearance">👁️ Appearance & Dress</FormLabel>
-              <FormTextarea
-                id="edit-race-appearance"
-                value={formData.appearance_dress}
-                onChange={(e) => setFormData({ ...formData, appearance_dress: e.target.value })}
-                rows={3}
                 disabled={isUpdating}
               />
             </div>
@@ -463,38 +528,47 @@ export function WorldRacesManager({ worldId, storyAliasId }: WorldRacesManagerPr
       )}
 
       {/* List of Races */}
-      {races.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-300">Existing Races</h4>
-          {races.map((race, index) => (
-            <RaceItem
-              key={race.id}
-              race={race}
-              isEditing={editingId === race.id}
-              isDeleting={isDeleting === race.id}
-              canMoveUp={index > 0}
-              canMoveDown={index < races.length - 1}
-              onEdit={() => startEdit(race)}
-              onDelete={() => setDeleteConfirmId(race.id)}
-              onMoveUp={() => handleMoveUp(race.id)}
-              onMoveDown={() => handleMoveDown(race.id)}
-              deleteConfirmId={deleteConfirmId}
-              onConfirmDelete={() => handleDelete(race.id)}
-              onCancelDelete={() => setDeleteConfirmId(null)}
-            />
-          ))}
-        </div>
-      )}
+      {(() => {
+        const displayRaces = isDraftMode ? draftRacesState : races;
+        return displayRaces.length > 0 ? (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-300">Existing Races</h4>
+            {displayRaces.map((race, index) => {
+              const raceId = isDraftMode ? index.toString() : (race as WorldRace).id;
+              return (
+                <RaceItem
+                  key={raceId}
+                  race={race}
+                  isEditing={editingId === raceId}
+                  isDeleting={isDeleting === raceId}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < displayRaces.length - 1}
+                  onEdit={() => startEdit(race, index)}
+                  onDelete={() => setDeleteConfirmId(raceId)}
+                  onMoveUp={() => handleMoveUp(raceId)}
+                  onMoveDown={() => handleMoveDown(raceId)}
+                  deleteConfirmId={deleteConfirmId}
+                  onConfirmDelete={() => handleDelete(raceId)}
+                  onCancelDelete={() => setDeleteConfirmId(null)}
+                />
+              );
+            })}
+          </div>
+        ) : null;
+      })()}
 
-      {races.length === 0 && !editingId && (
-        <div className="text-sm text-gray-400 italic">No races created yet.</div>
-      )}
+      {(() => {
+        const displayRaces = isDraftMode ? draftRacesState : races;
+        return displayRaces.length === 0 && !editingId ? (
+          <div className="text-sm text-gray-400 italic">No races created yet.</div>
+        ) : null;
+      })()}
     </div>
   );
 }
 
 interface RaceItemProps {
-  race: WorldRace;
+  race: WorldRace | Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>;
   isEditing: boolean;
   isDeleting: boolean;
   canMoveUp: boolean;
@@ -534,23 +608,13 @@ function RaceItem({
         <div className="flex-1">
           <div className="font-medium text-gray-200">{race.name}</div>
           {race.info && (
-            <div className="text-sm text-gray-400 mt-1">{race.info}</div>
+            <div className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{race.info}</div>
           )}
           {race.picture_url && (
             <div className="text-xs text-gray-500 mt-1">
               <a href={race.picture_url} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">
                 View Image
               </a>
-            </div>
-          )}
-          {(race.lifespan_development || race.appearance_dress) && (
-            <div className="text-xs text-gray-500 mt-2 space-y-1">
-              {race.lifespan_development && (
-                <div><strong>Lifespan & Development:</strong> {race.lifespan_development}</div>
-              )}
-              {race.appearance_dress && (
-                <div><strong>Appearance & Dress:</strong> {race.appearance_dress}</div>
-              )}
             </div>
           )}
         </div>

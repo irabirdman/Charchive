@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { World, WorldFieldDefinitions, WorldStoryData } from '@/types/oc';
+import type { World, WorldFieldDefinitions, WorldStoryData, WorldRace } from '@/types/oc';
 import { useFormSubmission } from '@/lib/hooks/useFormSubmission';
 import { slugify } from '@/lib/utils/slugify';
 import { WorldFieldsSection } from './WorldFieldsSection';
@@ -101,6 +101,7 @@ export function WorldForm({ world }: WorldFormProps) {
   const [selectedStoryAliasId, setSelectedStoryAliasId] = useState<string | null>(initialStoryAliasId);
   const [storyData, setStoryData] = useState<WorldStoryData | null>(null);
   const [isLoadingStoryData, setIsLoadingStoryData] = useState(false);
+  const [draftRaces, setDraftRaces] = useState<Omit<WorldRace, 'id' | 'world_id' | 'created_at' | 'updated_at'>[]>([]);
   
   // Get field definitions from world for display
   const fieldDefinitions = getWorldFieldDefinitions(world || null);
@@ -161,6 +162,36 @@ export function WorldForm({ world }: WorldFormProps) {
     successRoute: world ? `/admin/worlds/${world.id}` : '/admin/worlds',
     showSuccessMessage: true,
     successMessage: 'World saved successfully!',
+    onSuccess: async (responseData, isUpdate) => {
+      // If world was created and we have draft races, create them
+      if (!isUpdate && draftRaces.length > 0 && responseData && responseData.id) {
+        const newWorldId = responseData.id;
+        try {
+          // Create all draft races
+          await Promise.all(
+            draftRaces.map(race =>
+              fetch('/api/admin/world-races', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  world_id: newWorldId,
+                  story_alias_id: race.story_alias_id || null,
+                  name: race.name,
+                  info: race.info || null,
+                  picture_url: race.picture_url || null,
+                  position: race.position,
+                }),
+              })
+            )
+          );
+          // Clear draft races after successful creation
+          setDraftRaces([]);
+        } catch (err) {
+          console.error('Failed to create races after world creation:', err);
+          // Don't block the success message, but log the error
+        }
+      }
+    },
     transformData: (data) => {
       // Clean up empty strings and convert to null for optional fields
       return {
@@ -531,7 +562,7 @@ export function WorldForm({ world }: WorldFormProps) {
         setIsCustomSubmitting(false);
       }
     } else {
-      // Use base submit for world updates
+      // Use base submit for world updates/creation
       await baseSubmit.submit(data);
     }
   };
@@ -923,26 +954,13 @@ export function WorldForm({ world }: WorldFormProps) {
         defaultOpen={false}
         description="Core world mechanics and important elements: races/species, power systems, factions, notable figures, conflicts, world rules, and guidance for OC integration. Essential for understanding how the world works and what characters can do."
       >
-        {world && (
-          <div className="mb-6">
-            <WorldRacesManager 
-              worldId={world.id} 
-              storyAliasId={selectedStoryAliasId}
-            />
-          </div>
-        )}
-        
-        <div>
-          <FormLabel htmlFor="races_species">
-            Races/Species (Legacy Text Field)
-          </FormLabel>
-          <FormTextarea
-            {...register('races_species')}
-            rows={3}
-            placeholder="Legacy text field for races. Use the structured races manager above for better organization."
-            disabled={isSubmitting}
+        <div className="mb-6">
+          <WorldRacesManager 
+            worldId={world?.id || null} 
+            storyAliasId={selectedStoryAliasId}
+            draftRaces={draftRaces}
+            onDraftRacesChange={setDraftRaces}
           />
-          <p className="mt-1 text-xs text-gray-400">This field is kept for backward compatibility. Use the races manager above for structured race information.</p>
         </div>
 
         <div>

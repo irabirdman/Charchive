@@ -65,8 +65,6 @@ export async function POST(request: Request) {
       name,
       info,
       picture_url,
-      lifespan_development,
-      appearance_dress,
       position,
     } = body;
 
@@ -113,8 +111,6 @@ export async function POST(request: Request) {
         name,
         info: info || null,
         picture_url: picture_url || null,
-        lifespan_development: lifespan_development || null,
-        appearance_dress: appearance_dress || null,
         position: position ?? 0,
       })
       .select()
