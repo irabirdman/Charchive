@@ -110,6 +110,15 @@ export default async function WorldDetailPage({
         name,
         slug,
         description
+      ),
+      races:world_races(
+        id,
+        world_id,
+        story_alias_id,
+        name,
+        info,
+        picture_url,
+        position
       )
     `)
     .eq('slug', resolvedParams.slug)
@@ -138,6 +147,21 @@ export default async function WorldDetailPage({
       
       storyData = storyDataResult;
     }
+  }
+  
+  // Build query filters based on story alias
+  const storyAliasId = selectedStoryAlias?.id || null;
+  
+  // Filter races based on story alias (if no story selected, show base races)
+  let filteredRaces = world.races || [];
+  if (filteredRaces.length > 0) {
+    filteredRaces = filteredRaces.filter((race: any) => {
+      if (storyAliasId) {
+        return race.story_alias_id === storyAliasId;
+      } else {
+        return race.story_alias_id === null;
+      }
+    }).sort((a: any, b: any) => a.position - b.position);
   }
 
   // Merge base world data with story-specific data (story data overrides base)
@@ -171,10 +195,11 @@ export default async function WorldDetailPage({
     history_image_url: storyData.history_image_url ?? world.history_image_url,
     history: storyData.history ?? world.history,
     modular_fields: storyData.modular_fields ?? world.modular_fields,
-  } : world;
-
-  // Build query filters based on story alias
-  const storyAliasId = selectedStoryAlias?.id || null;
+    races: filteredRaces,
+  } : {
+    ...world,
+    races: filteredRaces,
+  };
   
   // Parallelize independent queries for better performance
   const [ocsResult, timelinesResult, loreEntriesResult] = await Promise.all([

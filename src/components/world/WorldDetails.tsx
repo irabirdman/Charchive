@@ -204,7 +204,7 @@ export function WorldDetails({ world }: WorldDetailsProps) {
       )}
 
       {/* World Building Section */}
-      {(world.races_species || world.power_systems || world.power_source || world.important_factions || world.notable_figures || world.central_conflicts || world.world_rules_limitations || world.oc_integration_notes) && (
+      {((world.races && world.races.length > 0) || world.races_species || world.power_systems || world.power_source || world.important_factions || world.notable_figures || world.central_conflicts || world.world_rules_limitations || world.oc_integration_notes) && (
         <SectionWithImage
           title="World Building"
           icon="fas fa-cube"
@@ -212,11 +212,49 @@ export function WorldDetails({ world }: WorldDetailsProps) {
           imageUrl={world.world_building_image_url || null}
         >
           <div className="space-y-4 text-gray-300 prose max-w-none">
-            {world.races_species && (
+            {world.races && world.races.length > 0 && (
               <div>
                 <h3 className="text-lg font-bold text-gray-100 mb-2 flex items-center gap-2">
                   <i className="fas fa-users text-sm"></i>
                   Races & Species
+                </h3>
+                <div className="space-y-4">
+                  {world.races.map((race) => (
+                    <div key={race.id} className="border border-gray-700/50 rounded-lg p-4 bg-gray-800/30">
+                      <div className="flex gap-4">
+                        {race.picture_url && (
+                          <div className="flex-shrink-0 w-32 h-32 relative rounded-lg overflow-hidden border border-gray-700/50">
+                            <Image
+                              src={race.picture_url.includes('drive.google.com')
+                                ? getProxyUrl(race.picture_url)
+                                : (convertGoogleDriveUrl(race.picture_url) || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/960px-Placeholder_view_vector.svg.png')}
+                              alt={race.name}
+                              fill
+                              className="object-cover"
+                              sizes="128px"
+                              unoptimized={race.picture_url.includes('drive.google.com') || isGoogleSitesUrl(race.picture_url)}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-gray-100 mb-2">{race.name}</h4>
+                          {race.info && (
+                            <div className="text-gray-300 whitespace-pre-wrap">
+                              <Markdown content={race.info} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {world.races_species && (
+              <div>
+                <h3 className="text-lg font-bold text-gray-100 mb-2 flex items-center gap-2">
+                  <i className="fas fa-users text-sm"></i>
+                  Races & Species (Legacy)
                 </h3>
                 <Markdown content={world.races_species} />
               </div>
