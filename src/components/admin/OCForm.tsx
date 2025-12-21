@@ -1269,41 +1269,97 @@ interface OCFormProps {
   reverseRelationships?: ReverseRelationships; // Relationships where other OCs have this OC
 }
 
-// Helper function to merge relationships, avoiding duplicates
+// Helper function to merge relationships, avoiding duplicates and preserving existing data
 function mergeRelationships(
-  existing: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>,
-  reverse: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }>
-): Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType }> {
+  existing: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>,
+  reverse: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>
+): Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }> {
   const merged = [...existing];
-  const existingIds = new Set(
-    existing
-      .map(r => r.oc_id)
-      .filter((id): id is string => Boolean(id))
-  );
-  const existingSlugs = new Set(
-    existing
-      .map(r => r.oc_slug)
-      .filter((slug): slug is string => Boolean(slug))
-  );
-  const existingNames = new Set(
-    existing
-      .map(r => r.name)
-      .filter((name): name is string => Boolean(name))
-  );
 
-  // Add reverse relationships that don't already exist
+  // Process reverse relationships
   for (const reverseRel of reverse) {
-    const hasDuplicate = 
-      (reverseRel.oc_id && existingIds.has(reverseRel.oc_id)) ||
-      (reverseRel.oc_slug && existingSlugs.has(reverseRel.oc_slug)) ||
-      (reverseRel.name && existingNames.has(reverseRel.name));
+    // Find matching existing relationship
+    // Priority: oc_id > oc_slug > name (case-insensitive)
+    const existingIndex = merged.findIndex(existingRel => {
+      // First check: exact oc_id match (most reliable)
+      if (reverseRel.oc_id && existingRel.oc_id && reverseRel.oc_id === existingRel.oc_id) {
+        return true;
+      }
+      // Second check: exact oc_slug match
+      if (reverseRel.oc_slug && existingRel.oc_slug && reverseRel.oc_slug === existingRel.oc_slug) {
+        return true;
+      }
+      // Third check: name match (only if both have names and neither has oc_id/oc_slug to avoid false matches)
+      if (reverseRel.name && existingRel.name) {
+        const reverseName = reverseRel.name.toLowerCase().trim();
+        const existingName = existingRel.name.toLowerCase().trim();
+        // Only match by name if names are identical AND neither has a reliable identifier
+        // (to avoid matching different people with the same name)
+        if (reverseName === existingName) {
+          // If either has an oc_id or oc_slug, don't match by name alone (they're different people)
+          const reverseHasId = !!(reverseRel.oc_id || reverseRel.oc_slug);
+          const existingHasId = !!(existingRel.oc_id || existingRel.oc_slug);
+          // Only match by name if both lack identifiers, or if they have matching identifiers
+          return !reverseHasId && !existingHasId;
+        }
+      }
+      return false;
+    });
 
-    if (!hasDuplicate) {
+    if (existingIndex >= 0) {
+      // Merge: preserve existing values for relationship, description, and relationship_type
+      // Only update if the existing value is empty/undefined and reverse has a value
+      const existingRel = merged[existingIndex];
+      merged[existingIndex] = {
+        ...existingRel,
+        // Preserve existing values - only fill in if missing
+        relationship: existingRel.relationship || reverseRel.relationship,
+        description: existingRel.description || reverseRel.description,
+        relationship_type: existingRel.relationship_type || reverseRel.relationship_type,
+        // Update oc_id/oc_slug if missing in existing
+        oc_id: existingRel.oc_id || reverseRel.oc_id,
+        oc_slug: existingRel.oc_slug || reverseRel.oc_slug,
+        // Update image_url if missing in existing
+        image_url: existingRel.image_url || reverseRel.image_url,
+      };
+    } else {
+      // No existing match, add the reverse relationship
       merged.push(reverseRel);
     }
   }
 
-  return merged;
+  // Final deduplication pass to ensure no duplicates remain
+  // Use a Map to track seen relationships by their unique identifiers
+  const seen = new Map<string, number>();
+  const deduplicated: typeof merged = [];
+  
+  for (let i = 0; i < merged.length; i++) {
+    const rel = merged[i];
+    // Create a unique key - prioritize oc_id, then oc_slug, then name
+    const key = rel.oc_id || rel.oc_slug || rel.name?.toLowerCase().trim() || `unnamed-${i}`;
+    
+    if (seen.has(key)) {
+      // Duplicate found - merge with the existing one, preserving data
+      const existingIndex = seen.get(key)!;
+      const existingRel = deduplicated[existingIndex];
+      deduplicated[existingIndex] = {
+        ...existingRel,
+        // Preserve existing values, only fill in if missing
+        relationship: existingRel.relationship || rel.relationship,
+        description: existingRel.description || rel.description,
+        relationship_type: existingRel.relationship_type || rel.relationship_type,
+        oc_id: existingRel.oc_id || rel.oc_id,
+        oc_slug: existingRel.oc_slug || rel.oc_slug,
+        image_url: existingRel.image_url || rel.image_url,
+      };
+    } else {
+      // New relationship, add it
+      seen.set(key, deduplicated.length);
+      deduplicated.push(rel);
+    }
+  }
+
+  return deduplicated;
 }
 
 // Helper function to get default values from OC
