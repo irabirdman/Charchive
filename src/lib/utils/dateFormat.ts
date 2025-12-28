@@ -51,6 +51,28 @@ export function formatDateOfBirth(dateStr: string | null | undefined): string {
   return trimmed;
 }
 
+/**
+ * Formats a date string to a readable "Last updated" format
+ * Examples: "December 8, 2024" or "January 15, 2024"
+ */
+export function formatLastUpdated(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const month = monthNames[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  return `${month} ${day}, ${year}`;
+}
+
 
 
 

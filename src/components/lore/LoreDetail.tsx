@@ -8,6 +8,7 @@ import { applyWorldThemeStyles } from '@/lib/theme/worldTheme';
 import { getWorldLoreFieldDefinitions, getFieldValue } from '@/lib/fields/worldFields';
 import { TagList } from '@/components/wiki/TagList';
 import { convertGoogleDriveUrl, isGoogleSitesUrl, getProxyUrl } from '@/lib/utils/googleDriveImage';
+import { formatLastUpdated } from '@/lib/utils/dateFormat';
 
 interface LoreDetailProps {
   lore: WorldLore;
@@ -37,7 +38,7 @@ export function LoreDetail({ lore }: LoreDetailProps) {
 
       {/* Header */}
       <div className="wiki-card p-6" style={themeStyles}>
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
           <span className="px-3 py-1 text-sm font-medium bg-purple-600/80 text-white rounded">
             {lore.lore_type}
           </span>
@@ -48,6 +49,12 @@ export function LoreDetail({ lore }: LoreDetailProps) {
             >
               {lore.world.name}
             </Link>
+          )}
+          {lore.updated_at && (
+            <span className="text-sm text-white/80">
+              <i className="fas fa-clock mr-1.5" aria-hidden="true"></i>
+              Last updated: {formatLastUpdated(lore.updated_at)}
+            </span>
           )}
         </div>
         <h1 className="text-4xl font-bold text-white">{lore.name}</h1>

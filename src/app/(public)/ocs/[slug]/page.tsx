@@ -18,6 +18,7 @@ import { extractColorHex, extractColorName, getColorHex } from '@/lib/utils/colo
 import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
 import { formatHeightWithMetric, formatWeightWithMetric } from '@/lib/utils/unitConversion';
 import { getRelationshipTypeConfig } from '@/lib/relationships/relationshipTypes';
+import { formatLastUpdated } from '@/lib/utils/dateFormat';
 
 export async function generateMetadata({
   params,
@@ -255,18 +256,26 @@ export default async function OCDetailPage({
                       {oc.name}
                     </span>
                   </h1>
-                  {oc.world && (
-                    <Link 
-                      href={`/worlds/${oc.world.slug}`}
-                      prefetch={true}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-all duration-200 border border-blue-500/20 hover:border-blue-500/40 group/link backdrop-blur-sm text-sm"
-                      suppressHydrationWarning
-                    >
-                      <i className="fas fa-globe text-xs group-hover/link:scale-110 transition-transform duration-200" aria-hidden="true" suppressHydrationWarning></i>
-                      <span className="font-semibold">{oc.world.name}</span>
-                      <i className="fas fa-arrow-right text-xs opacity-0 group-hover/link:opacity-100 group-hover/link:translate-x-1 transition-all duration-200" aria-hidden="true" suppressHydrationWarning></i>
-                    </Link>
-                  )}
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    {oc.world && (
+                      <Link 
+                        href={`/worlds/${oc.world.slug}`}
+                        prefetch={true}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-all duration-200 border border-blue-500/20 hover:border-blue-500/40 group/link backdrop-blur-sm text-sm"
+                        suppressHydrationWarning
+                      >
+                        <i className="fas fa-globe text-xs group-hover/link:scale-110 transition-transform duration-200" aria-hidden="true" suppressHydrationWarning></i>
+                        <span className="font-semibold">{oc.world.name}</span>
+                        <i className="fas fa-arrow-right text-xs opacity-0 group-hover/link:opacity-100 group-hover/link:translate-x-1 transition-all duration-200" aria-hidden="true" suppressHydrationWarning></i>
+                      </Link>
+                    )}
+                    {oc.updated_at && (
+                      <span className="text-sm text-gray-400" suppressHydrationWarning>
+                        <i className="fas fa-clock mr-1.5" aria-hidden="true" suppressHydrationWarning></i>
+                        Last updated: {formatLastUpdated(oc.updated_at)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

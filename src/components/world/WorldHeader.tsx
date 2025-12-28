@@ -2,6 +2,7 @@ import Image from 'next/image';
 import type { World } from '@/types/oc';
 import { applyWorldThemeStyles } from '@/lib/theme/worldTheme';
 import { convertGoogleDriveUrl, isGoogleSitesUrl, getProxyUrl } from '@/lib/utils/googleDriveImage';
+import { formatLastUpdated } from '@/lib/utils/dateFormat';
 
 interface WorldHeaderProps {
   world: World;
@@ -46,12 +47,20 @@ export function WorldHeader({ world }: WorldHeaderProps) {
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
               {world.name}
             </h1>
-            <span
-              className="inline-block px-4 py-1 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: world.primary_color }}
-            >
-              {world.series_type}
-            </span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span
+                className="inline-block px-4 py-1 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: world.primary_color }}
+              >
+                {world.series_type}
+              </span>
+              {world.updated_at && (
+                <span className="text-sm text-white/80">
+                  <i className="fas fa-clock mr-1.5" aria-hidden="true"></i>
+                  Last updated: {formatLastUpdated(world.updated_at)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

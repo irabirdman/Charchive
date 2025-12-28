@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
+import { formatLastUpdated } from '@/lib/utils/dateFormat';
 
 export const revalidate = 300;
 
@@ -132,8 +133,14 @@ export default async function TimelinePage({
 
       <div className="wiki-card p-6 md:p-8 mb-8">
         {timeline.description_markdown && (
-          <div className="prose max-w-none">
+          <div className="prose max-w-none mb-4">
             <Markdown content={timeline.description_markdown} />
+          </div>
+        )}
+        {timeline.updated_at && (
+          <div className="text-sm text-gray-400 mt-4 pt-4 border-t border-gray-700/60">
+            <i className="fas fa-clock mr-1.5" aria-hidden="true"></i>
+            Last updated: {formatLastUpdated(timeline.updated_at)}
           </div>
         )}
       </div>

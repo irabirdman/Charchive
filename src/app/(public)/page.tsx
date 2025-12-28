@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { WorldCard } from '@/components/world/WorldCard';
-import { OCCard } from '@/components/oc/OCCard';
+import { SimpleWorldCard } from '@/components/world/SimpleWorldCard';
+import { SimpleOCCard } from '@/components/oc/SimpleOCCard';
 import { FeatureTile } from '@/components/admin/FeatureTile';
-import { LoreCard } from '@/components/lore/LoreCard';
 
 export const metadata: Metadata = {
   title: 'Home',
@@ -37,9 +36,54 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-// Helper function to shuffle array and get random items
+// Generate a seed based on the current date (same seed for the same day)
+function getDaySeed(): number {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
+  
+  // Better hash function to convert date string to number
+  let hash = 0;
+  for (let i = 0; i < dateString.length; i++) {
+    const char = dateString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+
+// Improved seeded random number generator (Linear Congruential Generator)
+function seededRandom(seed: number): () => number {
+  let value = seed;
+  return function() {
+    // LCG parameters (from Numerical Recipes)
+    value = (value * 1664525 + 1013904223) % Math.pow(2, 32);
+    return value / Math.pow(2, 32);
+  };
+}
+
+// Fisher-Yates shuffle with seeded random
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  const random = seededRandom(seed);
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
+}
+
+// Helper function to shuffle array and get random items using day-based seed
 function getRandomItems<T>(array: T[], count: number): T[] {
-  const shuffled = [...array].sort(() => Math.random() - 0.5);
+  if (array.length === 0) return [];
+  
+  // Use day-based seed for consistent daily randomization
+  const seed = getDaySeed();
+  const shuffled = seededShuffle(array, seed);
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
@@ -96,34 +140,24 @@ export default async function HomePage() {
   const [recentWorlds, recentOCs, recentLore] = await Promise.all([
     supabase
       .from('worlds')
-      .select('id, name, slug, updated_at')
+      .select('*')
       .eq('is_public', true)
       .order('updated_at', { ascending: false })
       .limit(3),
     supabase
       .from('ocs')
-      .select('id, name, slug, updated_at, world:worlds(slug)')
+      .select('*, world:worlds(id, name, slug, primary_color, accent_color)')
       .eq('is_public', true)
       .order('updated_at', { ascending: false })
       .limit(3),
     supabase
       .from('world_lore')
-      .select('id, name, slug, updated_at, world:worlds!inner(slug, is_public)')
+      .select('*, world:worlds!inner(id, name, slug, is_public, primary_color, accent_color)')
       .eq('world.is_public', true)
       .order('updated_at', { ascending: false })
       .limit(3),
   ]);
 
-  // Get recently updated lore for dedicated section
-  const { data: recentlyUpdatedLore } = await supabase
-    .from('world_lore')
-    .select(`
-      *,
-      world:worlds!inner(id, name, slug, is_public, primary_color, accent_color)
-    `)
-    .eq('world.is_public', true)
-    .order('updated_at', { ascending: false })
-    .limit(6);
 
   // Get current projects section data
   const { data: currentProjectsData } = await supabase
@@ -336,94 +370,54 @@ export default async function HomePage() {
             <i className="fas fa-clock text-xl md:text-2xl text-blue-400"></i>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Recently Updated</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {recentWorlds.data && recentWorlds.data.length > 0 && (
-              <div className="wiki-card p-4">
-                <h3 className="text-lg font-semibold text-gray-100 mb-3 flex items-center gap-2">
-                  <i className="fas fa-globe text-purple-400"></i>
-                  Worlds
-                </h3>
-                <div className="space-y-2">
-                  {recentWorlds.data.slice(0, 3).map((world) => (
-                    <Link
-                      key={world.id}
-                      href={`/worlds/${world.slug}`}
-                      prefetch={true}
-                      className="block p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-gray-200">{world.name}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-            {recentOCs.data && recentOCs.data.length > 0 && (
-              <div className="wiki-card p-4">
-                <h3 className="text-lg font-semibold text-gray-100 mb-3 flex items-center gap-2">
-                  <i className="fas fa-user text-pink-400"></i>
-                  Characters
-                </h3>
-                <div className="space-y-2">
-                  {recentOCs.data.slice(0, 3).map((oc) => (
-                    <Link
-                      key={oc.id}
-                      href={`/ocs/${oc.slug}`}
-                      prefetch={true}
-                      className="block p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-gray-200">{oc.name}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-            {recentLore.data && recentLore.data.length > 0 && (
-              <div className="wiki-card p-4">
-                <h3 className="text-lg font-semibold text-gray-100 mb-3 flex items-center gap-2">
-                  <i className="fas fa-book text-teal-400"></i>
-                  Lore
-                </h3>
-                <div className="space-y-2">
-                  {recentLore.data.slice(0, 3).map((lore) => (
-                    <Link
-                      key={lore.id}
-                      href={`/worlds/${(lore.world as any)?.slug}/lore/${lore.slug}`}
-                      prefetch={true}
-                      className="block p-2 bg-gray-700/50 rounded hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-gray-200">{lore.name}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="wiki-card p-4 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {recentWorlds.data && recentWorlds.data.map((world) => (
+                <Link
+                  key={world.id}
+                  href={`/worlds/${world.slug}`}
+                  prefetch={true}
+                  className="block p-3 hover:bg-gray-700/50 rounded transition-colors border-l-2 border-purple-400"
+                >
+                  <div className="text-sm md:text-base text-gray-200">
+                    <span className="text-purple-400 font-medium">World</span>
+                    <span className="mx-2 text-gray-500">|</span>
+                    <span className="text-gray-100">{world.name}</span>
+                  </div>
+                </Link>
+              ))}
+              {recentOCs.data && recentOCs.data.map((oc) => (
+                <Link
+                  key={oc.id}
+                  href={`/ocs/${oc.slug}`}
+                  prefetch={true}
+                  className="block p-3 hover:bg-gray-700/50 rounded transition-colors border-l-2 border-pink-400"
+                >
+                  <div className="text-sm md:text-base text-gray-200">
+                    <span className="text-pink-400 font-medium">OC</span>
+                    <span className="mx-2 text-gray-500">|</span>
+                    <span className="text-gray-100">{oc.name}</span>
+                  </div>
+                </Link>
+              ))}
+              {recentLore.data && recentLore.data.map((lore) => (
+                <Link
+                  key={lore.id}
+                  href={`/worlds/${(lore.world as any)?.slug}/lore/${lore.slug}`}
+                  prefetch={true}
+                  className="block p-3 hover:bg-gray-700/50 rounded transition-colors border-l-2 border-teal-400"
+                >
+                  <div className="text-sm md:text-base text-gray-200">
+                    <span className="text-teal-400 font-medium">Lore</span>
+                    <span className="mx-2 text-gray-500">|</span>
+                    <span className="text-gray-100">{lore.name}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
-
-      {/* Recently Updated Lore Section */}
-      {recentlyUpdatedLore && recentlyUpdatedLore.length > 0 && (
-        <section className="slide-up">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <i className="fas fa-book text-teal-400 text-xl md:text-2xl"></i>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Recently Updated Lore</h2>
-            </div>
-            <Link
-              href="/lore"
-              prefetch={true}
-              className="text-teal-400 hover:text-teal-300 font-medium flex items-center gap-2 text-sm md:text-base"
-            >
-              View All <i className="fas fa-arrow-right"></i>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {recentlyUpdatedLore.map((lore) => (
-              <LoreCard key={lore.id} lore={lore} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Current Projects Section */}
       <section className="slide-up">
@@ -483,7 +477,7 @@ export default async function HomePage() {
         {randomWorlds.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {randomWorlds.map((world) => (
-              <WorldCard key={world.id} world={world} />
+              <SimpleWorldCard key={world.id} world={world} />
             ))}
           </div>
         ) : (
@@ -509,9 +503,9 @@ export default async function HomePage() {
           </Link>
         </div>
         {randomOCs.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {randomOCs.map((oc) => (
-              <OCCard key={oc.id} oc={oc} />
+              <SimpleOCCard key={oc.id} oc={oc} />
             ))}
           </div>
         ) : (

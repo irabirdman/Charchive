@@ -149,8 +149,13 @@ function calculateOCProgress(oc: OC): OCProgressItem {
 // Generate a seed based on the current date (same seed for the same day)
 function getDaySeed(): number {
   const today = new Date();
-  const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-  // Simple hash function to convert date string to number
+  // Use ISO date string (YYYY-MM-DD) for consistent day-based seeding
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed, so add 1
+  const day = String(today.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
+  
+  // Better hash function to convert date string to number
   let hash = 0;
   for (let i = 0; i < dateString.length; i++) {
     const char = dateString.charCodeAt(i);
@@ -160,13 +165,36 @@ function getDaySeed(): number {
   return Math.abs(hash);
 }
 
-// Simple seeded random number generator
+// Get a unique day identifier for comparison
+function getDayIdentifier(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Improved seeded random number generator (Linear Congruential Generator)
 function seededRandom(seed: number): () => number {
   let value = seed;
   return function() {
-    value = (value * 9301 + 49297) % 233280;
-    return value / 233280;
+    // LCG parameters (from Numerical Recipes)
+    value = (value * 1664525 + 1013904223) % Math.pow(2, 32);
+    return value / Math.pow(2, 32);
   };
+}
+
+// Fisher-Yates shuffle with seeded random
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  const random = seededRandom(seed);
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
 }
 
 interface RandomOCOfTheDayProps {
@@ -174,7 +202,7 @@ interface RandomOCOfTheDayProps {
 }
 
 // Function to select a random OC from the pool
-function selectRandomOC(progressItems: OCProgressItem[], useDateSeed: boolean = false): OCProgressItem | null {
+function selectRandomOC(progressItems: OCProgressItem[], useDateSeed: boolean = false, additionalSeed: number = 0): OCProgressItem | null {
   // Safety check: if no items, return null
   if (!progressItems || progressItems.length === 0) {
     return null;
@@ -193,15 +221,25 @@ function selectRandomOC(progressItems: OCProgressItem[], useDateSeed: boolean = 
     return sortedByProgress[0] || null;
   }
   
-  // Use date-based seed for initial selection, or random for reshuffle
-  const seed = useDateSeed ? getDaySeed() : Date.now() + Math.random();
-  const random = seededRandom(seed);
+  // Use date-based seed for initial selection, or better random for reshuffle
+  let seed: number;
+  if (useDateSeed) {
+    seed = getDaySeed();
+  } else {
+    // For reshuffle, use a combination of timestamp, random, and additional seed
+    // This ensures better distribution
+    seed = Date.now() + Math.random() * 1000000 + additionalSeed;
+  }
   
-  // Pick a random OC from the pool (weighted towards lower completion)
+  // Shuffle the pool using seeded shuffle for better distribution
+  const shuffledPool = seededShuffle(pool, seed);
+  
+  // Pick a random OC from the shuffled pool (weighted towards lower completion)
   // Use first 30% of the pool (lowest completion) with higher probability
-  const lowCompletionPool = pool.slice(0, Math.max(1, Math.floor(pool.length * 0.3)));
+  const random = seededRandom(seed);
+  const lowCompletionPool = shuffledPool.slice(0, Math.max(1, Math.floor(shuffledPool.length * 0.3)));
   const useLowPool = random() < 0.7;
-  const targetPool = useLowPool ? lowCompletionPool : pool;
+  const targetPool = useLowPool ? lowCompletionPool : shuffledPool;
   const randomIndex = Math.floor(random() * targetPool.length);
   
   // Safety check: ensure index is valid
@@ -210,7 +248,7 @@ function selectRandomOC(progressItems: OCProgressItem[], useDateSeed: boolean = 
   }
   
   // Fallback to first item if something goes wrong
-  return pool[0] || sortedByProgress[0] || null;
+  return targetPool[0] || shuffledPool[0] || sortedByProgress[0] || null;
 }
 
 export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
@@ -221,11 +259,38 @@ export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
   // Calculate progress for all OCs (memoized to avoid recalculating)
   const progressItems = useMemo(() => ocs.map(calculateOCProgress), [ocs]);
   
+  // Track the current day to detect day changes
+  const [currentDay, setCurrentDay] = useState<string>(() => getDayIdentifier());
+  const [reshuffleCounter, setReshuffleCounter] = useState<number>(0);
+  
   // Initialize with date-based seed, then allow reshuffling
   const [selectedItem, setSelectedItem] = useState<OCProgressItem | null>(() => {
     const item = selectRandomOC(progressItems, true);
     return item;
   });
+  
+  // Check if day has changed and reset if needed
+  useEffect(() => {
+    const checkDayChange = () => {
+      const today = getDayIdentifier();
+      if (today !== currentDay) {
+        setCurrentDay(today);
+        setReshuffleCounter(0); // Reset counter on new day
+        const newItem = selectRandomOC(progressItems, true);
+        if (newItem) {
+          setSelectedItem(newItem);
+        }
+      }
+    };
+    
+    // Check immediately
+    checkDayChange();
+    
+    // Set up interval to check every minute (in case page is open across midnight)
+    const interval = setInterval(checkDayChange, 60000);
+    
+    return () => clearInterval(interval);
+  }, [currentDay, progressItems]);
   
   // Ensure we have a selected item (fallback if initialization failed)
   useEffect(() => {
@@ -237,12 +302,18 @@ export function RandomOCOfTheDay({ ocs }: RandomOCOfTheDayProps) {
     }
   }, [selectedItem, progressItems]);
   
-  // Reshuffle function
+  // Reshuffle function with improved randomization
   const handleReshuffle = useCallback(() => {
-    const newItem = selectRandomOC(progressItems, false);
-    if (newItem) {
-      setSelectedItem(newItem);
-    }
+    // Increment counter to ensure different results each time
+    setReshuffleCounter(prev => {
+      const newCounter = prev + 1;
+      // Use the new counter value for selection
+      const newItem = selectRandomOC(progressItems, false, newCounter);
+      if (newItem) {
+        setSelectedItem(newItem);
+      }
+      return newCounter;
+    });
   }, [progressItems]);
   
   // If no item is selected, don't render
