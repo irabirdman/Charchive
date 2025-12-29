@@ -142,7 +142,7 @@ export default async function OCDetailPage({
       likes,
       dislikes,
       world:worlds(*),
-      story_alias:story_aliases(id, name, slug, description),
+      story_alias:story_aliases!fk_ocs_story_alias_id(id, name, slug, description),
       identity:oc_identities(
         *,
         versions:ocs(
