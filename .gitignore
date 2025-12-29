@@ -28,6 +28,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# user configuration files (these contain user-specific settings)
+site-config.json
+
 # vercel
 .vercel
 

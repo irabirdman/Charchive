@@ -6,6 +6,7 @@ interface SiteSettings {
   websiteName: string;
   websiteDescription: string;
   iconUrl: string;
+  altIconUrl: string;
   siteUrl: string;
   authorName: string;
   shortName: string;
@@ -18,6 +19,7 @@ export function SiteSettingsForm() {
     websiteName: '',
     websiteDescription: '',
     iconUrl: '',
+    altIconUrl: '',
     siteUrl: '',
     authorName: '',
     shortName: '',
@@ -42,6 +44,7 @@ export function SiteSettingsForm() {
           websiteName: result.data.website_name || '',
           websiteDescription: result.data.website_description || '',
           iconUrl: result.data.icon_url || '',
+          altIconUrl: result.data.alt_icon_url || '',
           siteUrl: result.data.site_url || '',
           authorName: result.data.author_name || '',
           shortName: result.data.short_name || '',
@@ -195,6 +198,21 @@ export function SiteSettingsForm() {
               placeholder="/icon.png"
             />
             <p className="text-xs text-gray-500 mt-1">Path to your site icon (e.g., /icon.png)</p>
+          </div>
+
+          <div>
+            <label htmlFor="altIconUrl" className="block text-sm font-medium text-gray-300 mb-2">
+              Alt Icon URL
+            </label>
+            <input
+              id="altIconUrl"
+              type="text"
+              value={settings.altIconUrl}
+              onChange={(e) => setSettings({ ...settings, altIconUrl: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="/icon-alt.png"
+            />
+            <p className="text-xs text-gray-500 mt-1">Optional: Alternative icon (e.g., for dark mode or different themes)</p>
           </div>
 
           <div>

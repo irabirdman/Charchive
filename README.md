@@ -103,9 +103,14 @@ Follow these steps in order. Take your time - there's no rush!
 
 **What you're doing**: Telling the website what to call itself and how to look.
 
-1. Open the file called `site-config.json` in a text editor (like Notepad on Windows or TextEdit on Mac)
+1. In your project folder, find the file called `site-config.json.example`
+2. Copy this file and name the copy `site-config.json` (remove the `.example` part)
+   - **Windows**: Right-click, Copy, then Paste, then rename
+   - **Mac**: Right-click, Duplicate, then rename
 
-2. You'll see something like this:
+3. Open the `site-config.json` file in a text editor (like Notepad on Windows or TextEdit on Mac)
+
+4. You'll see something like this:
    ```json
    {
      "websiteName": "My OC Wiki",
@@ -119,7 +124,7 @@ Follow these steps in order. Take your time - there's no rush!
    }
    ```
 
-3. Change the values to match your information:
+5. Change the values to match your information:
    - `websiteName`: What you want your site to be called (e.g., "Sarah's Character Wiki")
    - `websiteDescription`: A short description of your site
    - `authorName`: Your name
@@ -129,9 +134,11 @@ Follow these steps in order. Take your time - there's no rush!
    - `siteUrl`: Leave this for now - you'll fill it in later when you deploy
    - `iconUrl`: Leave this as is unless you have a custom icon
 
-4. Save the file
+6. Save the file
 
 **Don't worry**: You can change all of this later through the website's admin panel!
+
+**Important**: Your `site-config.json` file is protected and won't be overwritten when you get updates (see the "Getting Updates" section below).
 
 ---
 
@@ -335,6 +342,16 @@ Follow these steps in order. Take your time - there's no rush!
 
 **What you're doing**: Downloading the latest changes from GitHub to your computer.
 
+### ✅ Your Settings Are Safe!
+
+**Don't worry** - when you get updates, your personal settings will NOT be overwritten:
+- ✅ Your `site-config.json` file (with your site name, colors, etc.) is protected
+- ✅ Your `.env` file (with your database keys) is protected
+- ✅ Your database and all your content stays the same
+- ✅ Only code files will be updated
+
+You can safely pull updates without losing any of your customizations!
+
 ### How to Get Updates
 
 #### Step 1: Open Your Project Folder
@@ -459,12 +476,16 @@ Don't worry - you don't need to understand code to use these! Here's what each f
 
 **How to edit**: Open it in any text editor, change the values, save it
 
+**Protected**: This file won't be overwritten when you get updates - your settings are safe!
+
 ### `.env` file
 **What it is**: A file with secret connection codes (like passwords)
 
 **When to edit it**: Only when setting up or if you change your Supabase project
 
 **Important**: Never share this file or put it online!
+
+**Protected**: This file won't be overwritten when you get updates - your database keys are safe!
 
 ### `supabase/migrations/` folder
 **What it is**: Files that set up your database structure

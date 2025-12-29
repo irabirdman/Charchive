@@ -5,6 +5,7 @@ export interface SiteConfig {
   websiteName: string;
   websiteDescription: string;
   iconUrl: string;
+  altIconUrl?: string;
   siteUrl: string;
   authorName: string;
   shortName: string;
@@ -17,6 +18,7 @@ interface SiteSettingsRow {
   website_name: string;
   website_description: string;
   icon_url: string;
+  alt_icon_url?: string | null;
   site_url: string;
   author_name: string;
   short_name: string;
@@ -44,6 +46,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
         websiteName: data.website_name || siteConfigFile.websiteName,
         websiteDescription: data.website_description || siteConfigFile.websiteDescription,
         iconUrl: data.icon_url || siteConfigFile.iconUrl,
+        altIconUrl: data.alt_icon_url || undefined,
         siteUrl: data.site_url || siteConfigFile.siteUrl,
         authorName: data.author_name || siteConfigFile.authorName,
         shortName: data.short_name || siteConfigFile.shortName,
