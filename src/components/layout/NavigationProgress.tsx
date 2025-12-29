@@ -1,17 +1,51 @@
 'use client'
 
-import { useEffect, useState, useTransition, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 export function NavigationProgress() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
   const [isLoading, setIsLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const currentPathRef = useRef(pathname)
-  const startTimeRef = useRef<number | null>(null)
+  const isNavigatingRef = useRef(false)
+
+  // Start loading progress animation (shared function)
+  const startLoadingRef = useRef<() => void>()
+  startLoadingRef.current = () => {
+    if (isNavigatingRef.current) return // Already loading
+    
+    isNavigatingRef.current = true
+    setIsLoading(true)
+    setProgress(10) // Start at 10% so it's immediately visible
+    
+    // Clear any existing interval
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current)
+    }
+    
+    // Start progress animation immediately - first increment happens right away
+    const updateProgress = () => {
+      setProgress((prev) => {
+        if (prev >= 90) {
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current)
+            progressIntervalRef.current = null
+          }
+          return prev
+        }
+        // Increase progress more slowly as it gets higher
+        const increment = 95 - prev > 10 ? Math.random() * 10 : Math.random() * 2
+        return Math.min(prev + increment, 90)
+      })
+    }
+    
+    // Start immediately, then continue on interval
+    updateProgress()
+    progressIntervalRef.current = setInterval(updateProgress, 100)
+  }
 
   // Show loading immediately on link click
   useEffect(() => {
@@ -36,30 +70,8 @@ export function NavigationProgress() {
           const hrefPath = href.split('?')[0].split('#')[0]
           if (hrefPath === pathname) return
           
-          setIsLoading(true)
-          setProgress(0)
-          startTimeRef.current = Date.now()
-          
-          // Clear any existing interval
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current)
-          }
-          
-          // Simulate progress while waiting
-          progressIntervalRef.current = setInterval(() => {
-            setProgress((prev) => {
-              if (prev >= 90) {
-                if (progressIntervalRef.current) {
-                  clearInterval(progressIntervalRef.current)
-                  progressIntervalRef.current = null
-                }
-                return prev
-              }
-              // Increase progress more slowly as it gets higher
-              const increment = 95 - prev > 10 ? Math.random() * 10 : Math.random() * 2
-              return Math.min(prev + increment, 90)
-            })
-          }, 100)
+          // Start loading immediately
+          startLoadingRef.current?.()
         }
       }
     }
@@ -67,61 +79,42 @@ export function NavigationProgress() {
     document.addEventListener('click', handleClick, true)
     return () => {
       document.removeEventListener('click', handleClick, true)
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-      }
     }
   }, [pathname])
+
+  // Initialize pathname ref on mount
+  useEffect(() => {
+    if (currentPathRef.current === '') {
+      currentPathRef.current = pathname
+    }
+  }, [])
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      setIsLoading(true)
-      setProgress(0)
-      startTimeRef.current = Date.now()
-      
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-      }
-      
-      progressIntervalRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            if (progressIntervalRef.current) {
-              clearInterval(progressIntervalRef.current)
-              progressIntervalRef.current = null
-            }
-            return prev
-          }
-          const increment = 95 - prev > 10 ? Math.random() * 10 : Math.random() * 2
-          return Math.min(prev + increment, 90)
-        })
-      }, 100)
+      startLoadingRef.current?.()
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => {
       window.removeEventListener('popstate', handlePopState)
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-      }
     }
   }, [])
 
   // Track navigation completion
   useEffect(() => {
-    // If pathname or searchParams changed, navigation completed
-    if (currentPathRef.current !== pathname) {
-      const wasLoading = isLoading
+    // If pathname changed, navigation completed
+    if (currentPathRef.current !== pathname && currentPathRef.current !== '') {
+      const wasNavigating = isNavigatingRef.current
       currentPathRef.current = pathname
       
       // Complete the progress bar
-      if (wasLoading || isPending) {
+      if (wasNavigating) {
+        isNavigatingRef.current = false
         setProgress(100)
         const timer = setTimeout(() => {
           setIsLoading(false)
           setProgress(0)
-          startTimeRef.current = null
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current)
             progressIntervalRef.current = null
@@ -129,46 +122,27 @@ export function NavigationProgress() {
         }, 200)
         return () => clearTimeout(timer)
       }
+    } else if (currentPathRef.current === '') {
+      // First render - initialize
+      currentPathRef.current = pathname
     }
-    
-    // Also handle isPending state from useTransition
-    if (!isPending && isLoading) {
-      setProgress(100)
-      const timer = setTimeout(() => {
-        setIsLoading(false)
-        setProgress(0)
-        startTimeRef.current = null
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current)
-          progressIntervalRef.current = null
-        }
-      }, 200)
-      return () => clearTimeout(timer)
-    }
-  }, [pathname, searchParams, isPending, isLoading])
+  }, [pathname, searchParams])
 
-  // Show loading indicator if loading or pending
-  const showLoading = isLoading || isPending
-
-  if (!showLoading) return null
+  if (!isLoading) return null
 
   return (
     <>
       {/* Loading overlay */}
       <div 
-        className="fixed inset-0 z-[9998] bg-black/20 backdrop-blur-[2px] transition-opacity duration-200"
-        style={{
-          opacity: showLoading ? 1 : 0,
-          pointerEvents: 'none',
-        }}
+        className="fixed inset-0 z-[9998] bg-black/20 backdrop-blur-[2px] pointer-events-none"
       />
       
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-transparent">
         <div 
-          className="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 shadow-lg shadow-purple-500/50 transition-all duration-300 ease-out relative overflow-hidden"
+          className="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 shadow-lg shadow-purple-500/50 transition-all duration-150 ease-out relative overflow-hidden"
           style={{
-            width: `${Math.min(progress || (isPending ? 20 : 0), 100)}%`,
+            width: `${Math.max(progress, 10)}%`,
           }}
         >
           {/* Shimmer effect */}
