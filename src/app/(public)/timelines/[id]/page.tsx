@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getSiteConfig } from '@/lib/config/site-config';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
@@ -27,14 +28,15 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/timelines/${params.id}`;
   const world = timeline.world as any;
   // Use description_markdown for description, clean up markdown syntax
   const descriptionText = timeline.description_markdown || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
-    : `${timeline.name}${world ? ` - Timeline from ${world.name}` : ''} on Ruutulian`;
+    : `${timeline.name}${world ? ` - Timeline from ${world.name}` : ''} on ${config.websiteName}`;
 
   return {
     title: timeline.name,
@@ -48,13 +50,13 @@ export async function generateMetadata({
       'OC wiki',
     ].filter(Boolean),
     openGraph: {
-      title: `${timeline.name} | Ruutulian`,
+      title: `${timeline.name} | ${config.websiteName}`,
       description,
       url,
       type: 'website',
       images: [
         {
-          url: `${baseUrl}/icon.png`,
+          url: `${baseUrl}${config.iconUrl || '/icon.png'}`,
           width: 512,
           height: 512,
           alt: timeline.name,
@@ -63,9 +65,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${timeline.name} | Ruutulian`,
+      title: `${timeline.name} | ${config.websiteName}`,
       description,
-      images: [`${baseUrl}/icon.png`],
+      images: [`${baseUrl}${config.iconUrl || '/icon.png'}`],
     },
     alternates: {
       canonical: url,

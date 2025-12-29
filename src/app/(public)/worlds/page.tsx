@@ -1,38 +1,19 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { WorldCard } from '@/components/world/WorldCard';
 import { WorldFilters } from '@/components/filters/WorldFilters';
+import { generatePageMetadata } from '@/lib/config/metadata-helpers';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Worlds',
-  description: 'Browse all fictional worlds and universes on Ruutulian. Explore canon and original worlds with detailed lore, characters, and timelines.',
-  keywords: ['worlds', 'fictional worlds', 'world building', 'universes', 'canon worlds', 'original worlds', 'OC wiki'],
-  openGraph: {
-    title: 'Worlds | Ruutulian',
-    description: 'Browse all fictional worlds and universes on Ruutulian. Explore canon and original worlds with detailed lore, characters, and timelines.',
-    url: '/worlds',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Worlds | Ruutulian',
-    description: 'Browse all fictional worlds and universes on Ruutulian.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/worlds',
-  },
-};
+export async function generateMetadata() {
+  const config = await getSiteConfig();
+  return generatePageMetadata(
+    'Worlds',
+    `Browse all fictional worlds and universes on ${config.websiteName}. Explore canon and original worlds with detailed lore, characters, and timelines.`,
+    '/worlds'
+  );
+}
 
 export const revalidate = 60;
 

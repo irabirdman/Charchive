@@ -325,6 +325,14 @@ export default async function AdminDashboard() {
             color="blue"
             actionLabel="Manage →"
           />
+          <FeatureTile
+            title="Site Settings"
+            description="Configure your site's name, description, colors, and appearance"
+            href="/admin/settings"
+            icon="fas fa-cog"
+            color="purple"
+            actionLabel="Configure →"
+          />
         </div>
       </div>
 

@@ -1,473 +1,693 @@
-# **Ruu's OC Encyclopedia & World Wiki**
-*A Personal Wiki + CMS for Organizing All My OCs Across Every World*
+# OC Wiki - Your Personal Character Encyclopedia
+
+**A simple website where you can store and organize information about your original characters (OCs), their worlds, stories, and timelines.**
+
+Think of it like Wikipedia, but just for your own characters! You can customize everything - the name, colors, and how it looks. Best of all, you can access it from anywhere once it's set up online.
 
 ---
 
-## 🎯 **Project Purpose**
+## 🎯 What Can This Do?
 
-This application is a **personal OC encyclopedia and world wiki** designed exclusively for **Ruu**.  
-Its purpose is to:
-
-- Centralize all OCs across canon worlds (Naruto, FF7, etc.) and original worlds (Kismet, Moirai, Tiderift, etc.)
-- Provide a clean, readable **wiki-style website** for browsing characters and worlds
-- Provide a **private admin dashboard** where *only Ruu* can create, edit, or delete content
-
-There are **no user accounts**, **no public logins**, and **no collaboration tools**.  
-The public may only **view**; Ruu is the **sole editor**.
+- **Customize Everything**: Change the site name, colors, and how it looks to match your style
+- **Private Admin Area**: A password-protected section where only you can add or edit content
+- **Public Wiki Pages**: Beautiful pages that anyone can view (if you want to share your characters)
+- **Organize by Worlds**: Group your characters into different worlds or universes
+- **Create Timelines**: Track when events happen in your stories
+- **Add Lore**: Write detailed background information about your worlds
+- **See Statistics**: View how many characters, worlds, and entries you have
 
 ---
 
-# 🚫 **Access Model (Critical)**
+## 📋 What You'll Need Before Starting
 
-### 🔒 **Admin (Ruu Only)**
-- Logs into a private `/admin` area using environment-based authentication  
-- Full control over all data:
-  - Worlds
-  - OCs
-  - Timelines
-  - Timeline events
+Don't worry if you don't know what these are - we'll explain each one and show you how to get them!
 
-### 🌐 **Public (Everyone Else)**
-- Completely anonymous  
-- Can **read** public worlds, OCs, and timelines  
-- Can use **search** and **filters**  
-- Cannot edit anything  
-- Never sees a login or signup screen
+### Required Tools (All Free)
 
----
+1. **Node.js** - This lets your computer run the website code
+   - **What it is**: A program that runs JavaScript (the language websites use)
+   - **How to get it**: [Download here](https://nodejs.org/) - choose the version that says "LTS" (Long Term Support)
+   - **After installing**: You'll also get "npm" automatically (this is a tool that installs other tools)
 
-# 🏗️ **Tech Stack**
+2. **Git** - This lets you download the project files
+   - **What it is**: A tool for downloading and managing code projects
+   - **How to get it**: [Download here](https://git-scm.com/)
+   - **Don't worry**: You don't need to learn how to use it - we'll just use it once to download the files
 
-| Feature | Technology |
-|--------|------------|
-| Framework | **Next.js** |
-| Database | **Supabase PostgreSQL** |
-| Auth (Ruu only) | Environment-based authentication |
-| Styling | **Tailwind CSS** |
-| Hosting | **Railway** |
-| Assets (v1) | Google Drive URLs |
-| Data Exchange | JSON, Markdown |
+3. **Supabase Account** - This stores all your data (characters, worlds, etc.)
+   - **What it is**: A free online database service (like a digital filing cabinet in the cloud)
+   - **How to get it**: [Sign up here](https://supabase.com) - it's free!
+   - **Why you need it**: Your website needs somewhere to store all the information you add
 
----
+4. **Railway Account** - This puts your website online so others can see it
+   - **What it is**: A service that hosts (puts online) your website for free
+   - **How to get it**: [Sign up here](https://railway.app) - also free!
+   - **Why you need it**: Without this, your website only works on your computer
 
-# 🚀 **Deployment on Railway**
-
-## Prerequisites
-
-1. A Railway account ([railway.app](https://railway.app))
-2. A Supabase project with database configured
-3. All required environment variables (see below)
-
-## Setup Steps
-
-### 1. Connect Repository to Railway
-
-1. Go to [Railway Dashboard](https://railway.app/dashboard)
-2. Click "New Project"
-3. Select "Deploy from GitHub repo"
-4. Connect your GitHub account if needed
-5. Select this repository
-
-### 2. Configure Environment Variables
-
-In your Railway project settings, add the following environment variables:
-
-```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Supabase Admin Key (for server-side admin operations)
-# You can use either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-# OR
-SUPABASE_SECRET_KEY=your_supabase_secret_key
-
-# Admin Login Credentials
-USERNAME=your_admin_username
-PASSWORD=your_admin_password
-```
-
-**Important Notes:**
-- `NEXT_PUBLIC_*` variables are automatically exposed to the client-side
-- Never commit your `.env` file or expose secrets
-- Set all variables in Railway's environment variables section
-
-### 3. Deploy
-
-Railway will automatically:
-- Detect Next.js framework
-- Run `npm install` to install dependencies
-- Run `npm run build` to build the application
-- Run `npm start` to start the production server
-
-### 4. Access Your Deployed Application
-
-Once deployed, Railway will provide you with a public URL. You can:
-- View the public site at the root URL
-- Access the admin dashboard at `/admin/login`
+5. **GitHub Account** - This connects Railway to your project
+   - **What it is**: A website where people store and share code projects
+   - **How to get it**: [Sign up here](https://github.com) - free!
+   - **Why you need it**: Railway needs to access your project from GitHub
 
 ---
 
-# 💻 **Local Development**
+## 🚀 Step-by-Step Setup Guide
 
-## Setup
+Follow these steps in order. Take your time - there's no rush!
 
-1. Clone the repository
-2. Install dependencies:
+### Step 1: Download the Project Files
+
+**What you're doing**: Getting all the website files onto your computer.
+
+1. Open a program called "Command Prompt" (Windows) or "Terminal" (Mac)
+   - **Windows**: Press the Windows key, type "cmd", and press Enter
+   - **Mac**: Press Cmd+Space, type "terminal", and press Enter
+
+2. Navigate to where you want to save the project (like your Desktop):
+   ```bash
+   cd Desktop
+   ```
+
+3. Download the project (replace `<your-repo-url>` with the actual link to this project):
+   ```bash
+   git clone <your-repo-url>
+   ```
+
+4. Move into the project folder:
+   ```bash
+   cd oc-wiki
+   ```
+
+**What you should see**: A new folder on your computer called "oc-wiki" with lots of files inside.
+
+---
+
+### Step 2: Install Required Packages
+
+**What you're doing**: Downloading all the extra code pieces your website needs to work.
+
+1. Make sure you're in the project folder (you should be from Step 1)
+
+2. Run this command:
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root directory with all required environment variables (see above)
-4. Run the development server:
+
+**What you should see**: Lots of text scrolling by. This is normal! It's downloading everything you need. Wait until you see your command prompt again (it might take 1-5 minutes).
+
+**If you get an error**: Make sure you installed Node.js correctly. Try typing `node --version` - if it shows a version number, you're good!
+
+---
+
+### Step 3: Set Up Your Site Information
+
+**What you're doing**: Telling the website what to call itself and how to look.
+
+1. Open the file called `site-config.json` in a text editor (like Notepad on Windows or TextEdit on Mac)
+
+2. You'll see something like this:
+   ```json
+   {
+     "websiteName": "My OC Wiki",
+     "websiteDescription": "A place to store and organize information on original characters, worlds, lore, and timelines.",
+     "iconUrl": "/icon.png",
+     "siteUrl": "https://your-domain.com",
+     "authorName": "Your Name",
+     "shortName": "OC Wiki",
+     "themeColor": "#8b5cf6",
+     "backgroundColor": "#111827"
+   }
+   ```
+
+3. Change the values to match your information:
+   - `websiteName`: What you want your site to be called (e.g., "Sarah's Character Wiki")
+   - `websiteDescription`: A short description of your site
+   - `authorName`: Your name
+   - `shortName`: A shorter version of your site name (for menus)
+   - `themeColor`: A color code (like `#8b5cf6` for purple). You can find color codes at [htmlcolorcodes.com](https://htmlcolorcodes.com)
+   - `backgroundColor`: Another color code for the background
+   - `siteUrl`: Leave this for now - you'll fill it in later when you deploy
+   - `iconUrl`: Leave this as is unless you have a custom icon
+
+4. Save the file
+
+**Don't worry**: You can change all of this later through the website's admin panel!
+
+---
+
+### Step 4: Set Up Supabase (Your Database)
+
+**What you're doing**: Creating an online storage space for all your character data.
+
+#### 4a. Create a Supabase Account and Project
+
+1. Go to [supabase.com](https://supabase.com) and click "Start your project"
+2. Sign up (you can use your email or GitHub account)
+3. Click "New Project"
+4. Fill in:
+   - **Name**: Give your project a name (like "My OC Wiki Database")
+   - **Database Password**: Create a strong password (write this down somewhere safe!)
+   - **Region**: Pick the one closest to where you live
+5. Click "Create new project"
+6. Wait 1-2 minutes while it sets up (you'll see a loading screen)
+
+#### 4b. Get Your Connection Keys
+
+**What these are**: Special codes that let your website talk to your database. Think of them like passwords.
+
+1. In your Supabase dashboard, click on **Settings** (the gear icon on the left)
+2. Click **API** in the settings menu
+3. You'll see three important things:
+   - **Project URL**: A long web address (starts with `https://`)
+   - **anon public key**: A long string of letters and numbers
+   - **service_role key**: Another long string (this one is secret - don't share it!)
+
+4. **Write these down** or keep this page open - you'll need them in the next step!
+
+#### 4c. Set Up Your Database Tables
+
+**What you're doing**: Creating the "folders" where your data will be stored.
+
+1. In your Supabase dashboard, click **SQL Editor** on the left sidebar
+2. Click **New query**
+3. You need to run **all** migration files in order. Here's the complete list:
+   - `20250101000000_create_site_settings.sql`
+   - `20250101000001_create_admin_credentials.sql`
+   - `20250101000002_create_worlds.sql`
+   - `20250101000003_create_oc_identities.sql`
+   - `20250101000004_create_ocs.sql`
+   - `20250101000005_create_story_aliases.sql`
+   - `20250101000006_create_world_story_data.sql`
+   - `20250101000007_create_world_races.sql`
+   - `20250101000008_create_timelines.sql`
+   - `20250101000009_create_timeline_events.sql`
+   - `20250101000010_create_timeline_event_timelines.sql`
+   - `20250101000011_create_timeline_event_characters.sql`
+   - `20250101000012_create_world_lore.sql`
+   - `20250101000013_create_world_lore_ocs.sql`
+   - `20250101000014_create_world_lore_timeline_events.sql`
+   - `20250101000015_create_dropdown_options.sql`
+   - `20250101000016_create_current_projects.sql`
+   - `20250101000017_add_story_alias_fk_to_ocs.sql`
+
+4. For each migration file (in order):
+   - Open the file from the `supabase/migrations/` folder on your computer (you can open it in Notepad/TextEdit)
+   - Copy ALL the text from that file
+   - Paste it into the SQL Editor in Supabase
+   - Click the **Run** button (or press Ctrl+Enter / Cmd+Enter)
+   - Wait for a green success message
+   - Then move to the next file
+
+**Important**: Run them in the exact order listed above! Each migration builds on the previous ones.
+
+**If you see an error**: Make sure you copied the entire file, including all the text from top to bottom. Also verify you're running them in the correct order.
+
+---
+
+### Step 5: Set Up Your Environment Variables
+
+**What you're doing**: Giving your website the secret codes it needs to connect to your database.
+
+**What is an environment variable?**: It's like a secret note your website reads to know how to connect to things. We store these in a special file called `.env`.
+
+1. In your project folder, find a file called `.env.example`
+2. Copy this file and name the copy `.env` (remove the `.example` part)
+   - **Windows**: Right-click, Copy, then Paste, then rename
+   - **Mac**: Right-click, Duplicate, then rename
+
+3. Open the `.env` file in a text editor
+
+4. You'll see something like this:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+   ```
+
+5. Replace each value with the ones you copied from Supabase:
+   - Replace `your_supabase_project_url_here` with your **Project URL** from Step 4b
+   - Replace `your_supabase_anon_key_here` with your **anon public key** from Step 4b
+   - Replace `your_supabase_service_role_key_here` with your **service_role key** from Step 4b
+
+6. Save the file
+
+**Important**: Never share your `.env` file with anyone! It contains secret keys.
+
+---
+
+### Step 6: Test It Locally (On Your Computer)
+
+**What you're doing**: Making sure everything works before putting it online.
+
+1. Make sure you're in the project folder in your command prompt/terminal
+
+2. Run this command:
    ```bash
    npm run dev
    ```
-5. Open [http://localhost:3000](http://localhost:3000)
 
-## Importing Data
+3. Wait until you see a message like "Ready on http://localhost:3000"
 
-To import OCs from a CSV file:
-```bash
-npx tsx scripts/import-csv.ts
-```
+4. Open your web browser and go to: `http://localhost:3000`
+
+**What you should see**: Your website! It might look basic at first - that's okay.
 
 ---
 
-# 🌍 **Core Data Models**
+### Step 7: Complete the Initial Setup
 
-## 1. **Worlds**
+**What you're doing**: Setting up your admin account so you can log in and add content.
 
-A "World" represents any universe a character can belong to.  
-This includes canon series and original settings.
+1. In your browser, go to: `http://localhost:3000/admin/setup`
 
-### Canon Worlds
-Dragon Ball Z • Final Fantasy • Inuyasha • Naruto • Nier • Pokémon • Shaman King • Zelda
+2. You'll see a setup form. Fill it out with:
+   - Your site name and description
+   - An admin username (this is what you'll use to log in)
+   - An admin password (make it strong!)
 
-### Original Worlds
-Kismet • Moirai • Pluviophile • Tiderift • Vieulx • None • Not Accessible
+3. Click "Complete Setup"
 
-### `worlds` Table (v1)
+4. You'll be taken to a login page at `/admin/login`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | uuid | Internal ID |
-| `name` | text | World name |
-| `slug` | text | URL-safe name |
-| `series_type` | `"canon"` or `"original"` |
-| `summary` | text | Short description |
-| `description_markdown` | text | Long-form lore |
-| `primary_color` | text | Hex / theme color |
-| `accent_color` | text | Secondary color |
-| `is_public` | boolean | Visibility control |
-| Timestamps | auto | Created/updated |
+5. Log in with the username and password you just created
+
+**Congratulations!** Your website is now set up and running on your computer!
 
 ---
 
-## 2. **OCs (Characters)**
+## 🚂 Putting Your Website Online (Deployment)
 
-Each OC belongs to **one primary world** and has:
+**What you're doing**: Making your website accessible to anyone on the internet (or just keeping it private - it's up to you).
 
-- Universal fields  
-- A template type  
-- Additional template-specific fields (JSON)
+### Step 1: Create a Railway Account
 
-### `ocs` Table (v1)
+1. Go to [railway.app](https://railway.app)
+2. Click "Start a New Project"
+3. Sign up with your GitHub account (this connects Railway to your GitHub)
+4. Verify your email if asked
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | uuid | |
-| `name` | text | |
-| `slug` | text | |
-| `world_id` | uuid | FK → worlds |
-| `series_type` | text | Cached from world |
-| `template_type` | text | `"naruto"`, `"ff7"`, `"inuyasha"`, etc. |
-| `age` | int | |
-| `pronouns` | text | |
-| `gender_identity` | text | Optional |
-| `status` | text | alive/dead/missing/etc |
-| `image_url` | text | |
-| `tags` | text[] | |
-| `short_bio` | text | |
-| `full_bio_markdown` | text | Markdown |
-| `extra_fields` | JSONB | Template-specific |
-| `is_public` | boolean | |
-| Timestamps | auto | |
+### Step 2: Connect Your Project to Railway
 
----
+1. In Railway, click **"New Project"**
+2. Click **"Deploy from GitHub repo"**
+3. If asked, authorize Railway to access your GitHub
+4. Find and select your OC Wiki repository
+5. Railway will automatically detect that it's a Next.js project (this is good!)
 
-## 3. **Template Types & Extra Fields**
+### Step 3: Add Your Secret Keys to Railway
 
-Used to store fandom-specific info.
+**What you're doing**: Giving Railway the same secret codes you put in your `.env` file.
 
-### Naruto
-```json
-{
-  "village": "",
-  "clan": "",
-  "rank": "",
-  "chakra_natures": [],
-  "kekkei_genkai": ""
-}
-```
+1. In your Railway project, click the **Variables** tab
+2. Click **"New Variable"** for each of these:
 
-### Final Fantasy
-```json
-{
-  "affiliation": "",
-  "role": "",
-  "mako_exposure": "",
-  "materia_skill": ""
-}
-```
+   - **Variable name**: `NEXT_PUBLIC_SUPABASE_URL`
+     **Value**: Your Supabase Project URL (from earlier)
 
-### Inuyasha
-```json
-{
-  "species": "",
-  "youkai_type": "",
-  "era": "",
-  "weapon_or_ability": ""
-}
-```
+   - **Variable name**: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     **Value**: Your Supabase anon key (from earlier)
 
-### Shaman King
-```json
-{
-  "spirit_type": "",
-  "spirit_name": "",
-  "oversoul_style": "",
-  "medium_type": ""
-}
-```
+   - **Variable name**: `SUPABASE_SERVICE_ROLE_KEY`
+     **Value**: Your Supabase service_role key (from earlier)
 
-### Zelda
-```json
-{
-  "race": "",
-  "region": "",
-  "deity_or_blessing": "",
-  "weapon_style": ""
-}
-```
+   - **Variable name**: `NEXT_PUBLIC_SITE_URL`
+     **Value**: Leave this blank for now - Railway will give you a URL later
 
-### Dragon Ball
-```json
-{
-  "race": "",
-  "power_level": "",
-  "transformation_stages": []
-}
-```
+   - **Variable name**: `NODE_ENV`
+     **Value**: `production`
 
-### Pokémon
-```json
-{
-  "species": "",
-  "typing": [],
-  "trainer_class": "",
-  "region": ""
-}
-```
+3. Save all the variables
 
-### Nier
-```json
-{
-  "model_type": "",
-  "role": "",
-  "weapon_specialty": "",
-  "faction": ""
-}
-```
+### Step 4: Deploy Your Website
 
-### Original Worlds
-```json
-{
-  "role": "",
-  "species": "",
-  "ability_type": "",
-  "region": ""
-}
-```
+1. Railway will automatically start building your website
+2. Wait for the build to finish (you'll see a progress bar)
+3. Once it's done, Railway will give you a web address (like `your-site.railway.app`)
+4. Copy that address and update the `NEXT_PUBLIC_SITE_URL` variable in Railway with the full address (include `https://`)
+
+**Your website is now live!** Share the Railway URL with anyone you want to see it.
 
 ---
 
-## 4. **Timelines**
+## 👥 Sharing Code Updates (For Project Maintainers)
 
-### `timelines`
-- `id`
-- `world_id`
-- `name`
-- `description_markdown`
-- timestamps
+**What this section is for**: If you're the person making changes to the code and want others to be able to use your updates, this is for you!
 
-### `timeline_events`
-- `id`
-- `timeline_id`
-- `title`
-- `body_markdown`
-- `date_text`
-- `position`
-- timestamps
+**What you're doing**: Uploading your changes to GitHub so others can download them.
 
-v1 = simple vertical lists.
+### How to Share Your Updates
+
+**Before you start**: Make sure you have a GitHub account and your project is already on GitHub (if you deployed to Railway, it should already be there).
+
+#### Step 1: Make Your Changes
+
+1. Edit any files you want to update (using your code editor)
+2. Save all your changes
+
+#### Step 2: Check What Changed
+
+**What you're doing**: Seeing what files you modified.
+
+1. Open Command Prompt (Windows) or Terminal (Mac)
+2. Navigate to your project folder:
+   ```bash
+   cd path/to/oc-wiki
+   ```
+   (Replace `path/to/oc-wiki` with the actual path to your project)
+
+3. Check what files changed:
+   ```bash
+   git status
+   ```
+
+**What you should see**: A list of files you've changed (they'll be in red or green)
+
+#### Step 3: Tell Git About Your Changes
+
+**What you're doing**: Marking which files you want to upload.
+
+1. Add all your changed files:
+   ```bash
+   git add .
+   ```
+   (The `.` means "all files")
+
+   **OR** if you only want to add specific files:
+   ```bash
+   git add filename1.js filename2.tsx
+   ```
+   (Replace with your actual file names)
+
+#### Step 4: Save Your Changes (Commit)
+
+**What you're doing**: Creating a "snapshot" of your changes with a message describing what you did.
+
+1. Create a commit with a message:
+   ```bash
+   git commit -m "Description of what you changed"
+   ```
+
+   **Examples of good commit messages**:
+   - `"Fixed the character display bug"`
+   - `"Added new timeline feature"`
+   - `"Updated the README with better instructions"`
+   - `"Changed the site colors to purple"`
+
+#### Step 5: Upload to GitHub (Push)
+
+**What you're doing**: Sending your changes to GitHub so others can see them.
+
+1. Upload your changes:
+   ```bash
+   git push
+   ```
+
+2. If this is your first time, you might need to set the remote:
+   ```bash
+   git push -u origin main
+   ```
+   (Or `master` instead of `main` if that's what your branch is called)
+
+**What you should see**: Messages showing your files being uploaded. When it says "done" or shows a success message, you're finished!
+
+**If you get an error about authentication**: You might need to set up GitHub authentication. See the troubleshooting section below.
+
+#### Step 6: Tell Others About the Update
+
+Let your team know that you've pushed updates! They can now follow the instructions below to get your changes.
 
 ---
 
-# 🎨 **Styling & Design System**
+## 📥 Getting Updates from Others (For Team Members)
 
-The visual goal:
+**What this section is for**: If someone else made changes and you want to get the latest version of the code.
 
-- Clean, minimal, modern  
-- Anime-wiki-inspired layout  
-- Consistent reading experience  
-- Theming based on world colors  
+**What you're doing**: Downloading the newest changes from GitHub to your computer.
 
----
+### How to Get the Latest Updates
 
-## 📁 Styling File Organization
+#### Step 1: Make Sure You're in the Project Folder
 
-```
-src/
-  styles/
-    globals.css            # Tailwind base + global rules
-  lib/
-    theme/
-      worldTheme.ts        # Helper for dynamic world colors
-  components/
-    layout/                # Shared wrappers/layouts
-    wiki/                  # Infobox, tag list, etc.
-    oc/                    # OC-specific components
-    world/                 # World-specific components
-```
+1. Open Command Prompt (Windows) or Terminal (Mac)
+2. Navigate to your project folder:
+   ```bash
+   cd path/to/oc-wiki
+   ```
+   (Replace `path/to/oc-wiki` with the actual path to your project)
 
----
+#### Step 2: Save Your Current Work (Optional but Recommended)
 
-## 🎨 Tailwind & Themes
+**What you're doing**: Making sure you don't lose any changes you made.
 
-### Tailwind (`globals.css`)
-- Import Tailwind layers
-- Set typography defaults
-- Add base link styles
-- Optionally define CSS variables like:
-  ```css
-  :root {
-    --world-primary: #f97316;
-    --world-accent: #94a3b8;
-  }
+**Important**: If you've made changes to files, you should either:
+- **Option A**: Commit and push your changes first (follow the "Sharing Code Updates" section above)
+- **Option B**: Stash your changes (temporarily save them):
+  ```bash
+  git stash
   ```
+  (You can get them back later with `git stash pop`)
 
-### Dynamic World Themes (`worldTheme.ts`)
-```ts
-export function getWorldTheme(world) {
-  return {
-    primary: world.primary_color || '#64748b',
-    accent: world.accent_color || '#94a3b8'
-  };
-}
-```
+#### Step 3: Download the Latest Updates
 
-Apply with:
-```tsx
-<div style={{
-  '--world-primary': theme.primary,
-  '--world-accent': theme.accent
-}}>
-```
+**What you're doing**: Getting all the new changes from GitHub.
 
----
+1. Download the updates:
+   ```bash
+   git pull
+   ```
 
-## 📦 Component-Level Styling
+**What you should see**: Messages showing files being downloaded and updated. If there are conflicts (see below), Git will tell you.
 
-Use Tailwind utilities within components:
+#### Step 4: Install Any New Packages (If Needed)
 
-```tsx
-export function Infobox({ children }) {
-  return (
-    <aside className="w-full md:w-80 border rounded-xl p-4 shadow-sm bg-white/80">
-      {children}
-    </aside>
-  );
-}
-```
+**What you're doing**: If the update added new features, you might need new code packages.
 
-This keeps styling modular and predictable.
+1. Install new packages:
+   ```bash
+   npm install
+   ```
 
----
+**When to do this**: If the person who updated the code added new features or dependencies, you'll need to run this.
 
-# 🌐 **Public Site Features (Read-Only)**
+#### Step 5: Restart Your Development Server
 
-Visitors can:
+**What you're doing**: Making sure your local website uses the new code.
 
-- Browse all worlds  
-- View OC profiles  
-- Read timelines  
-- Use search & filters  
-- Navigate wiki-style pages  
+1. If your development server is running, stop it (press Ctrl+C in the terminal where it's running)
+2. Start it again:
+   ```bash
+   npm run dev
+   ```
 
-No login, no accounts, no editing.
+**You're done!** Your local version now has all the latest updates.
 
 ---
 
-# 🔧 **Admin Dashboard (Ruu Only)**
+## 🔄 Handling Conflicts (When Changes Overlap)
 
-`/admin` routes provide tools to manage:
+**What this means**: Sometimes you and someone else changed the same file. Git needs you to decide which version to keep.
 
-### Worlds
-- Create/edit/delete
-- Set theme colors
-- Toggle visibility
+### If You Get a Merge Conflict
 
-### OCs
-- Create/edit/delete
-- Template-aware extra fields
-- Markdown editor
-- Image URLs
-- Tags
-- Toggle visibility
+**What you'll see**: Git will tell you there's a conflict and which files have conflicts.
 
-### Timelines
-- Add/edit timelines
-- Add/edit/reorder events
+1. Open the files that have conflicts (Git will mark them with `<<<<<<<`, `=======`, and `>>>>>>>`)
 
----
+2. You'll see something like this:
+   ```
+   <<<<<<< HEAD
+   Your version of the code
+   =======
+   Their version of the code
+   >>>>>>> branch-name
+   ```
 
-# 🔐 **Security**
+3. **Decide what to keep**:
+   - Keep your version? Delete their section (everything between `=======` and `>>>>>>>`)
+   - Keep their version? Delete your section (everything between `<<<<<<<` and `=======`)
+   - Keep both? Edit the code to combine them, then remove the conflict markers
 
-Supabase Row-Level Security:
+4. Save the file
 
-- Public = `SELECT` only where `is_public = true`
-- Admin = full CRUD permissions
-- Exactly **one** user (Ruu)
-- No signup allowed
+5. Tell Git you fixed it:
+   ```bash
+   git add filename.js
+   ```
+   (Replace with the actual filename)
 
----
+6. Complete the merge:
+   ```bash
+   git commit -m "Resolved merge conflict"
+   ```
 
-# 🔄 **Migration From Google Sheets**
-
-1. Define worlds in Supabase  
-2. Clean OC spreadsheet  
-3. Export CSV  
-4. Import into Supabase `ocs`  
-5. Set templates and extra fields  
-6. Use admin dashboard for all edits going forward  
+**If this seems complicated**: Ask the person who made the changes to help you resolve it, or just keep their version if you're not sure.
 
 ---
 
-# 📅 **Future Features (Post-v1)**
+## 🔐 Setting Up GitHub Authentication (If Needed)
 
-- Relationship graph  
-- OC relationship table  
-- Personal timelines  
-- Visual timeline UI  
-- Dark mode  
-- Supabase Storage for images  
-- Export/backup tools  
+**When you need this**: If `git push` or `git pull` asks for a username and password.
+
+### Option 1: Personal Access Token (Recommended)
+
+1. Go to GitHub.com and sign in
+2. Click your profile picture → **Settings**
+3. Scroll down and click **Developer settings**
+4. Click **Personal access tokens** → **Tokens (classic)**
+5. Click **Generate new token** → **Generate new token (classic)**
+6. Give it a name (like "OC Wiki Project")
+7. Check the box for **repo** (this gives access to repositories)
+8. Click **Generate token**
+9. **Copy the token immediately** (you won't see it again!)
+10. When Git asks for a password, paste the token instead
+
+### Option 2: GitHub Desktop (Easier for Beginners)
+
+1. Download [GitHub Desktop](https://desktop.github.com/)
+2. Sign in with your GitHub account
+3. Use GitHub Desktop instead of the command line - it's much easier!
 
 ---
 
-# ✅ **Summary**
+## 💡 Tips for Working Together
 
-This project is:
+- **Communicate**: Let others know when you're pushing updates
+- **Pull before you push**: Always run `git pull` before making changes to make sure you have the latest code
+- **Write clear commit messages**: Describe what you changed so others understand
+- **Test your changes**: Make sure your code works before pushing it
+- **Don't push your `.env` file**: It contains secrets! (It should already be in `.gitignore`)
 
-> A private, extensible, beautifully organized OC encyclopedia powered by Next.js and Supabase, giving Ruu a long-term home for every character and world — with world-based themes, dynamic templates, wiki layouts, timelines, and a private admin CMS that only Ruu can use.
+---
+
+## ⚙️ Understanding the Configuration Files
+
+Don't worry - you don't need to understand code to use these! Here's what each file does in simple terms:
+
+### `site-config.json`
+**What it is**: A file that stores your site's basic information (name, colors, etc.)
+
+**When to edit it**: When you want to change how your site looks or what it's called
+
+**How to edit**: Open it in any text editor, change the values, save it
+
+### `.env` file
+**What it is**: A file with secret connection codes (like passwords)
+
+**When to edit it**: Only when setting up or if you change your Supabase project
+
+**Important**: Never share this file or put it online!
+
+### `supabase/migrations/` folder
+**What it is**: Files that set up your database structure
+
+**When to use it**: Only once, when first setting up (you already did this in Step 4c)
+
+---
+
+## 🔧 Using the Admin Panel
+
+Once you're logged in, you can:
+
+- **Site Settings** (`/admin/settings`): Change your site name, colors, and description
+- **Add Worlds**: Create different universes for your characters
+- **Add Characters**: Create character profiles with all their information
+- **Create Timelines**: Track when events happen in your stories
+- **Add Lore**: Write background information about your worlds
+- **View Statistics**: See how many entries you have
+
+Everything is done through easy-to-use forms - no coding required!
+
+---
+
+## 🐛 Troubleshooting (Fixing Problems)
+
+### Problem: "Failed to connect to Supabase"
+
+**What this means**: Your website can't talk to your database.
+
+**How to fix**:
+1. Check that your `.env` file has the correct Supabase URL and keys
+2. Make sure you copied the entire keys (they're very long!)
+3. Check that your Supabase project is still active (log into Supabase to check)
+
+### Problem: Can't log in to admin
+
+**What this means**: Your login isn't working.
+
+**How to fix**:
+1. Make sure you completed the setup at `/admin/setup` first
+2. Try clearing your browser's cookies
+3. Make sure you're using the correct username and password
+4. If it's your first time, go to `/admin/setup` to create your account
+
+### Problem: Website shows default/blank content
+
+**What this means**: Your site settings aren't loading.
+
+**How to fix**:
+1. Make sure you ran the database setup files (Step 4c)
+2. Check that your `site-config.json` file is saved correctly
+3. Try refreshing the page (Ctrl+F5 or Cmd+Shift+R to hard refresh)
+
+### Problem: Railway deployment fails
+
+**What this means**: Railway couldn't build your website.
+
+**How to fix**:
+1. Check the Railway logs (click on your project, then "Logs")
+2. Make sure all your environment variables are set in Railway
+3. Make sure your Supabase keys are correct in Railway
+
+### Still Having Problems?
+
+- Check that you followed all the steps in order
+- Make sure all your accounts (Supabase, Railway, GitHub) are set up
+- Try starting over from Step 1 if something seems broken
+- Check the error messages - they often tell you exactly what's wrong
+
+---
+
+## 📚 Helpful Resources
+
+If you want to learn more about the tools used:
+
+- [Next.js Documentation](https://nextjs.org/docs) - Learn about the website framework
+- [Supabase Documentation](https://supabase.com/docs) - Learn about the database
+- [Railway Documentation](https://docs.railway.app) - Learn about hosting
+
+**But remember**: You don't need to read these to use your OC Wiki! Everything should work just by following the steps above.
+
+---
+
+## ✅ Quick Checklist
+
+Before you start, make sure you have:
+- [ ] Node.js installed
+- [ ] Git installed
+- [ ] A Supabase account
+- [ ] A Railway account
+- [ ] A GitHub account
+
+After setup, you should have:
+- [ ] Downloaded the project files
+- [ ] Installed all packages (`npm install`)
+- [ ] Created a Supabase project
+- [ ] Set up your database tables
+- [ ] Created your `.env` file with keys
+- [ ] Tested the site locally
+- [ ] Completed the admin setup
+- [ ] Deployed to Railway (optional, but recommended)
+
+---
+
+## 🎉 You're Done!
+
+Your OC Wiki is now set up and ready to use! Start adding your characters, worlds, and stories through the admin panel.
+
+**Remember**: 
+- Your website runs on your computer when you use `npm run dev`
+- Your website is online when deployed to Railway
+- You can update content anytime through the admin panel
+- Everything is customizable - make it yours!
+
+If you have questions, refer back to the relevant section above. Good luck with your OC Wiki!

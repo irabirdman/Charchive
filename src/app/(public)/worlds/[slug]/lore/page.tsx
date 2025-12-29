@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getSiteConfig } from '@/lib/config/site-config';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreList } from '@/components/lore/LoreList';
 
@@ -25,9 +26,11 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${resolvedParams.slug}/lore`;
-  const description = `Browse all lore entries for ${world.name} on Ruutulian. Discover detailed world building, history, and background information.`;
+  const iconUrl = config.iconUrl || '/icon.png';
+  const description = `Browse all lore entries for ${world.name} on ${config.websiteName}. Discover detailed world building, history, and background information.`;
 
   return {
     title: `${world.name} - Lore`,
@@ -42,13 +45,13 @@ export async function generateMetadata({
       'OC wiki',
     ],
     openGraph: {
-      title: `${world.name} - Lore | Ruutulian`,
+      title: `${world.name} - Lore | ${config.websiteName}`,
       description,
       url,
       type: 'website',
       images: [
         {
-          url: `${baseUrl}/icon.png`,
+          url: `${baseUrl}${iconUrl}`,
           width: 512,
           height: 512,
           alt: world.name,
@@ -57,9 +60,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${world.name} - Lore | Ruutulian`,
+      title: `${world.name} - Lore | ${config.websiteName}`,
       description,
-      images: [`${baseUrl}/icon.png`],
+      images: [`${baseUrl}${iconUrl}`],
     },
     alternates: {
       canonical: url,

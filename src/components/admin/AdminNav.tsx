@@ -19,6 +19,7 @@ export function AdminNav({ userEmail }: AdminNavProps) {
     { href: '/admin/world-lore', label: 'Lore' },
     { href: '/admin/fields', label: 'Fields' },
     { href: '/admin/stats', label: 'Stats' },
+    { href: '/admin/settings', label: 'Settings' },
   ];
 
   const toggleMenu = () => {

@@ -43,6 +43,24 @@ export function verifySessionToken(token: string, hash: string): boolean {
   return constantTimeCompare(tokenHash, hash);
 }
 
+/**
+ * Hash a password using bcrypt
+ * Note: This is async because bcrypt operations are CPU-intensive
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const bcrypt = await import('bcryptjs');
+  const saltRounds = 10;
+  return bcrypt.hash(password, saltRounds);
+}
+
+/**
+ * Verify a password against a bcrypt hash
+ */
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.compare(password, hash);
+}
+
 
 
 

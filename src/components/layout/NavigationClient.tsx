@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { SiteName } from './SiteName';
 
 interface NavigationClientProps {
   isAuthenticated: boolean;
@@ -79,7 +80,7 @@ export function NavigationClient({ isAuthenticated }: NavigationClientProps) {
               className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent flex-shrink-0"
               onClick={closeMenu}
             >
-              Ruutulian
+              <SiteName />
             </Link>
 
             {/* Desktop Navigation */}

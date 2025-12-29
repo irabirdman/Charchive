@@ -4,35 +4,42 @@ import { createClient } from '@/lib/supabase/server';
 import { SimpleWorldCard } from '@/components/world/SimpleWorldCard';
 import { SimpleOCCard } from '@/components/oc/SimpleOCCard';
 import { FeatureTile } from '@/components/admin/FeatureTile';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Home',
-  description: "Welcome to Ruutulian - Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines. Browse characters, worlds, lore, timelines, and statistics.",
-  keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters'],
-  openGraph: {
-    title: "Ruu's Personal OC Wiki - Ruutulian",
-    description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines. Browse characters, worlds, lore, timelines, and statistics.",
-    url: '/',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Ruu's Personal OC Wiki - Ruutulian",
-    description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines. Browse characters, worlds, lore, timelines, and statistics.",
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getSiteConfig();
+  const siteUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const iconUrl = config.iconUrl || '/icon.png';
+  
+  return {
+    title: 'Home',
+    description: `Welcome to ${config.websiteName} - ${config.websiteDescription}`,
+    keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters'],
+    openGraph: {
+      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
+      description: config.websiteDescription,
+      url: '/',
+      type: 'website',
+      images: [
+        {
+          url: `${siteUrl}${iconUrl}`,
+          width: 512,
+          height: 512,
+          alt: `${config.websiteName} Logo`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
+      description: config.websiteDescription,
+      images: [`${siteUrl}${iconUrl}`],
+    },
+    alternates: {
+      canonical: '/',
+    },
+  };
+}
 
 export const revalidate = 60;
 
@@ -89,6 +96,7 @@ function getRandomItems<T>(array: T[], count: number): T[] {
 
 export default async function HomePage() {
   const supabase = await createClient();
+  const config = await getSiteConfig();
 
   // Check if user is logged in
   const {
@@ -167,7 +175,7 @@ export default async function HomePage() {
 
   // Default current projects data if none exists
   const currentProjects = currentProjectsData || {
-    description: 'Welcome to Ruutulian! Ruu\'s personal OC wiki for organizing and storing information on her original characters, worlds, lore, and timelines across various universes.',
+    description: `Welcome to ${config.websiteName}! ${config.websiteDescription}`,
     project_items: [
       {
         title: 'World Building',
@@ -184,14 +192,14 @@ export default async function HomePage() {
     ],
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   
   // Structured data for SEO
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Ruutulian',
-    description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines across every universe.",
+    name: config.websiteName,
+    description: config.websiteDescription,
     url: baseUrl,
     potentialAction: {
       '@type': 'SearchAction',
@@ -213,10 +221,10 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="hero-gradient rounded-2xl p-6 md:p-8 lg:p-12 text-center fade-in">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-100 mb-3 md:mb-4">
-          Ruutulian
+          {config.websiteName}
         </h1>
         <p className="text-base md:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto mb-6 md:mb-8 px-4">
-          Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines across every universe.
+          {config.websiteDescription}
         </p>
         <div className="flex flex-wrap justify-center gap-3 md:gap-4 px-4">
           <Link

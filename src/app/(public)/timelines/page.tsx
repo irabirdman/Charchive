@@ -1,37 +1,18 @@
-import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineList } from '@/components/timeline/TimelineList';
 import Link from 'next/link';
+import { generatePageMetadata } from '@/lib/config/metadata-helpers';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Timelines',
-  description: 'Explore chronological timelines and events across all worlds on Ruutulian. Track story progression and major events in your favorite worlds.',
-  keywords: ['timelines', 'events', 'chronology', 'story timeline', 'world events', 'OC wiki'],
-  openGraph: {
-    title: 'Timelines | Ruutulian',
-    description: 'Explore chronological timelines and events across all worlds on Ruutulian.',
-    url: '/timelines',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Timelines | Ruutulian',
-    description: 'Explore chronological timelines and events across all worlds.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/timelines',
-  },
-};
+export async function generateMetadata() {
+  const config = await getSiteConfig();
+  return generatePageMetadata(
+    'Timelines',
+    `Explore chronological timelines and events across all worlds on ${config.websiteName}. Track story progression and major events in your favorite worlds.`,
+    '/timelines'
+  );
+}
 
 export const revalidate = 60;
 

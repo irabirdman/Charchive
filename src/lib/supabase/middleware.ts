@@ -12,6 +12,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow setup page through without authentication
+  const isSetupPage = pathname === '/admin/setup' || pathname === '/admin/setup/';
+  if (isSetupPage) {
+    return NextResponse.next();
+  }
+
   // Allow all API routes through
   if (pathname.startsWith('/api')) {
     return NextResponse.next();

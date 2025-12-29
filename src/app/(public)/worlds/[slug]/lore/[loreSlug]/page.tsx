@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getSiteConfig } from '@/lib/config/site-config';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreDetail } from '@/components/lore/LoreDetail';
 
@@ -25,15 +26,17 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${(lore.world as any).slug}/lore/${resolvedParams.loreSlug}`;
   const world = lore.world as any;
+  const iconUrl = config.iconUrl || '/icon.png';
   
   // Use description_markdown first, then description, then fallback
   const descriptionText = lore.description_markdown || lore.description || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
-    : `${lore.name} - ${lore.lore_type} lore entry from ${world.name} on Ruutulian`;
+    : `${lore.name} - ${lore.lore_type} lore entry from ${world.name} on ${config.websiteName}`;
 
   return {
     title: `${lore.name} | ${world.name}`,
@@ -48,7 +51,7 @@ export async function generateMetadata({
       'OC wiki',
     ].filter(Boolean),
     openGraph: {
-      title: `${lore.name} | ${world.name} - Ruutulian`,
+      title: `${lore.name} | ${world.name} - ${config.websiteName}`,
       description,
       url,
       type: 'article',
@@ -63,7 +66,7 @@ export async function generateMetadata({
           ]
         : [
             {
-              url: `${baseUrl}/icon.png`,
+              url: `${baseUrl}${iconUrl}`,
               width: 512,
               height: 512,
               alt: lore.name,
@@ -72,9 +75,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${lore.name} | ${world.name} - Ruutulian`,
+      title: `${lore.name} | ${world.name} - ${config.websiteName}`,
       description,
-      images: lore.banner_image_url ? [lore.banner_image_url] : [`${baseUrl}/icon.png`],
+      images: lore.banner_image_url ? [lore.banner_image_url] : [`${baseUrl}${iconUrl}`],
     },
     alternates: {
       canonical: url,

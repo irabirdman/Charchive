@@ -33,13 +33,15 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${resolvedParams.slug}`;
+  const iconUrl = config.iconUrl || '/icon.png';
   // Prioritize description_markdown, then summary, then fallback
   const descriptionText = world.description_markdown || world.summary || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
-    : `${world.name} - ${world.series_type} world on Ruutulian`;
+    : `${world.name} - ${world.series_type} world on ${config.websiteName}`;
 
   return {
     title: world.name,
@@ -53,14 +55,14 @@ export async function generateMetadata({
       'OC wiki',
     ],
     openGraph: {
-      title: `${world.name} | Ruutulian`,
+      title: `${world.name} | ${config.websiteName}`,
       description,
       url,
       type: 'website',
       images: world.header_image_url || world.icon_url
         ? [
             {
-              url: world.header_image_url || world.icon_url || `${baseUrl}/icon.png`,
+              url: world.header_image_url || world.icon_url || `${baseUrl}${iconUrl}`,
               alt: world.name,
               width: 1200,
               height: 630,
@@ -68,7 +70,7 @@ export async function generateMetadata({
           ]
         : [
             {
-              url: `${baseUrl}/icon.png`,
+              url: `${baseUrl}${iconUrl}`,
               width: 512,
               height: 512,
               alt: world.name,
@@ -77,9 +79,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${world.name} | Ruutulian`,
+      title: `${world.name} | ${config.websiteName}`,
       description,
-      images: world.header_image_url || world.icon_url ? [world.header_image_url || world.icon_url || `${baseUrl}/icon.png`] : [`${baseUrl}/icon.png`],
+      images: world.header_image_url || world.icon_url ? [world.header_image_url || world.icon_url || `${baseUrl}${iconUrl}`] : [`${baseUrl}${iconUrl}`],
     },
     alternates: {
       canonical: url,

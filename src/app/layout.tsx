@@ -1,67 +1,74 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import './globals.css';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'),
-  title: {
-    template: '%s | Ruutulian',
-    default: "Ruu's Personal OC Wiki - Ruutulian",
-  },
-  description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines across every universe.",
-  keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters', 'OC database'],
-  authors: [{ name: 'Ruutulian' }],
-  creator: 'Ruutulian',
-  publisher: 'Ruutulian',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: '/',
-    siteName: 'Ruutulian',
-    title: "Ruu's Personal OC Wiki - Ruutulian",
-    description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines across every universe.",
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: "Ruu's Personal OC Wiki - Ruutulian",
-    description: "Ruu's personal OC wiki! A place to store and organize information on her original characters, worlds, lore, and timelines across every universe.",
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  icons: {
-    icon: [
-      { url: '/icon.png', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-  },
-  manifest: '/manifest.json',
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getSiteConfig();
+  const siteUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const iconUrl = config.iconUrl || '/icon.png';
+  
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      template: `%s | ${config.websiteName}`,
+      default: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
+    },
+    description: config.websiteDescription,
+    keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters', 'OC database'],
+    authors: [{ name: config.authorName }],
+    creator: config.authorName,
+    publisher: config.authorName,
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'en_US',
+      url: '/',
+      siteName: config.websiteName,
+      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
+      description: config.websiteDescription,
+      images: [
+        {
+          url: `${siteUrl}${iconUrl}`,
+          width: 512,
+          height: 512,
+          alt: `${config.websiteName} Logo`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
+      description: config.websiteDescription,
+      images: [`${siteUrl}${iconUrl}`],
+    },
+    icons: {
+      icon: [
+        { url: iconUrl, sizes: 'any' },
+        { url: iconUrl, type: 'image/png' },
+      ],
+      apple: [
+        { url: iconUrl, sizes: '180x180', type: 'image/png' },
+      ],
+    },
+    manifest: '/manifest.json',
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-};
+  };
+}
 
 export default function RootLayout({
   children,

@@ -1,38 +1,19 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LoreList } from '@/components/lore/LoreList';
 import { LoreFilters } from '@/components/filters/LoreFilters';
+import { generatePageMetadata } from '@/lib/config/metadata-helpers';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Lore',
-  description: 'Browse all lore entries and codex information on Ruutulian. Discover detailed world building, history, and background information.',
-  keywords: ['lore', 'codex', 'world building', 'world lore', 'background information', 'OC wiki'],
-  openGraph: {
-    title: 'Lore | Ruutulian',
-    description: 'Browse all lore entries and codex information on Ruutulian. Discover detailed world building, history, and background information.',
-    url: '/lore',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Lore | Ruutulian',
-    description: 'Browse all lore entries and codex information.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/lore',
-  },
-};
+export async function generateMetadata() {
+  const config = await getSiteConfig();
+  return generatePageMetadata(
+    'Lore',
+    `Browse all lore entries and codex information on ${config.websiteName}. Discover detailed world building, history, and background information.`,
+    '/lore'
+  );
+}
 
 interface LorePageProps {
   searchParams: { [key: string]: string | string[] | undefined };

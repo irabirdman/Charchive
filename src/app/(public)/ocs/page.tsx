@@ -1,38 +1,19 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { OCCard } from '@/components/oc/OCCard';
 import { CharacterFilters } from '@/components/filters/CharacterFilters';
+import { generatePageMetadata } from '@/lib/config/metadata-helpers';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Characters',
-  description: 'Browse all original characters on Ruutulian. Discover characters from various worlds with detailed information, appearance, personality, and relationships.',
-  keywords: ['original characters', 'OCs', 'characters', 'fictional characters', 'character database', 'OC wiki'],
-  openGraph: {
-    title: 'Characters | Ruutulian',
-    description: 'Browse all original characters on Ruutulian. Discover characters from various worlds with detailed information, appearance, personality, and relationships.',
-    url: '/ocs',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Characters | Ruutulian',
-    description: 'Browse all original characters on Ruutulian.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/ocs',
-  },
-};
+export async function generateMetadata() {
+  const config = await getSiteConfig();
+  return generatePageMetadata(
+    'Characters',
+    `Browse all original characters on ${config.websiteName}. Discover characters from various worlds with detailed information, appearance, personality, and relationships.`,
+    '/ocs'
+  );
+}
 
 export const revalidate = 60;
 

@@ -1,38 +1,19 @@
-import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { StatCard } from '@/components/stats/StatCard';
 import { DistributionChart } from '@/components/stats/DistributionChart';
 import { PieChart } from '@/components/stats/PieChart';
 import { BarChart } from '@/components/stats/BarChart';
 import Link from 'next/link';
+import { generatePageMetadata } from '@/lib/config/metadata-helpers';
+import { getSiteConfig } from '@/lib/config/site-config';
 
-export const metadata: Metadata = {
-  title: 'Statistics',
-  description: 'Comprehensive statistics and analytics for Ruutulian. View detailed demographics, distributions, and insights about characters, worlds, and content.',
-  keywords: ['statistics', 'analytics', 'demographics', 'data', 'insights', 'OC wiki'],
-  openGraph: {
-    title: 'Statistics | Ruutulian',
-    description: 'Comprehensive statistics and analytics for Ruutulian. View detailed demographics, distributions, and insights.',
-    url: '/stats',
-    type: 'website',
-    images: [
-      {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: 'Ruutulian Logo',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Statistics | Ruutulian',
-    description: 'Comprehensive statistics and analytics for Ruutulian.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com'}/icon.png`],
-  },
-  alternates: {
-    canonical: '/stats',
-  },
+export async function generateMetadata() {
+  const config = await getSiteConfig();
+  return generatePageMetadata(
+    'Statistics',
+    `Comprehensive statistics and analytics for ${config.websiteName}. View detailed demographics, distributions, and insights about characters, worlds, and content.`,
+    '/stats'
+  );
 };
 
 export const revalidate = 300; // Revalidate every 5 minutes
@@ -410,7 +391,7 @@ export default async function StatsPage() {
           Statistics
         </h1>
         <p className="text-gray-400 text-lg">
-          Comprehensive analytics and insights about Ruutulian
+          Comprehensive analytics and insights
         </p>
         <Link
           href="/"

@@ -19,6 +19,7 @@ import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
 import { formatHeightWithMetric, formatWeightWithMetric } from '@/lib/utils/unitConversion';
 import { getRelationshipTypeConfig } from '@/lib/relationships/relationshipTypes';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
+import { getSiteConfig } from '@/lib/config/site-config';
 
 export async function generateMetadata({
   params,
@@ -41,13 +42,14 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ruutulian.com';
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/ocs/${resolvedParams.slug}`;
   // Use history_summary for description, clean up markdown syntax
   const descriptionText = oc.history_summary || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
-    : `${oc.name}${oc.world ? ` from ${(oc.world as any).name}` : ''} - Original Character on Ruutulian`;
+    : `${oc.name}${oc.world ? ` from ${(oc.world as any).name}` : ''} - Original Character on ${config.websiteName}`;
   const world = oc.world as any;
 
   return {
@@ -62,7 +64,7 @@ export async function generateMetadata({
       'fictional character',
     ].filter(Boolean),
     openGraph: {
-      title: `${oc.name} | Ruutulian`,
+      title: `${oc.name} | ${config.websiteName}`,
       description,
       url,
       type: 'profile',
@@ -86,9 +88,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${oc.name} | Ruutulian`,
+      title: `${oc.name} | ${config.websiteName}`,
       description,
-      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}/icon.png`],
+      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}${config.iconUrl || '/icon.png'}`],
     },
     alternates: {
       canonical: url,

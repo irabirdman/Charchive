@@ -2,48 +2,24 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
-import { getSiteConfig } from '@/lib/config/site-config';
 
 export async function GET() {
   try {
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
-      .from('current_projects')
+      .from('site_settings')
       .select('*')
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      // PGRST116 is "not found" - return default if not found
+      // PGRST116 is "not found" - return null if not found
       return errorResponse(error.message);
     }
 
-    // If no data exists, return default structure
-    if (!data) {
-      const config = await getSiteConfig();
-      return successResponse({
-        id: null,
-        description: `Welcome to ${config.websiteName}! ${config.websiteDescription}`,
-        project_items: [
-          {
-            title: 'World Building',
-            description: 'Creating and expanding unique worlds and universes',
-            icon: 'fas fa-globe',
-            color: 'purple',
-          },
-          {
-            title: 'Character Development',
-            description: 'Developing rich characters with detailed backstories',
-            icon: 'fas fa-users',
-            color: 'pink',
-          },
-        ],
-      });
-    }
-
-    return successResponse(data);
+    return successResponse(data || null);
   } catch (error) {
-    return handleError(error, 'Failed to fetch current projects');
+    return handleError(error, 'Failed to fetch site settings');
   }
 }
 
@@ -57,16 +33,34 @@ export async function PUT(request: Request) {
     const supabase = createAdminClient();
 
     const body = await request.json();
-    const { description, project_items } = body;
+    const {
+      websiteName,
+      websiteDescription,
+      iconUrl,
+      siteUrl,
+      authorName,
+      shortName,
+      themeColor,
+      backgroundColor,
+    } = body;
 
     // Validate required fields
-    if (description === undefined || project_items === undefined) {
-      return errorResponse('Missing required fields: description, project_items');
+    if (
+      !websiteName ||
+      !websiteDescription ||
+      !iconUrl ||
+      !siteUrl ||
+      !authorName ||
+      !shortName ||
+      !themeColor ||
+      !backgroundColor
+    ) {
+      return errorResponse('Missing required fields');
     }
 
     // Check if a row exists
     const { data: existing } = await supabase
-      .from('current_projects')
+      .from('site_settings')
       .select('id')
       .single();
 
@@ -74,10 +68,16 @@ export async function PUT(request: Request) {
     if (existing) {
       // Update existing row
       const { data, error } = await supabase
-        .from('current_projects')
+        .from('site_settings')
         .update({
-          description,
-          project_items,
+          website_name: websiteName,
+          website_description: websiteDescription,
+          icon_url: iconUrl,
+          site_url: siteUrl,
+          author_name: authorName,
+          short_name: shortName,
+          theme_color: themeColor,
+          background_color: backgroundColor,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id)
@@ -92,10 +92,16 @@ export async function PUT(request: Request) {
     } else {
       // Insert new row
       const { data, error } = await supabase
-        .from('current_projects')
+        .from('site_settings')
         .insert({
-          description,
-          project_items,
+          website_name: websiteName,
+          website_description: websiteDescription,
+          icon_url: iconUrl,
+          site_url: siteUrl,
+          author_name: authorName,
+          short_name: shortName,
+          theme_color: themeColor,
+          background_color: backgroundColor,
         })
         .select()
         .single();
@@ -109,18 +115,7 @@ export async function PUT(request: Request) {
 
     return successResponse(result);
   } catch (error) {
-    return handleError(error, 'Failed to update current projects');
+    return handleError(error, 'Failed to update site settings');
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
