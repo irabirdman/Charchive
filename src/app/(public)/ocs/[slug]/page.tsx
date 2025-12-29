@@ -29,18 +29,41 @@ export async function generateMetadata({
   const supabase = await createClient();
   const resolvedParams = await params;
 
-  const { data: oc } = await supabase
+  console.log('[generateMetadata] Request received for slug:', resolvedParams.slug);
+  console.log('[generateMetadata] Creating Supabase client...');
+
+  const { data: oc, error } = await supabase
     .from('ocs')
     .select('name, slug, history_summary, image_url, world:worlds(name, slug)')
     .eq('slug', resolvedParams.slug)
     .eq('is_public', true)
     .single();
 
+  if (error) {
+    console.error('[generateMetadata] Supabase query error:', {
+      slug: resolvedParams.slug,
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+  }
+
   if (!oc) {
+    console.warn('[generateMetadata] Character not found:', {
+      slug: resolvedParams.slug,
+      error: error?.message || 'No data returned',
+    });
     return {
       title: 'Character Not Found',
     };
   }
+
+  console.log('[generateMetadata] Character found:', {
+    slug: resolvedParams.slug,
+    name: oc.name,
+    hasWorld: !!oc.world,
+  });
 
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
@@ -105,10 +128,14 @@ export default async function OCDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const startTime = Date.now();
   const supabase = await createClient();
   const resolvedParams = await params;
 
-  const { data: oc } = await supabase
+  console.log('[OCDetailPage] Request received for slug:', resolvedParams.slug);
+  console.log('[OCDetailPage] Creating Supabase client...');
+
+  const { data: oc, error } = await supabase
     .from('ocs')
     .select(`
       *,
@@ -132,9 +159,38 @@ export default async function OCDetailPage({
     .eq('is_public', true)
     .single();
 
+  const duration = Date.now() - startTime;
+
+  if (error) {
+    console.error('[OCDetailPage] Supabase query error:', {
+      slug: resolvedParams.slug,
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      duration: `${duration}ms`,
+    });
+  }
+
   if (!oc) {
+    console.error('[OCDetailPage] Character not found - calling notFound():', {
+      slug: resolvedParams.slug,
+      error: error?.message || 'No data returned',
+      duration: `${duration}ms`,
+    });
     notFound();
   }
+
+  console.log('[OCDetailPage] Character loaded successfully:', {
+    slug: resolvedParams.slug,
+    name: oc.name,
+    id: oc.id,
+    is_public: oc.is_public,
+    hasWorld: !!oc.world,
+    hasStoryAlias: !!oc.story_alias,
+    hasIdentity: !!oc.identity,
+    duration: `${duration}ms`,
+  });
 
   // Helper function to render a field value
   const renderFieldValue = (field: WorldFieldDefinition, value: string | number | string[] | null) => {

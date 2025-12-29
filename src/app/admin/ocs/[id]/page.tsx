@@ -17,18 +17,43 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const supabase = await createClient();
 
+  console.log('[generateMetadata - Admin] Request received for id/slug:', params.id);
+  console.log('[generateMetadata - Admin] Is UUID:', isUUID(params.id));
+  console.log('[generateMetadata - Admin] Creating Supabase client...');
+
   // Support both ID (UUID) and slug
   const query = isUUID(params.id)
     ? supabase.from('ocs').select('name').eq('id', params.id)
     : supabase.from('ocs').select('name').eq('slug', params.id);
 
-  const { data: oc } = await query.single();
+  const { data: oc, error } = await query.single();
+
+  if (error) {
+    console.error('[generateMetadata - Admin] Supabase query error:', {
+      id: params.id,
+      isUUID: isUUID(params.id),
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+  }
 
   if (!oc) {
+    console.warn('[generateMetadata - Admin] Character not found:', {
+      id: params.id,
+      isUUID: isUUID(params.id),
+      error: error?.message || 'No data returned',
+    });
     return {
       title: 'Edit Character',
     };
   }
+
+  console.log('[generateMetadata - Admin] Character found:', {
+    id: params.id,
+    name: oc.name,
+  });
 
   return {
     title: `Edit ${oc.name}`,
@@ -116,7 +141,12 @@ export default async function EditOCPage({
 }: {
   params: { id: string };
 }) {
+  const startTime = Date.now();
   const supabase = await createClient();
+
+  console.log('[EditOCPage] Request received for id/slug:', params.id);
+  console.log('[EditOCPage] Is UUID:', isUUID(params.id));
+  console.log('[EditOCPage] Creating Supabase client...');
 
   // Support both ID (UUID) and slug
   const baseQuery = supabase
@@ -141,16 +171,61 @@ export default async function EditOCPage({
     ? baseQuery.eq('id', params.id)
     : baseQuery.eq('slug', params.id);
 
-  const { data: oc } = await query.single();
+  const { data: oc, error: ocError } = await query.single();
+  const ocQueryDuration = Date.now() - startTime;
+
+  if (ocError) {
+    console.error('[EditOCPage] Supabase OC query error:', {
+      id: params.id,
+      isUUID: isUUID(params.id),
+      error: ocError.message,
+      code: ocError.code,
+      details: ocError.details,
+      hint: ocError.hint,
+      duration: `${ocQueryDuration}ms`,
+    });
+  }
 
   if (!oc) {
+    console.error('[EditOCPage] Character not found - calling notFound():', {
+      id: params.id,
+      isUUID: isUUID(params.id),
+      error: ocError?.message || 'No data returned',
+      duration: `${ocQueryDuration}ms`,
+    });
     notFound();
   }
 
+  console.log('[EditOCPage] Character loaded successfully:', {
+    id: params.id,
+    name: oc.name,
+    ocId: oc.id,
+    slug: oc.slug,
+    hasWorld: !!oc.world,
+    hasStoryAlias: !!oc.story_alias,
+    hasIdentity: !!oc.identity,
+    duration: `${ocQueryDuration}ms`,
+  });
+
   // Fetch all OCs to find reverse relationships
-  const { data: allOCs } = await supabase
+  const allOCsStartTime = Date.now();
+  const { data: allOCs, error: allOCsError } = await supabase
     .from('ocs')
     .select('id, name, slug, family, friends_allies, rivals_enemies, romantic, other_relationships');
+
+  if (allOCsError) {
+    console.error('[EditOCPage] Error fetching all OCs for reverse relationships:', {
+      error: allOCsError.message,
+      code: allOCsError.code,
+      details: allOCsError.details,
+      duration: `${Date.now() - allOCsStartTime}ms`,
+    });
+  } else {
+    console.log('[EditOCPage] All OCs fetched for reverse relationships:', {
+      count: allOCs?.length || 0,
+      duration: `${Date.now() - allOCsStartTime}ms`,
+    });
+  }
 
   // Find reverse relationships
   const reverseRelationships = allOCs 
