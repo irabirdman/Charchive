@@ -10,7 +10,6 @@ interface GeneratedCharacter {
   gender?: string;
   pronouns?: string;
   sex?: string;
-  status?: string;
   romantic_orientation?: string;
   sexual_orientation?: string;
   eye_color?: string;
@@ -295,9 +294,6 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
     const negative = getOptions(negativeTraitsOptions);
     const sexes = getOptions(sexOptions);
 
-    // Status is hardcoded in the form, so we use the same hardcoded list
-    const statusOptions = ['alive', 'deceased', 'missing', 'unknown', 'au-only'];
-
     // Combine all trait options
     const allTraits = [...positive, ...neutral, ...negative];
 
@@ -307,7 +303,6 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
       gender: randomElement(genders) || undefined,
       pronouns: randomElement(pronouns) || undefined,
       sex: randomElement(sexes) || undefined,
-      status: randomElement(statusOptions) || undefined,
       romantic_orientation: randomElement(romantic) || undefined,
       sexual_orientation: randomElement(sexual) || undefined,
       eye_color: randomElement(eyeColors) || undefined,
@@ -505,19 +500,13 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
               )}
 
               {/* Status & Role Category */}
-              {(generated.status || generated.occupation || generated.setting || generated.trope) && (
+              {(generated.occupation || generated.setting || generated.trope) && (
                 <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
                   <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
                     <i className="fas fa-briefcase"></i>
                     Status & Role
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {generated.status && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Status</div>
-                        <div className="text-gray-100 text-sm capitalize">{generated.status}</div>
-                      </div>
-                    )}
                     {generated.occupation && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Occupation</div>

@@ -96,8 +96,8 @@ export function NetworkGraph({
           linkDirectionalArrowLength={6}
           linkDirectionalArrowRelPos={1}
           linkCurvature={0.25}
-          onNodeClick={onNodeClick}
-          onNodeHover={onNodeHover}
+          onNodeClick={onNodeClick ? (node: any, event: MouseEvent) => onNodeClick(node as Node) : undefined}
+          onNodeHover={onNodeHover ? (node: any) => onNodeHover(node ? (node as Node) : null) : undefined}
           backgroundColor="#111827"
           cooldownTicks={100}
           onEngineStop={() => {
