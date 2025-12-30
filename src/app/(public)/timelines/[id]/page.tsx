@@ -33,7 +33,7 @@ export async function generateMetadata({
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/timelines/${params.id}`;
   const world = timeline.world as any;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/icon.png');
+  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
   // Use description_markdown for description, clean up markdown syntax
   const descriptionText = timeline.description_markdown || '';
   const description = descriptionText

@@ -96,7 +96,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: `${oc.name} | ${config.websiteName}`,
       description,
-      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}${convertGoogleDriveUrl(config.iconUrl || '/icon.png')}`],
+      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}${convertGoogleDriveUrl(config.iconUrl || '/images/logo.png')}`],
     },
     alternates: {
       canonical: url,

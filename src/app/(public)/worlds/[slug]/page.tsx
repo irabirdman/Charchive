@@ -38,7 +38,7 @@ export async function generateMetadata({
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${resolvedParams.slug}`;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/icon.png');
+  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
   // Prioritize description_markdown, then summary, then fallback
   const descriptionText = world.description_markdown || world.summary || '';
   const description = descriptionText

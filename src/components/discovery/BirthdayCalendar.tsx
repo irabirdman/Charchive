@@ -3,18 +3,27 @@
 import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { format, isSameDay } from 'date-fns';
-import type { OC } from '@/types/oc';
+import { format } from 'date-fns';
 import Link from 'next/link';
+import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
+
+// Minimal type for birthday calendar - only requires the fields we actually use
+interface BirthdayOC {
+  id: string;
+  name: string;
+  slug: string;
+  date_of_birth?: string | null;
+  image_url?: string | null;
+}
 
 interface BirthdayCalendarProps {
-  ocs: OC[];
+  ocs: BirthdayOC[];
   className?: string;
 }
 
 interface BirthdayEvent {
   date: Date;
-  characters: OC[];
+  characters: BirthdayOC[];
 }
 
 export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps) {
@@ -22,7 +31,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
 
   // Parse birthdays and group by date
   const birthdayEvents: BirthdayEvent[] = [];
-  const birthdayMap = new Map<string, OC[]>();
+  const birthdayMap = new Map<string, BirthdayOC[]>();
 
   ocs.forEach((oc) => {
     if (oc.date_of_birth) {
@@ -50,7 +59,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
   });
 
   // Get characters for a specific date
-  const getCharactersForDate = (date: Date): OC[] => {
+  const getCharactersForDate = (date: Date): BirthdayOC[] => {
     const month = date.getMonth();
     const day = date.getDate();
     const key = `${month}-${day}`;
@@ -63,16 +72,18 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
       const characters = getCharactersForDate(date);
       if (characters.length > 0) {
         return (
-          <div className="flex flex-wrap gap-0.5 justify-center mt-1">
-            {characters.slice(0, 3).map((oc) => (
+          <div className="flex flex-wrap gap-1 justify-center mt-1.5 items-center">
+            {characters.slice(0, 2).map((oc) => (
               <div
                 key={oc.id}
-                className="w-1.5 h-1.5 rounded-full bg-purple-400"
+                className="w-2 h-2 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 shadow-sm"
                 title={oc.name}
               />
             ))}
-            {characters.length > 3 && (
-              <div className="text-[8px] text-purple-400">+{characters.length - 3}</div>
+            {characters.length > 2 && (
+              <div className="text-[10px] font-semibold text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded">
+                +{characters.length - 2}
+              </div>
             )}
           </div>
         );
@@ -97,98 +108,219 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="wiki-card p-4 md:p-6">
-        <h2 className="text-2xl font-bold text-gray-100 mb-4 flex items-center gap-2">
-          <i className="fas fa-calendar-alt text-purple-400"></i>
-          Character Birthdays
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100 mb-2 flex items-center gap-3">
+            <i className="fas fa-calendar-alt text-purple-400 text-2xl"></i>
+            Character Birthdays
+          </h2>
+          <p className="text-gray-400 text-sm md:text-base">
+            Click on any date to see which characters have birthdays on that day
+          </p>
+        </div>
         
-        <div className="bg-gray-900 rounded-lg p-4">
+        <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-6 border border-gray-700/50">
           <Calendar
             onChange={(value) => setSelectedDate(value as Date)}
             value={selectedDate}
             tileContent={tileContent}
             tileClassName={tileClassName}
-            className="bg-transparent text-gray-200 border-none"
+            className="bg-transparent text-gray-100 border-none w-full"
           />
         </div>
 
         <style jsx global>{`
           .react-calendar {
-            background: transparent;
-            border: none;
+            background: transparent !important;
+            border: none !important;
             font-family: inherit;
+            width: 100%;
           }
+          
           .react-calendar__navigation {
             display: flex;
-            margin-bottom: 1em;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.3);
           }
+          
+          .react-calendar__navigation__label {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+          }
+          
+          .react-calendar__navigation__label:hover {
+            background-color: rgba(139, 92, 246, 0.1);
+            color: #c084fc;
+          }
+          
           .react-calendar__navigation button {
-            color: #e5e7eb;
+            color: #d1d5db;
             min-width: 44px;
-            background: none;
-            font-size: 16px;
-            margin-top: 8px;
+            height: 44px;
+            background: rgba(75, 85, 99, 0.2);
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            border: 1px solid transparent;
           }
+          
           .react-calendar__navigation button:enabled:hover,
           .react-calendar__navigation button:enabled:focus {
-            background-color: #374151;
+            background: rgba(139, 92, 246, 0.2);
+            color: #c084fc;
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: scale(1.05);
           }
+          
+          .react-calendar__navigation button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+          }
+          
           .react-calendar__month-view__weekdays {
             text-align: center;
             text-transform: uppercase;
-            font-weight: bold;
-            font-size: 0.75em;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
             color: #9ca3af;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.2);
           }
+          
+          .react-calendar__month-view__weekdays__weekday {
+            padding: 0.5rem 0;
+          }
+          
           .react-calendar__month-view__days {
             display: grid !important;
-            grid-template-columns: 14.2% 14.2% 14.2% 14.2% 14.2% 14.2% 14.2%;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
           }
+          
           .react-calendar__tile {
             max-width: 100%;
             text-align: center;
-            padding: 0.75em 0.5em;
-            background: none;
+            padding: 0.875rem 0.5rem;
+            background: rgba(31, 41, 55, 0.4);
             color: #e5e7eb;
-            border-radius: 4px;
-            min-height: 60px;
+            border-radius: 0.5rem;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            border: 1px solid rgba(75, 85, 99, 0.2);
+            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
           }
+          
           .react-calendar__tile:enabled:hover,
           .react-calendar__tile:enabled:focus {
-            background-color: #374151;
+            background: rgba(75, 85, 99, 0.5);
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+            z-index: 1;
           }
+          
+          .react-calendar__tile:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(31, 41, 55, 0.2);
+          }
+          
           .react-calendar__tile--now {
-            background: #8b5cf6;
-            color: white;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+            color: #f3f4f6;
+            border-color: rgba(139, 92, 246, 0.5);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
           }
+          
+          .react-calendar__tile--now:enabled:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.4));
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+          }
+          
           .react-calendar__tile--active {
-            background: #7c3aed;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
             color: white;
+            border-color: #a855f7;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+            transform: scale(1.05);
           }
+          
+          .react-calendar__tile--active:enabled:hover {
+            background: linear-gradient(135deg, #7c3aed, #db2777);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+          }
+          
           .react-calendar__tile.has-birthday {
-            background: rgba(139, 92, 246, 0.2);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.15));
+            border-color: rgba(139, 92, 246, 0.4);
+            position: relative;
           }
+          
+          .react-calendar__tile.has-birthday::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(139, 92, 246, 0.6);
+          }
+          
           .react-calendar__tile.has-birthday:enabled:hover {
-            background: rgba(139, 92, 246, 0.3);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(236, 72, 153, 0.25));
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+          }
+          
+          .react-calendar__tile--active.has-birthday {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+          }
+          
+          .react-calendar__tile abbr {
+            text-decoration: none;
+            font-size: 0.95rem;
           }
         `}</style>
       </div>
 
       {selectedDate && selectedCharacters.length > 0 && (
         <div className="wiki-card p-4 md:p-6">
-          <h3 className="text-xl font-bold text-gray-100 mb-4">
-            Birthdays on {format(selectedDate, 'MMMM d')}
-          </h3>
+          <div className="mb-4 pb-3 border-b border-gray-700">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-100 flex items-center gap-2">
+              <i className="fas fa-birthday-cake text-purple-400"></i>
+              Birthdays on {format(selectedDate, 'MMMM d')}
+            </h3>
+            <p className="text-gray-400 text-sm mt-1">
+              {selectedCharacters.length} character{selectedCharacters.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
           <div className="space-y-3">
             {selectedCharacters.map((oc) => (
               <Link
                 key={oc.id}
                 href={`/ocs/${oc.slug}`}
-                className="block p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+                className="block p-4 bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-lg hover:from-gray-700/50 hover:to-gray-700/30 transition-all border border-gray-700/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {oc.image_url && (
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-purple-500/30">
                       {oc.image_url.includes('drive.google.com') ? (
                         <img
                           src={oc.image_url}
@@ -205,14 +337,15 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-gray-100 font-semibold truncate">{oc.name}</h4>
+                    <h4 className="text-gray-100 font-semibold text-lg truncate mb-1">{oc.name}</h4>
                     {oc.date_of_birth && (
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-sm flex items-center gap-2">
+                        <i className="fas fa-calendar text-purple-400/60 text-xs"></i>
                         {format(new Date(oc.date_of_birth), 'MMMM d, yyyy')}
                       </p>
                     )}
                   </div>
-                  <i className="fas fa-chevron-right text-gray-400"></i>
+                  <i className="fas fa-chevron-right text-gray-400 group-hover:text-purple-400 transition-colors"></i>
                 </div>
               </Link>
             ))}
@@ -221,8 +354,16 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
       )}
 
       {selectedDate && selectedCharacters.length === 0 && (
-        <div className="wiki-card p-4 md:p-6 text-center text-gray-400">
-          <p>No birthdays on {format(selectedDate, 'MMMM d')}</p>
+        <div className="wiki-card p-4 md:p-6 text-center">
+          <div className="py-8">
+            <i className="fas fa-calendar-times text-4xl text-gray-600 mb-4"></i>
+            <p className="text-gray-400 text-lg">
+              No birthdays on {format(selectedDate, 'MMMM d')}
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Try selecting a different date
+            </p>
+          </div>
         </div>
       )}
     </div>

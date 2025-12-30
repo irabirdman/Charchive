@@ -30,7 +30,7 @@ export async function generateMetadata({
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${resolvedParams.slug}/lore`;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/icon.png');
+  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
   const description = `Browse all lore entries for ${world.name} on ${config.websiteName}. Discover detailed world building, history, and background information.`;
 
   return {

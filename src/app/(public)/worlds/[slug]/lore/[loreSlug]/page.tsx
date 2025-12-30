@@ -31,7 +31,7 @@ export async function generateMetadata({
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/worlds/${(lore.world as any).slug}/lore/${resolvedParams.loreSlug}`;
   const world = lore.world as any;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/icon.png');
+  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
   
   // Use description_markdown first, then description, then fallback
   const descriptionText = lore.description_markdown || lore.description || '';

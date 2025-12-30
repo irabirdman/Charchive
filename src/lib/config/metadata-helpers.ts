@@ -8,7 +8,7 @@ export async function generatePageMetadata(
 ): Promise<Metadata> {
   const config = await getSiteConfig();
   const siteUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const iconUrl = config.iconUrl || '/icon.png';
+  const iconUrl = config.iconUrl || '/images/logo.png';
   const fullTitle = `${title} | ${config.websiteName}`;
   
   return {

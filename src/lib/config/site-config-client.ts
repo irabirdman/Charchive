@@ -10,7 +10,7 @@ export function getSiteConfigSync(): SiteConfig {
   return {
     websiteName: 'Ruutulian',
     websiteDescription: 'A place to store and organize information on original characters, worlds, lore, and timelines.',
-    iconUrl: '/icon.png',
+    iconUrl: '/images/logo.png',
     altIconUrl: undefined,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com',
     authorName: '',
