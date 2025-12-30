@@ -382,5 +382,23 @@ BEGIN
     v_story_alias_id
   );
 
+  -- Delete existing timeline event associations for this timeline to make the migration idempotent
+  DELETE FROM timeline_event_timelines WHERE timeline_id = v_timeline_id;
+
+  -- Insert all events into the junction table, ordered by year, month, day
+  -- Use ROW_NUMBER() to assign positions based on chronological order
+  INSERT INTO timeline_event_timelines (timeline_id, timeline_event_id, position)
+  SELECT 
+    v_timeline_id,
+    te.id,
+    ROW_NUMBER() OVER (ORDER BY te.year ASC NULLS LAST, 
+                              (te.date_data->>'month')::INTEGER ASC NULLS LAST,
+                              (te.date_data->>'day')::INTEGER ASC NULLS LAST,
+                              te.created_at ASC) - 1 AS position
+  FROM timeline_events te
+  WHERE te.timeline_id = v_timeline_id 
+    AND te.story_alias_id = v_story_alias_id
+  ON CONFLICT (timeline_id, timeline_event_id) DO NOTHING;
+
 END $$;
 

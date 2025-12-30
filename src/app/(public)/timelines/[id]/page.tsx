@@ -167,17 +167,32 @@ export default async function TimelinePage({
         )}
       </div>
 
-      <div>
-        <h2 className="text-2xl font-bold text-gray-100 mb-6">Events</h2>
+      <div className="mt-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100 px-4">
+            <i className="fas fa-history mr-2 text-purple-400" aria-hidden="true"></i>
+            Timeline Events
+          </h2>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+        </div>
+        
         {events && events.length > 0 ? (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <TimelineEvent key={event.id} event={event} />
+          <div className="relative">
+            {events.map((event, index) => (
+              <TimelineEvent 
+                key={event.id} 
+                event={event} 
+                isLast={index === events.length - 1}
+              />
             ))}
           </div>
         ) : (
-          <div className="wiki-card p-6 text-center text-gray-500">
-            No events in this timeline yet.
+          <div className="wiki-card p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <i className="fas fa-calendar-times text-4xl text-gray-600" aria-hidden="true"></i>
+              <p className="text-gray-400 text-lg">No events in this timeline yet.</p>
+            </div>
           </div>
         )}
       </div>
