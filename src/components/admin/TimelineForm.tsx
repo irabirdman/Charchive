@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Timeline } from '@/types/oc';
@@ -16,6 +16,7 @@ import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
 import { StoryAliasSelector } from './StoryAliasSelector';
+import { EraSystemManager } from './EraSystemManager';
 import { optionalUuid } from '@/lib/utils/zodSchemas';
 
 const timelineSchema = z.object({
@@ -74,7 +75,7 @@ export function TimelineForm({ timeline }: TimelineFormProps) {
         },
   });
 
-  const { register, handleSubmit, formState: { errors }, watch } = methods;
+  const { register, handleSubmit, formState: { errors }, watch, control } = methods;
   
   const watchedWorldId = watch('world_id');
 
@@ -172,13 +173,20 @@ export function TimelineForm({ timeline }: TimelineFormProps) {
             <FormLabel htmlFor="era" optional>
               Era System
             </FormLabel>
-            <FormInput
-              {...register('era')}
-              placeholder='e.g., "BE, SE" or "Before Era, Current Era, Future Era"'
-              disabled={isSubmitting}
+            <Controller
+              name="era"
+              control={control}
+              render={({ field }) => (
+                <EraSystemManager
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                />
+              )}
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Optional: Define custom era systems for this timeline (comma-separated). For example: "BE, SE" or "Before Era, Current Era, Future Era". Events will use these eras when created.
+            <p className="text-xs text-gray-400 mt-2">
+              Optional: Define custom era systems for this timeline. Add eras in chronological order (earliest to latest). 
+              The order determines how dates are sorted. You can optionally label eras (e.g., "Past Era", "Current Era", "Future Era").
             </p>
           </div>
 
