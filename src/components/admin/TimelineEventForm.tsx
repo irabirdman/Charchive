@@ -160,7 +160,11 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
   const { ocs: characters } = useOCsByWorld(watchedWorldId);
 
   // Manage related characters
-  const relatedCharacters = useRelatedItems(
+  const relatedCharacters = useRelatedItems<{
+    oc_id: string | null;
+    custom_name: string | null;
+    role: string;
+  }>(
     'characters',
     watch,
     setValue,

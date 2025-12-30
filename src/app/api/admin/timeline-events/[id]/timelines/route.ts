@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/auth/require-auth';
 
@@ -12,7 +12,7 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const body = await request.json();
   const { timeline_id, position } = body;
@@ -65,7 +65,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { searchParams } = new URL(request.url);
   const timeline_id = searchParams.get('timeline_id');
@@ -100,7 +100,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const body = await request.json();
   const { timeline_id, position } = body;

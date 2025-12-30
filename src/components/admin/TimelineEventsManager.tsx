@@ -78,34 +78,26 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
   async function addEventToTimeline(eventId: string) {
     setIsSaving(true);
-    const supabase = createClient();
 
-    // Get the highest position
-    const { data: existing } = await supabase
-      .from('timeline_event_timelines')
-      .select('position')
-      .eq('timeline_id', timelineId)
-      .order('position', { ascending: false })
-      .limit(1)
-      .single();
-
-    const newPosition = (existing?.position ?? -1) + 1;
-
-    const { error } = await supabase
-      .from('timeline_event_timelines')
-      .insert({
-        timeline_id: timelineId,
-        timeline_event_id: eventId,
-        position: newPosition,
+    try {
+      const response = await fetch(`/api/admin/timeline-events/${eventId}/timelines`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeline_id: timelineId }),
       });
 
-    if (error) {
-      console.error('Error adding event to timeline:', error);
-      alert('Failed to add event to timeline');
-    } else {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to add event to timeline' }));
+        throw new Error(errorData.error || 'Failed to add event to timeline');
+      }
+
       await loadTimelineAndEvents();
+    } catch (error) {
+      console.error('Error adding event to timeline:', error);
+      alert(error instanceof Error ? error.message : 'Failed to add event to timeline');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   }
 
   async function handleEventCreated(responseData: any) {
@@ -123,40 +115,48 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
     }
 
     setIsSaving(true);
-    const supabase = createClient();
 
-    const { error } = await supabase
-      .from('timeline_event_timelines')
-      .delete()
-      .eq('timeline_id', timelineId)
-      .eq('timeline_event_id', eventId);
+    try {
+      const response = await fetch(`/api/admin/timeline-events/${eventId}/timelines?timeline_id=${timelineId}`, {
+        method: 'DELETE',
+      });
 
-    if (error) {
-      console.error('Error removing event from timeline:', error);
-      alert('Failed to remove event from timeline');
-    } else {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to remove event from timeline' }));
+        throw new Error(errorData.error || 'Failed to remove event from timeline');
+      }
+
       await loadTimelineAndEvents();
+    } catch (error) {
+      console.error('Error removing event from timeline:', error);
+      alert(error instanceof Error ? error.message : 'Failed to remove event from timeline');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   }
 
   async function updateEventPosition(eventId: string, newPosition: number) {
     setIsSaving(true);
-    const supabase = createClient();
 
-    const { error } = await supabase
-      .from('timeline_event_timelines')
-      .update({ position: newPosition })
-      .eq('timeline_id', timelineId)
-      .eq('timeline_event_id', eventId);
+    try {
+      const response = await fetch(`/api/admin/timeline-events/${eventId}/timelines`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeline_id: timelineId, position: newPosition }),
+      });
 
-    if (error) {
-      console.error('Error updating position:', error);
-      alert('Failed to update event position');
-    } else {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to update event position' }));
+        throw new Error(errorData.error || 'Failed to update event position');
+      }
+
       await loadTimelineAndEvents();
+    } catch (error) {
+      console.error('Error updating position:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update event position');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   }
 
   function moveEvent(index: number, direction: 'up' | 'down') {
