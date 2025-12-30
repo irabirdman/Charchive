@@ -193,7 +193,20 @@ export async function DELETE(
 
     const supabase = createAdminClient();
 
-    // Delete event (cascade will handle related records)
+    // Delete all related records first to ensure complete removal
+    // Delete character associations
+    await supabase
+      .from('timeline_event_characters')
+      .delete()
+      .eq('timeline_event_id', params.id);
+
+    // Delete timeline associations (junction table)
+    await supabase
+      .from('timeline_event_timelines')
+      .delete()
+      .eq('timeline_event_id', params.id);
+
+    // Delete the event itself (cascade should handle this, but explicit is safer)
     const { error } = await supabase
       .from('timeline_events')
       .delete()

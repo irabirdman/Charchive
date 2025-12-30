@@ -51,7 +51,14 @@ export async function DELETE(
       return errorResponse('Timeline ID is required');
     }
 
-    // Delete timeline (cascade will handle related tables)
+    // Delete all related records first to ensure complete removal
+    // Delete timeline-event associations (junction table)
+    await supabase
+      .from('timeline_event_timelines')
+      .delete()
+      .eq('timeline_id', id);
+
+    // Delete the timeline itself (cascade should handle this, but explicit is safer)
     const { error } = await supabase
       .from('timelines')
       .delete()
