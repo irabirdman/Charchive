@@ -1,17 +1,30 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
+
+// Cache the site config fetch for 60 seconds
+const getCachedSiteConfig = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .single();
+    return { data, error };
+  },
+  ['site-config-api'],
+  {
+    revalidate: 60, // Cache for 60 seconds
+    tags: ['site-config'],
+  }
+);
 
 // Public endpoint to get site configuration (no auth required)
 // Database-only - no file fallback
 export async function GET(request: Request) {
   try {
-    const supabase = createAdminClient();
-
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('*')
-      .single();
+    const { data, error } = await getCachedSiteConfig();
 
     // PGRST116 is "not found" - return error if no settings exist
     if (error && error.code === 'PGRST116') {
@@ -23,9 +36,7 @@ export async function GET(request: Request) {
         {
           status: 404,
           headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
           },
         }
       );
@@ -41,15 +52,13 @@ export async function GET(request: Request) {
         {
           status: 500,
           headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
           },
         }
       );
     }
 
-    // Return database data with no-cache headers
+    // Return database data with caching headers
     return NextResponse.json(
       {
         success: true,
@@ -65,9 +74,7 @@ export async function GET(request: Request) {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
         },
       }
     );

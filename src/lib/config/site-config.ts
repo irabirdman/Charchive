@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 
 export interface SiteConfig {
   websiteName: string;
@@ -24,10 +26,10 @@ interface SiteSettingsRow {
 }
 
 /**
- * Get site configuration from database only (no file fallback)
- * Throws error if no settings exist in database
+ * Internal function to fetch site config from database
+ * This is cached using React's cache() to deduplicate requests within the same render
  */
-export async function getSiteConfig(): Promise<SiteConfig> {
+const fetchSiteConfigFromDB = cache(async (): Promise<SiteConfig> => {
   const supabase = createAdminClient();
   
   const { data, error } = await supabase
@@ -51,6 +53,22 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     authorName: data.author_name,
     shortName: data.short_name,
   };
-}
+});
+
+/**
+ * Get site configuration from database only (no file fallback)
+ * Throws error if no settings exist in database
+ * 
+ * Uses React cache() to deduplicate calls within the same request
+ * and unstable_cache for cross-request caching (60 seconds)
+ */
+export const getSiteConfig = unstable_cache(
+  fetchSiteConfigFromDB,
+  ['site-config'],
+  {
+    revalidate: 60, // Cache for 60 seconds
+    tags: ['site-config'],
+  }
+);
 
 

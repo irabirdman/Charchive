@@ -98,27 +98,39 @@ function getRandomItems<T>(array: T[], count: number): T[] {
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const config = await getSiteConfig();
+  
+  // Batch initial data fetches in parallel
+  const [
+    config,
+    userResult,
+    worldSampleResult,
+    ocSampleResult,
+    worldCountResult,
+    ocCountResult,
+    loreCountResult,
+    timelineEventCountResult,
+  ] = await Promise.all([
+    getSiteConfig(),
+    supabase.auth.getUser(),
+    supabase
+      .from('worlds')
+      .select('*')
+      .eq('is_public', true)
+      .limit(6), // Reduced from 10 to 6 since we only show 3
+    supabase
+      .from('ocs')
+      .select('*, world:worlds(*)')
+      .eq('is_public', true)
+      .limit(6), // Reduced from 10 to 6 since we only show 3
+    supabase.from('worlds').select('*', { count: 'exact', head: true }).eq('is_public', true),
+    supabase.from('ocs').select('*', { count: 'exact', head: true }).eq('is_public', true),
+    supabase.from('world_lore').select('*, world:worlds!inner(is_public)', { count: 'exact', head: true }).eq('world.is_public', true),
+    supabase.from('timeline_events').select('*', { count: 'exact', head: true }),
+  ]);
 
-  // Check if user is logged in
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Fetch a sample of public worlds for random selection (fetch 10, then randomly select 2-3)
-  // This is much more efficient than fetching all worlds
-  const { data: worldSample } = await supabase
-    .from('worlds')
-    .select('*')
-    .eq('is_public', true)
-    .limit(10);
-
-  // Fetch a sample of public OCs for random selection (fetch 10, then randomly select 2-3)
-  const { data: ocSample } = await supabase
-    .from('ocs')
-    .select('*, world:worlds(*)')
-    .eq('is_public', true)
-    .limit(10);
+  const { data: { user } } = userResult;
+  const { data: worldSample } = worldSampleResult;
+  const { data: ocSample } = ocSampleResult;
 
   // Get random worlds and characters (always show 3, or all available if less than 3)
   const totalWorlds = worldSample ? worldSample.length : 0;
@@ -127,19 +139,6 @@ export default async function HomePage() {
   const randomOCCount = totalOCs > 0 ? Math.min(3, totalOCs) : 0;
   const randomWorlds = worldSample ? getRandomItems(worldSample, randomWorldCount) : [];
   const randomOCs = ocSample ? getRandomItems(ocSample, randomOCCount) : [];
-
-  // Get stats
-  const [
-    worldCountResult,
-    ocCountResult,
-    loreCountResult,
-    timelineEventCountResult,
-  ] = await Promise.all([
-    supabase.from('worlds').select('*', { count: 'exact', head: true }).eq('is_public', true),
-    supabase.from('ocs').select('*', { count: 'exact', head: true }).eq('is_public', true),
-    supabase.from('world_lore').select('*, world:worlds!inner(is_public)', { count: 'exact', head: true }).eq('world.is_public', true),
-    supabase.from('timeline_events').select('*', { count: 'exact', head: true }),
-  ]);
 
   const worldCount = worldCountResult.count ?? 0;
   const ocCount = ocCountResult.count ?? 0;
@@ -169,12 +168,13 @@ export default async function HomePage() {
   ]);
 
 
-  // Get quote of the day
+  // Get quote of the day - optimized: fetch only what we need
+  // Since we're using seeded shuffle, we can fetch a smaller sample
   const { data: allQuotes } = await supabase
     .from('character_quotes')
     .select('*, oc:ocs!inner(id, name, slug, is_public)')
     .eq('oc.is_public', true)
-    .limit(100);
+    .limit(20); // Reduced from 100 to 20 - still plenty for daily variety
 
   let quoteOfTheDay = null;
   if (allQuotes && allQuotes.length > 0) {
