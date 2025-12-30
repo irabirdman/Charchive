@@ -1,10 +1,11 @@
 import { PREDEFINED_EVENT_CATEGORIES } from '@/types/oc';
 
 /**
- * Get color classes for a category
- * Returns different colors for predefined categories, default gray for custom categories
+ * Generate a consistent color for a category based on its name
+ * Uses a hash function to deterministically assign colors
  */
-export function getCategoryColorClasses(category: string): string {
+function getCategoryColor(category: string): string {
+  // Predefined colors for known categories
   const categoryColors: Record<string, string> = {
     'Death': 'bg-red-600/30 text-red-300 border-red-500/50',
     'Birth': 'bg-green-600/30 text-green-300 border-green-500/50',
@@ -24,7 +25,43 @@ export function getCategoryColorClasses(category: string): string {
     'Transformation': 'bg-teal-600/30 text-teal-300 border-teal-500/50',
   };
 
-  return categoryColors[category] || 'bg-gray-700/30 text-gray-300 border-gray-600/50';
+  if (categoryColors[category]) {
+    return categoryColors[category];
+  }
+
+  // Generate consistent color based on category name hash
+  const colorPalette = [
+    'bg-sky-600/30 text-sky-300 border-sky-500/50',
+    'bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/50',
+    'bg-lime-600/30 text-lime-300 border-lime-500/50',
+    'bg-amber-600/30 text-amber-300 border-amber-500/50',
+    'bg-emerald-600/30 text-emerald-300 border-emerald-500/50',
+    'bg-cyan-600/30 text-cyan-300 border-cyan-500/50',
+    'bg-violet-600/30 text-violet-300 border-violet-500/50',
+    'bg-rose-600/30 text-rose-300 border-rose-500/50',
+    'bg-indigo-600/30 text-indigo-300 border-indigo-500/50',
+    'bg-pink-600/30 text-pink-300 border-pink-500/50',
+    'bg-teal-600/30 text-teal-300 border-teal-500/50',
+    'bg-orange-600/30 text-orange-300 border-orange-500/50',
+  ];
+
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = ((hash << 5) - hash) + category.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  const index = Math.abs(hash) % colorPalette.length;
+  return colorPalette[index];
+}
+
+/**
+ * Get color classes for a category
+ * Returns different colors for predefined categories, random but consistent colors for custom categories
+ */
+export function getCategoryColorClasses(category: string): string {
+  return getCategoryColor(category);
 }
 
 /**

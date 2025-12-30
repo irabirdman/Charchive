@@ -168,13 +168,12 @@ export default async function TimelinePage({
       </div>
 
       <div className="mt-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-100 px-4">
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-100 mb-2">
             <i className="fas fa-history mr-2 text-purple-400" aria-hidden="true"></i>
             Timeline Events
           </h2>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
         </div>
         
         {events && events.length > 0 ? (
