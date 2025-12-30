@@ -84,8 +84,18 @@ export async function POST(request: Request) {
       return validationError;
     }
 
-    // Check if slug is unique
-    const existingFanfic = await checkSlugUniqueness(supabase, 'fanfics', slug);
+    // Check if slug is unique (fanfics don't have scopes, so check globally)
+    const { data: existingFanfic, error: slugCheckError } = await supabase
+      .from('fanfics')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+    
+    if (slugCheckError && slugCheckError.code !== 'PGRST116') {
+      // PGRST116 is "not found" which is fine, other errors should be reported
+      return errorResponse(`Error checking slug: ${slugCheckError.message}`);
+    }
+    
     if (existingFanfic) {
       return errorResponse('A fanfic with this slug already exists');
     }

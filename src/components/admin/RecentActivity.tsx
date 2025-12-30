@@ -5,7 +5,7 @@ import Link from 'next/link';
 interface RecentItem {
   id: string;
   name: string;
-  type: 'oc' | 'world' | 'lore' | 'timeline' | 'timeline-event';
+  type: 'oc' | 'world' | 'lore' | 'timeline' | 'timeline-event' | 'fanfic';
   updated_at: string;
   href: string;
 }
@@ -20,6 +20,7 @@ const typeConfig = {
   lore: { label: 'Lore', color: 'text-teal-400', icon: 'fas fa-book' },
   timeline: { label: 'Timeline', color: 'text-blue-400', icon: 'fas fa-clock' },
   'timeline-event': { label: 'Event', color: 'text-orange-400', icon: 'fas fa-calendar' },
+  fanfic: { label: 'Fanfic', color: 'text-indigo-400', icon: 'fas fa-file-alt' },
 };
 
 export function RecentActivity({ items }: RecentActivityProps) {

@@ -90,10 +90,11 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       if (ocsData) setOCs(ocsData);
 
 
-      // Load tags
+      // Load fanfic-specific tags only
       const { data: tagsData } = await supabase
         .from('tags')
         .select('*')
+        .eq('category', 'fanfic')
         .order('name');
       if (tagsData) setAvailableTags(tagsData);
 
@@ -167,6 +168,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
 
   // Track if user has manually edited the slug
   const slugManuallyEditedRef = useRef(false);
+  const previousSlugRef = useRef<string>('');
   
   // Auto-generate slug from title, world, and story alias (only for new fanfics)
   useEffect(() => {
@@ -174,69 +176,61 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       const generateSlug = async () => {
         try {
           const titleSlug = slugify(watchedTitle.trim());
-          if (!titleSlug) return; // Don't generate slug if title becomes empty after slugification
+          if (!titleSlug || titleSlug === 'untitled') return; // Don't generate slug if title becomes empty
           
-          let slugParts = [titleSlug];
+          let slugParts: string[] = [titleSlug];
           
           if (watchedWorldId && worlds.length > 0) {
             const selectedWorld = worlds.find(w => w.id === watchedWorldId);
-            if (selectedWorld && selectedWorld.slug) {
+            if (selectedWorld?.slug) {
               slugParts.push(selectedWorld.slug);
             }
           }
           
           if (watchedStoryAliasId && watchedWorldId) {
             try {
-              // Fetch story alias slug
               const { data, error } = await supabase
                 .from('story_aliases')
                 .select('slug')
                 .eq('id', watchedStoryAliasId)
-                .single();
+                .maybeSingle();
               
-              if (!error && data && data.slug) {
+              if (!error && data?.slug) {
                 slugParts.push(data.slug);
               }
             } catch (err) {
               console.error('Error fetching story alias slug:', err);
-              // Continue without story alias slug if fetch fails
             }
           }
           
           const newSlug = slugParts.filter(part => part && part.trim()).join('-');
           
-          // Only update if slug hasn't been manually edited
-          if (!slugManuallyEditedRef.current) {
+          // Only update if slug hasn't been manually edited and it's different from current
+          if (!slugManuallyEditedRef.current && newSlug && newSlug !== watchedSlug) {
             setValue('slug', newSlug, { shouldDirty: false });
+            previousSlugRef.current = newSlug;
           }
         } catch (err) {
           console.error('Error generating slug:', err);
         }
       };
       
-      generateSlug();
+      // Debounce slug generation slightly to avoid too many updates
+      const timeoutId = setTimeout(generateSlug, 300);
+      return () => clearTimeout(timeoutId);
     }
-  }, [watchedTitle, watchedWorldId, watchedStoryAliasId, fanfic, setValue, worlds, supabase]);
+  }, [watchedTitle, watchedWorldId, watchedStoryAliasId, fanfic, setValue, worlds, supabase, watchedSlug]);
 
-  // Track manual slug edits
-  useEffect(() => {
-    if (watchedSlug && !fanfic) {
-      const titleSlug = watchedTitle ? slugify(watchedTitle.trim()) : '';
-      const expectedSlug = titleSlug ? (watchedWorldId && worlds.length > 0 ? `${titleSlug}-${worlds.find(w => w.id === watchedWorldId)?.slug || ''}` : titleSlug) : '';
-      
-      // If slug doesn't match expected pattern, user has manually edited it
-      if (watchedSlug !== expectedSlug && watchedSlug !== titleSlug) {
-        slugManuallyEditedRef.current = true;
-      }
+  // Track manual slug edits via a wrapper
+  const slugRegister = register('slug');
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSlug = e.target.value;
+    // If the slug doesn't match what we would auto-generate, mark as manually edited
+    if (newSlug !== previousSlugRef.current) {
+      slugManuallyEditedRef.current = true;
     }
-  }, [watchedSlug, watchedTitle, watchedWorldId, fanfic, worlds]);
-
-  // Reset manual edit flag when title changes significantly
-  useEffect(() => {
-    if (!fanfic && watchedTitle) {
-      slugManuallyEditedRef.current = false;
-    }
-  }, [watchedTitle, fanfic]);
+    slugRegister.onChange(e);
+  };
 
   // Clear story alias when world changes (only for new fanfics)
   // StoryAliasSelector will handle filtering, but we clear it when world changes
@@ -324,9 +318,11 @@ export function FanficForm({ fanfic }: FanficFormProps) {
               Slug
             </FormLabel>
             <FormInput
-              {...register('slug')}
+              {...slugRegister}
+              onChange={handleSlugChange}
               error={errors.slug?.message}
               disabled={isSubmitting}
+              helpText="Auto-generated from title, world, and story alias. You can edit it manually if needed."
             />
           </div>
 
@@ -583,23 +579,25 @@ export function FanficForm({ fanfic }: FanficFormProps) {
         </FormSection>
 
         <FormSection title="Tags" icon="tag" accentColor="purple" defaultOpen={true}>
-          <TagsInput
-            selectedTags={selectedTags}
-            availableTags={availableTags}
-            onTagsChange={setSelectedTags}
-            onCreateTag={async (name) => {
-              const { data, error } = await supabase
-                .from('tags')
-                .insert({ name })
-                .select()
-                .single();
-              if (error || !data) return null;
-              setAvailableTags([...availableTags, data]);
-              return data;
-            }}
-            placeholder="Add tags to categorize this fanfic..."
-            disabled={isSubmitting}
-          />
+          <div className="min-h-[200px]">
+            <TagsInput
+              selectedTags={selectedTags}
+              availableTags={availableTags}
+              onTagsChange={setSelectedTags}
+              onCreateTag={async (name) => {
+                const { data, error } = await supabase
+                  .from('tags')
+                  .insert({ name, category: 'fanfic' })
+                  .select()
+                  .single();
+                if (error || !data) return null;
+                setAvailableTags([...availableTags, data]);
+                return data;
+              }}
+              placeholder="Add tags to categorize this fanfic..."
+              disabled={isSubmitting}
+            />
+          </div>
         </FormSection>
 
         <div className="flex gap-4">

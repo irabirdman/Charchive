@@ -147,6 +147,7 @@ export interface Tag {
   name: string;
   description?: string | null;
   color?: string | null;
+  category?: 'character' | 'fanfic' | 'general' | null;
   created_at: string;
   updated_at: string;
 }

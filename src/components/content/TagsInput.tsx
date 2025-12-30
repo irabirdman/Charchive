@@ -135,101 +135,94 @@ export function TagsInput({
 
   return (
     <div ref={containerRef} className="relative space-y-3">
-      {/* Dropdown for selecting from predefined tags */}
-      {!disabled && unselectedTags.length > 0 && (
-        <div>
-          <label htmlFor="tag-dropdown" className="block text-sm font-medium text-gray-300 mb-2">
-            Select from predefined tags:
-          </label>
-          <select
-            id="tag-dropdown"
-            ref={dropdownRef}
-            onChange={handleDropdownChange}
-            value=""
-            className="w-full px-3 py-2 bg-gray-800/60 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="">Choose a tag...</option>
-            {unselectedTags
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(tag => (
-                <option key={tag.id} value={tag.id}>
-                  {tag.name}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
-
-      {/* Selected tags display */}
+      {/* Selected tags display with input */}
       <div>
         {selectedTags.length > 0 && (
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Selected tags:
           </label>
         )}
-        <div className="flex flex-wrap gap-2 p-2 border border-gray-600 rounded-lg bg-gray-800/30 min-h-[42px]">
-          {selectedTags.map(tag => (
-            <span
-              key={tag.id}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-purple-600/20 text-purple-300 border border-purple-500/30"
-              style={tag.color ? { borderColor: tag.color, backgroundColor: `${tag.color}20`, color: tag.color } : {}}
-            >
-              {tag.name}
-              {!disabled && (
+        <div className="relative">
+          <div className="flex flex-wrap gap-2 p-2 border border-gray-600 rounded-lg bg-gray-800/30 min-h-[42px] focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500">
+            {selectedTags.map(tag => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                style={tag.color ? { borderColor: tag.color, backgroundColor: `${tag.color}20`, color: tag.color } : {}}
+              >
+                {tag.name}
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag.id)}
+                    className="hover:text-red-400 transition-colors"
+                    aria-label={`Remove ${tag.name} tag`}
+                  >
+                    <i className="fas fa-times text-xs"></i>
+                  </button>
+                )}
+              </span>
+            ))}
+            {!disabled && (
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyDown={handleInputKeyDown}
+                onFocus={() => {
+                  if (inputValue.trim()) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                placeholder={selectedTags.length === 0 ? placeholder : 'Type to search or create new tag...'}
+                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"
+              />
+            )}
+          </div>
+          
+          {/* Autocomplete suggestions dropdown */}
+          {showSuggestions && !disabled && (
+            <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {filteredTags.length > 0 && (
+                <>
+                  {filteredTags.map(tag => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(tag)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200"
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                  {onCreateTag && inputValue.trim() && !availableTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) && (
+                    <div className="border-t border-gray-600"></div>
+                  )}
+                </>
+              )}
+              {onCreateTag && inputValue.trim() && !availableTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) && (
                 <button
                   type="button"
-                  onClick={() => handleRemoveTag(tag.id)}
-                  className="hover:text-red-400 transition-colors"
-                  aria-label={`Remove ${tag.name} tag`}
+                  onClick={() => handleAddTag(inputValue.trim())}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200 text-purple-300"
                 >
-                  <i className="fas fa-times text-xs"></i>
+                  <i className="fas fa-plus mr-2"></i>
+                  Create &quot;{inputValue.trim()}&quot;
                 </button>
               )}
-            </span>
-          ))}
-          {!disabled && (
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleInputKeyDown}
-              onFocus={() => {
-                if (inputValue.trim()) {
-                  setShowSuggestions(true);
-                }
-              }}
-              placeholder={selectedTags.length === 0 ? placeholder : 'Type to search or create new tag...'}
-              className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"
-            />
+              {filteredTags.length === 0 && !onCreateTag && inputValue.trim() && (
+                <div className="px-4 py-2 text-gray-400 text-sm">
+                  No tags found
+                </div>
+              )}
+            </div>
           )}
         </div>
+        <p className="text-xs text-gray-400 mt-1">
+          Type to search existing tags or press Enter to create a new one
+        </p>
       </div>
-
-      {showSuggestions && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filteredTags.map(tag => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => handleSelectSuggestion(tag)}
-              className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200"
-            >
-              {tag.name}
-            </button>
-          ))}
-          {onCreateTag && inputValue.trim() && !availableTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) && (
-            <button
-              type="button"
-              onClick={() => handleAddTag(inputValue.trim())}
-              className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200 border-t border-gray-600"
-            >
-              <i className="fas fa-plus mr-2"></i>
-              Create &quot;{inputValue.trim()}&quot;
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
