@@ -30,7 +30,6 @@ export function SiteName() {
         });
         if (response.ok) {
           const result = await response.json();
-          console.log('[SiteName] API response:', { success: result.success, hasData: !!result.data, websiteName: result.data?.websiteName });
           if (result.success && result.data) {
             // Use database value if it exists, even if it's an empty string
             const dbName = result.data.websiteName;
@@ -39,24 +38,19 @@ export function SiteName() {
               // Update the ref after we've verified this is the latest
               if (fetchTime >= lastFetchTimeRef.current) {
                 lastFetchTimeRef.current = fetchTime;
-                console.log('[SiteName] Using database value:', dbName);
                 setWebsiteName(dbName);
                 setIsLoading(false);
                 fetchingRef.current = false;
                 return;
               } else {
-                console.log('[SiteName] Ignoring stale fetch result');
                 fetchingRef.current = false;
                 return;
               }
             }
           }
-          console.warn('[SiteName] No valid websiteName in API response');
-        } else {
-          console.warn('[SiteName] API response not OK:', response.status);
         }
       } catch (error) {
-        console.warn('[SiteName] Failed to fetch site name from API:', error);
+        // Silently handle errors - fallback will be used
       }
       
       // Fallback to default if API fails
@@ -85,7 +79,6 @@ export function SiteName() {
       // If the event includes the new websiteName, use it immediately
       const customEvent = event as CustomEvent;
       if (customEvent?.detail?.websiteName) {
-        console.log('[SiteName] Received new websiteName from event:', customEvent.detail.websiteName);
         const newName = customEvent.detail.websiteName;
         setWebsiteName(newName);
         setIsLoading(false);

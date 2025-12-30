@@ -19,6 +19,15 @@ const nextConfig = {
   },
   // Disable automatic trailing slash redirects to prevent redirect loops
   trailingSlash: false,
+  // Optimize compiler for better performance
+  compiler: {
+    // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  // Enable SWC minification for faster builds
+  swcMinify: true,
 }
 
 module.exports = nextConfig
