@@ -48,7 +48,7 @@ export default async function WritingPromptsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Writing Prompts" />
       <WritingPrompts ocs={ocs || []} prompts={prompts || []} />
     </div>

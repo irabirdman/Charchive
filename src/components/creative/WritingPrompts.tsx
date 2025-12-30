@@ -403,36 +403,36 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="wiki-card p-6 md:p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl border border-purple-500/30">
-            <i className="fas fa-pen-fancy text-purple-400 text-2xl"></i>
+    <div className={`space-y-4 ${className}`}>
+      <div className="wiki-card p-4 md:p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+            <i className="fas fa-pen-fancy text-purple-400 text-xl"></i>
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-100">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-100">
               Writing Prompt Generator
             </h2>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-gray-400 text-xs mt-0.5">
               Generate prompts from characters in the same world
             </p>
           </div>
         </div>
         
-        <div className="p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/30 rounded-xl border border-gray-700/50 mb-6">
-          <p className="text-gray-300 leading-relaxed mb-4">
+        <div className="p-4 bg-gradient-to-br from-gray-800/50 to-gray-900/30 rounded-xl border border-gray-700/50 mb-4">
+          <p className="text-gray-300 text-sm leading-relaxed mb-3">
             Generate creative writing prompts based on your characters and their relationships. 
             Choose between single-character prompts or prompts that compare two characters from the same world.
           </p>
 
-          <div className="mb-4">
-            <label className="block text-gray-300 text-sm font-semibold uppercase tracking-wider mb-3">
+          <div className="mb-3">
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
               Prompt Type
             </label>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={() => setPromptType('single')}
-                className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                className={`flex-1 px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                   promptType === 'single'
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
                     : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700/70 hover:text-gray-300'
@@ -443,7 +443,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
               </button>
               <button
                 onClick={() => setPromptType('two')}
-                className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                className={`flex-1 px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                   promptType === 'two'
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
                     : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700/70 hover:text-gray-300'
@@ -455,7 +455,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
             </div>
           </div>
 
-          <div className="flex items-start gap-2 text-sm text-gray-400">
+          <div className="flex items-start gap-2 text-xs text-gray-400">
             <i className="fas fa-info-circle text-purple-400 mt-0.5"></i>
             <p>
               {promptType === 'two' 
@@ -469,7 +469,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
         <button
           onClick={generatePrompt}
           disabled={!canGenerate}
-          className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-3"
+          className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-2"
         >
           <i className="fas fa-magic"></i>
           <span>Generate Prompt</span>
@@ -477,24 +477,24 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
       </div>
 
       {prompt && category && character1 && (
-        <div className="wiki-card p-6 md:p-8 border-l-4 border-purple-400 bg-gradient-to-br from-gray-800/60 to-gray-900/40 shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-xl border border-purple-500/40 shadow-lg shadow-purple-500/20">
-              <i className="fas fa-star text-purple-300 text-xl"></i>
+        <div className="wiki-card p-4 md:p-6 border-l-4 border-purple-400 bg-gradient-to-br from-gray-800/60 to-gray-900/40 shadow-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-lg border border-purple-500/40 shadow-lg shadow-purple-500/20">
+              <i className="fas fa-star text-purple-300 text-lg"></i>
             </div>
             <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-100">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-100">
                 Your Writing Prompt
               </h3>
-              <p className="text-gray-400 text-sm mt-1">Ready to inspire your next story</p>
+              <p className="text-gray-400 text-xs mt-0.5">Ready to inspire your next story</p>
             </div>
           </div>
           
           {character1.world && (
-            <div className="mb-6">
+            <div className="mb-4">
               <a
                 href={`/worlds/${character1.world.slug}`}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/40 hover:border-purple-400/60 rounded-xl text-purple-300 hover:text-purple-200 transition-all duration-200 group shadow-md"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/40 hover:border-purple-400/60 rounded-lg text-purple-300 hover:text-purple-200 transition-all duration-200 group shadow-md text-sm"
               >
                 <i className="fas fa-globe text-purple-400"></i>
                 <span className="font-medium">World: {character1.world.name}</span>
@@ -503,29 +503,29 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
             </div>
           )}
           
-          <div className="p-6 md:p-8 bg-gradient-to-br from-gray-900/70 to-gray-800/50 rounded-xl border border-gray-700/60 mb-6 shadow-inner">
-            <div className="mb-5 pb-4 border-b border-gray-700/60">
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 rounded-lg">
-                <i className="fas fa-tag text-purple-400 text-sm"></i>
-                <span className="text-purple-300 font-semibold text-sm uppercase tracking-wider">
+          <div className="p-4 bg-gradient-to-br from-gray-900/70 to-gray-800/50 rounded-xl border border-gray-700/60 mb-4 shadow-inner">
+            <div className="mb-3 pb-3 border-b border-gray-700/60">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 rounded-lg">
+                <i className="fas fa-tag text-purple-400 text-xs"></i>
+                <span className="text-purple-300 font-semibold text-xs uppercase tracking-wider">
                   {category}
                 </span>
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="text-gray-400 text-sm font-semibold uppercase tracking-wider flex items-center gap-2">
+            <div className="space-y-1.5">
+              <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
                 <i className="fas fa-pen-nib text-purple-400"></i>
                 Prompt
               </div>
-              <p className="text-xl md:text-2xl lg:text-3xl text-gray-100 leading-relaxed font-medium">
+              <p className="text-lg md:text-xl lg:text-2xl text-gray-100 leading-relaxed font-medium">
                 {prompt}
               </p>
             </div>
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-gray-900/70 to-gray-800/50 rounded-xl border border-gray-700/60 mb-6">
-            <div className="mb-4">
-              <label htmlFor="response-text" className="block text-gray-300 text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+          <div className="p-4 bg-gradient-to-br from-gray-900/70 to-gray-800/50 rounded-xl border border-gray-700/60 mb-4">
+            <div className="mb-3">
+              <label htmlFor="response-text" className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-2">
                 <i className="fas fa-pen text-purple-400"></i>
                 Your Response
               </label>
@@ -534,20 +534,20 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
                 placeholder="Write your response to this prompt here..."
-                className="w-full h-48 px-4 py-3 bg-gray-900/60 border border-gray-700/60 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all resize-y"
+                className="w-full h-40 px-3 py-2 bg-gray-900/60 border border-gray-700/60 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-purple-500/60 focus:ring-2 focus:ring-purple-500/20 transition-all resize-y text-sm"
                 disabled={isSaving}
               />
             </div>
 
             {saveMessage && (
-              <div className={`mb-4 p-4 rounded-lg border ${
+              <div className={`mb-3 p-3 rounded-lg border text-sm ${
                 saveMessage.type === 'success'
                   ? 'bg-green-500/20 border-green-500/40 text-green-300'
                   : 'bg-red-500/20 border-red-500/40 text-red-300'
               }`}>
                 <div className="flex items-center gap-2">
                   <i className={`fas ${saveMessage.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
-                  <span className="text-sm font-medium">{saveMessage.text}</span>
+                  <span className="font-medium">{saveMessage.text}</span>
                 </div>
               </div>
             )}
@@ -555,7 +555,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
             <button
               onClick={handleSaveResponse}
               disabled={isSaving || !responseText.trim()}
-              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-3"
+              className="w-full px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 disabled:hover:scale-100 disabled:shadow-none flex items-center justify-center gap-2 text-sm"
             >
               {isSaving ? (
                 <>
@@ -571,19 +571,19 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <a
               href={`/ocs/${character1.slug}`}
-              className="group p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02]"
+              className="group p-4 bg-gradient-to-br from-gray-800/80 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02]"
             >
-              <div className="text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+              <div className="text-gray-400 text-xs uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-2">
                 <i className="fas fa-user text-purple-400"></i>
                 Character 1
               </div>
-              <div className="text-purple-400 hover:text-purple-300 font-bold text-lg group-hover:text-purple-300 transition-colors">
+              <div className="text-purple-400 hover:text-purple-300 font-bold group-hover:text-purple-300 transition-colors">
                 {character1.name}
               </div>
-              <div className="mt-2 flex items-center gap-1 text-gray-500 text-sm">
+              <div className="mt-1.5 flex items-center gap-1 text-gray-500 text-xs">
                 <i className="fas fa-arrow-right text-xs"></i>
                 <span>View character</span>
               </div>
@@ -591,27 +591,27 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
             {character2 ? (
               <a
                 href={`/ocs/${character2.slug}`}
-                className="group p-5 bg-gradient-to-br from-gray-800/80 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02]"
+                className="group p-4 bg-gradient-to-br from-gray-800/80 to-gray-900/60 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02]"
               >
-                <div className="text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+                <div className="text-gray-400 text-xs uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-2">
                   <i className="fas fa-user text-purple-400"></i>
                   Character 2
                 </div>
-                <div className="text-purple-400 hover:text-purple-300 font-bold text-lg group-hover:text-purple-300 transition-colors">
+                <div className="text-purple-400 hover:text-purple-300 font-bold group-hover:text-purple-300 transition-colors">
                   {character2.name}
                 </div>
-                <div className="mt-2 flex items-center gap-1 text-gray-500 text-sm">
+                <div className="mt-1.5 flex items-center gap-1 text-gray-500 text-xs">
                   <i className="fas fa-arrow-right text-xs"></i>
                   <span>View character</span>
                 </div>
               </a>
             ) : (
-              <div className="p-5 bg-gradient-to-br from-gray-800/40 to-gray-900/30 rounded-xl border border-gray-700/30 opacity-60">
-                <div className="text-gray-500 text-xs uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+              <div className="p-4 bg-gradient-to-br from-gray-800/40 to-gray-900/30 rounded-xl border border-gray-700/30 opacity-60">
+                <div className="text-gray-500 text-xs uppercase tracking-wider mb-1.5 font-semibold flex items-center gap-2">
                   <i className="fas fa-info-circle"></i>
                   Single Character Prompt
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-gray-600 text-xs">
                   This prompt focuses on {character1?.name} alone.
                 </div>
               </div>
