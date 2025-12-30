@@ -40,16 +40,43 @@ export function TagsInput({
   // Filter available tags based on input
   useEffect(() => {
     if (inputValue.trim()) {
+      const searchLower = inputValue.toLowerCase().trim();
+      // More flexible matching: check if tag name contains the search string or all words match
       const filtered = availableTags.filter(
-        tag =>
-          tag.name.toLowerCase().includes(inputValue.toLowerCase()) &&
-          !selectedTags.some(st => st.id === tag.id)
+        tag => {
+          const tagLower = tag.name.toLowerCase();
+          
+          // Simple substring match (exact or partial)
+          if (tagLower.includes(searchLower)) {
+            return !selectedTags.some(st => st.id === tag.id);
+          }
+          
+          // Word-based matching: check if all search words appear in tag (allowing partial word matches)
+          const searchWords = searchLower.split(/\s+/).filter(w => w.length > 2); // Only match words 3+ chars
+          if (searchWords.length > 0) {
+            const allWordsMatch = searchWords.every(searchWord => {
+              // Check if any word in the tag starts with or contains this search word
+              return tagLower.includes(searchWord) || 
+                     tagLower.split(/\s+/).some(tagWord => tagWord.startsWith(searchWord.substring(0, Math.min(4, searchWord.length))));
+            });
+            if (allWordsMatch) {
+              return !selectedTags.some(st => st.id === tag.id);
+            }
+          }
+          
+          return false;
+        }
       );
       setFilteredTags(filtered);
       setShowSuggestions(filtered.length > 0 || !!onCreateTag);
     } else {
-      setFilteredTags([]);
-      setShowSuggestions(false);
+      // When input is empty, show first 10 unselected tags
+      const unselected = availableTags.filter(
+        tag => !selectedTags.some(st => st.id === tag.id)
+      );
+      setFilteredTags(unselected.slice(0, 10));
+      // Don't show suggestions when empty unless explicitly focused
+      // We'll handle showing on focus separately
     }
   }, [inputValue, availableTags, selectedTags, onCreateTag]);
 
@@ -66,7 +93,12 @@ export function TagsInput({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    // Show suggestions when typing
+    if (newValue.trim()) {
+      setShowSuggestions(true);
+    }
   };
 
   const handleInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -171,9 +203,12 @@ export function TagsInput({
                 onChange={handleInputChange}
                 onKeyDown={handleInputKeyDown}
                 onFocus={() => {
-                  if (inputValue.trim()) {
-                    setShowSuggestions(true);
-                  }
+                  // Show suggestions when focused, even if input is empty
+                  const unselected = availableTags.filter(
+                    tag => !selectedTags.some(st => st.id === tag.id)
+                  );
+                  setFilteredTags(unselected.slice(0, 10));
+                  setShowSuggestions(unselected.length > 0);
                 }}
                 placeholder={selectedTags.length === 0 ? placeholder : 'Type to search or create new tag...'}
                 className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"

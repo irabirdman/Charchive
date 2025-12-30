@@ -65,7 +65,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
   const shouldNavigateAfterSaveRef = useRef(false);
   
   const [worlds, setWorlds] = useState<World[]>([]);
-  const [ocs, setOCs] = useState<OC[]>([]);
+  const [ocs, setOCs] = useState<Pick<OC, 'id' | 'name' | 'slug' | 'world_id'>[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,13 +90,19 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       if (ocsData) setOCs(ocsData);
 
 
-      // Load fanfic-specific tags only
-      const { data: tagsData } = await supabase
+      // Load fanfic-specific tags only (check both 'fanfic' category and null/empty for backwards compatibility)
+      const { data: tagsData, error: tagsError } = await supabase
         .from('tags')
         .select('*')
-        .eq('category', 'fanfic')
+        .or('category.eq.fanfic,category.is.null')
         .order('name');
-      if (tagsData) setAvailableTags(tagsData);
+      if (tagsError) {
+        console.error('Error loading tags:', tagsError);
+      }
+      if (tagsData) {
+        console.log('Loaded tags:', tagsData.length, tagsData);
+        setAvailableTags(tagsData);
+      }
 
       // If editing, load existing data
       if (fanfic) {
