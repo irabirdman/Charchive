@@ -167,15 +167,11 @@ function generateWeightedAge(): number {
   if (rand < 0.75) {
     return Math.floor(Math.random() * 26) + 10; // 10-35
   }
-  // 12.5% chance of being 1-9 (young)
-  else if (rand < 0.875) {
-    return Math.floor(Math.random() * 9) + 1; // 1-9
-  }
-  // 10% chance of being 36-200 (older human-like ages)
-  else if (rand < 0.975) {
+  // 22% chance of being 36-200 (older human-like ages)
+  else if (rand < 0.97) {
     return Math.floor(Math.random() * 165) + 36; // 36-200
   }
-  // 2.5% chance of being 201-5000 (very old, for long-lived species)
+  // 3% chance of being 201-5000 (very old, for long-lived species)
   else {
     // Use exponential distribution for very old ages to favor lower end but allow up to 5000
     const ageRange = 4799; // 201-5000
