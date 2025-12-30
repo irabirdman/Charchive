@@ -28,6 +28,28 @@ const nextConfig = {
   },
   // Enable SWC minification for faster builds
   swcMinify: true,
+  webpack: (config, { webpack, isServer }) => {
+    // Exclude VR-related modules from react-force-graph that require A-Frame
+    // These modules are not needed for 2D force graphs
+    if (!isServer) {
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          checkResource(resource) {
+            // Ignore VR-related modules that require A-Frame
+            const ignoredModules = [
+              '3d-force-graph-vr',
+              'aframe',
+              'aframe-extras',
+            ];
+            return ignoredModules.some(module => 
+              resource.includes(module) || resource === module
+            );
+          },
+        })
+      );
+    }
+    return config;
+  },
 }
 
 module.exports = nextConfig

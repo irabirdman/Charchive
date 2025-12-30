@@ -341,7 +341,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
                     {oc.date_of_birth && (
                       <p className="text-gray-400 text-sm flex items-center gap-2">
                         <i className="fas fa-calendar text-purple-400/60 text-xs"></i>
-                        {format(new Date(oc.date_of_birth), 'MMMM d, yyyy')}
+                        {format(new Date(oc.date_of_birth), 'MMMM d')}
                       </p>
                     )}
                   </div>

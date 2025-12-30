@@ -2,10 +2,22 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { OC } from '@/types/oc';
+
+// Minimal type for writing prompts - only requires the fields we actually use
+interface PromptOC {
+  id: string;
+  name: string;
+  slug: string;
+  world_id: string;
+  world?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+}
 
 interface WritingPromptsProps {
-  ocs: OC[];
+  ocs: PromptOC[];
   prompts?: Array<{
     id: string;
     category: string;
@@ -260,8 +272,8 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
   const [promptType, setPromptType] = useState<'single' | 'two'>('two');
   const [prompt, setPrompt] = useState<string | null>(null);
   const [category, setCategory] = useState<string | null>(null);
-  const [character1, setCharacter1] = useState<OC | null>(null);
-  const [character2, setCharacter2] = useState<OC | null>(null);
+  const [character1, setCharacter1] = useState<PromptOC | null>(null);
+  const [character2, setCharacter2] = useState<PromptOC | null>(null);
   const [responseText, setResponseText] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -274,7 +286,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '' }: WritingPro
     }
     acc[worldId].push(oc);
     return acc;
-  }, {} as Record<string, OC[]>);
+  }, {} as Record<string, PromptOC[]>);
 
   // Convert database prompts to template format, or use defaults
   const dbPromptTemplates: PromptTemplate[] = prompts.length > 0

@@ -183,6 +183,29 @@ export default async function HomePage() {
     quoteOfTheDay = shuffled[0];
   }
 
+  // Get OCs with birthdays and check if today is anyone's birthday
+  const { data: allOCsWithBirthdays } = await supabase
+    .from('ocs')
+    .select('id, name, slug, date_of_birth, image_url')
+    .eq('is_public', true)
+    .not('date_of_birth', 'is', null);
+
+  const today = new Date();
+  const todayMonth = today.getMonth();
+  const todayDay = today.getDate();
+
+  const birthdayOCs = (allOCsWithBirthdays || []).filter((oc) => {
+    if (!oc.date_of_birth) return false;
+    try {
+      const birthDate = new Date(oc.date_of_birth);
+      if (isNaN(birthDate.getTime())) return false;
+      // Match month and day, ignore year
+      return birthDate.getMonth() === todayMonth && birthDate.getDate() === todayDay;
+    } catch {
+      return false;
+    }
+  });
+
   // Get current projects section data
   const { data: currentProjectsData } = await supabase
     .from('current_projects')
@@ -296,6 +319,56 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Birthday Celebration Section */}
+      {birthdayOCs.length > 0 && (
+        <section className="slide-up">
+          <div className="wiki-card p-6 md:p-8 bg-gradient-to-br from-pink-600/20 via-purple-600/20 to-pink-600/20 border-2 border-pink-500/50 rounded-2xl">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-3xl md:text-4xl animate-bounce">
+                  <i className="fas fa-birthday-cake text-white"></i>
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-100 mb-2">
+                  {birthdayOCs.length === 1 ? (
+                    <>
+                      It's <Link href={`/ocs/${birthdayOCs[0].slug}`} className="text-pink-400 hover:text-pink-300 underline transition-colors">{birthdayOCs[0].name}</Link>'s birthday!!
+                    </>
+                  ) : (
+                    <>
+                      It's {birthdayOCs.map((oc, index) => (
+                        <span key={oc.id}>
+                          <Link href={`/ocs/${oc.slug}`} className="text-pink-400 hover:text-pink-300 underline transition-colors">
+                            {oc.name}
+                          </Link>
+                          {index < birthdayOCs.length - 2 && ', '}
+                          {index === birthdayOCs.length - 2 && ' and '}
+                        </span>
+                      ))}'s birthday!!
+                    </>
+                  )}
+                </h2>
+                <p className="text-gray-300 text-sm md:text-base">
+                  {birthdayOCs.length === 1 
+                    ? 'Wish them a happy birthday! 🎉'
+                    : `Wish ${birthdayOCs.length} characters a happy birthday! 🎉`}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <Link
+                  href="/calendar"
+                  className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-all hover:scale-105 shadow-lg text-sm md:text-base flex items-center gap-2"
+                >
+                  <i className="fas fa-calendar-alt"></i>
+                  View Calendar
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Quote of the Day */}
       {quoteOfTheDay && quoteOfTheDay.oc && (

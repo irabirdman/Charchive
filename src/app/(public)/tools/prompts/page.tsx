@@ -18,14 +18,23 @@ export const revalidate = 60;
 export default async function WritingPromptsPage() {
   const supabase = await createClient();
 
-  const { data: ocs, error: ocsError } = await supabase
+  const { data: ocsData, error: ocsError } = await supabase
     .from('ocs')
-    .select('id, name, slug, world_id, world:worlds(id, name, slug)')
+    .select('id, name, slug, world_id, worlds!inner(id, name, slug)')
     .eq('is_public', true);
 
   if (ocsError) {
     console.error('Error fetching OCs:', ocsError);
   }
+
+  // Transform the data to match the expected type (Supabase returns world as array)
+  const ocs = ocsData?.map((oc: any) => ({
+    id: oc.id,
+    name: oc.name,
+    slug: oc.slug,
+    world_id: oc.world_id,
+    world: Array.isArray(oc.worlds) && oc.worlds.length > 0 ? oc.worlds[0] : null,
+  })) || [];
 
   // Fetch active prompts from database
   const { data: prompts, error: promptsError } = await supabase
