@@ -158,7 +158,7 @@ export default async function FanficDetailPage({
             <img
               src={fanfic.image_url}
               alt={fanfic.title}
-              className="w-full h-[400px] md:h-[500px] object-cover"
+              className="w-full h-[250px] object-cover object-center"
             />
           </div>
         )}

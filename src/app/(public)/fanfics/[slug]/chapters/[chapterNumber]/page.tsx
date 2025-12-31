@@ -234,7 +234,7 @@ export default async function ChapterPage({
               <img
                 src={chapter.image_url}
                 alt={chapter.title || `Chapter ${chapterNum}`}
-                className="w-full h-auto max-h-[600px] object-contain mx-auto"
+                className="w-full h-[150px] md:h-[200px] object-cover object-center"
               />
             </div>
           )}
@@ -242,68 +242,6 @@ export default async function ChapterPage({
           {/* Chapter Body */}
           {chapter.content ? (
             <div className="prose prose-invert prose-lg md:prose-xl max-w-none text-gray-200 leading-relaxed">
-              <style jsx global>{`
-                .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-                  color: #f3f4f6;
-                  font-weight: 700;
-                  margin-top: 2em;
-                  margin-bottom: 1em;
-                }
-                .prose p {
-                  margin-bottom: 1.5em;
-                  line-height: 1.8;
-                }
-                .prose strong {
-                  color: #e5e7eb;
-                  font-weight: 600;
-                }
-                .prose em {
-                  color: #d1d5db;
-                }
-                .prose a {
-                  color: #a78bfa;
-                  text-decoration: underline;
-                  text-decoration-color: rgba(167, 139, 250, 0.3);
-                  transition: all 0.2s;
-                }
-                .prose a:hover {
-                  color: #c4b5fd;
-                  text-decoration-color: rgba(196, 181, 253, 0.6);
-                }
-                .prose blockquote {
-                  border-left: 4px solid rgba(167, 139, 250, 0.5);
-                  padding-left: 1.5em;
-                  margin: 2em 0;
-                  color: #d1d5db;
-                  font-style: italic;
-                }
-                .prose code {
-                  background: rgba(55, 65, 81, 0.5);
-                  padding: 0.2em 0.4em;
-                  border-radius: 0.25rem;
-                  font-size: 0.9em;
-                }
-                .prose pre {
-                  background: rgba(17, 24, 39, 0.8);
-                  border: 1px solid rgba(75, 85, 99, 0.5);
-                  border-radius: 0.5rem;
-                  padding: 1.5em;
-                  overflow-x: auto;
-                }
-                .prose ul, .prose ol {
-                  margin: 1.5em 0;
-                  padding-left: 2em;
-                }
-                .prose li {
-                  margin: 0.75em 0;
-                }
-                .prose img {
-                  border-radius: 0.5rem;
-                  margin: 2em auto;
-                  max-width: 100%;
-                  height: auto;
-                }
-              `}</style>
               <Markdown content={chapter.content} />
             </div>
           ) : (

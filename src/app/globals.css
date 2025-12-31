@@ -336,6 +336,85 @@ body {
   @apply rounded-lg my-4;
 }
 
+/* Enhanced prose styles for fanfic chapters */
+.prose.prose-invert h1,
+.prose.prose-invert h2,
+.prose.prose-invert h3,
+.prose.prose-invert h4,
+.prose.prose-invert h5,
+.prose.prose-invert h6 {
+  color: #f3f4f6;
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.prose.prose-invert p {
+  margin-bottom: 1.5em;
+  line-height: 1.8;
+}
+
+.prose.prose-invert strong {
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+.prose.prose-invert em {
+  color: #d1d5db;
+}
+
+.prose.prose-invert a {
+  color: #a78bfa;
+  text-decoration: underline;
+  text-decoration-color: rgba(167, 139, 250, 0.3);
+  transition: all 0.2s;
+}
+
+.prose.prose-invert a:hover {
+  color: #c4b5fd;
+  text-decoration-color: rgba(196, 181, 253, 0.6);
+}
+
+.prose.prose-invert blockquote {
+  border-left: 4px solid rgba(167, 139, 250, 0.5);
+  padding-left: 1.5em;
+  margin: 2em 0;
+  color: #d1d5db;
+  font-style: italic;
+}
+
+.prose.prose-invert code {
+  background: rgba(55, 65, 81, 0.5);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.prose.prose-invert pre {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.5rem;
+  padding: 1.5em;
+  overflow-x: auto;
+}
+
+.prose.prose-invert ul,
+.prose.prose-invert ol {
+  margin: 1.5em 0;
+  padding-left: 2em;
+}
+
+.prose.prose-invert li {
+  margin: 0.75em 0;
+}
+
+.prose.prose-invert img {
+  border-radius: 0.5rem;
+  margin: 2em auto;
+  max-width: 100%;
+  height: auto;
+}
+
 /* Image styling */
 .wiki-image {
   @apply rounded-lg shadow-lg border-2 border-gray-700/50;

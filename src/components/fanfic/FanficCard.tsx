@@ -32,6 +32,16 @@ export function FanficCard({ fanfic }: FanficCardProps) {
             </div>
           </div>
         )}
+        {/* Fanfic Image */}
+        {fanfic.image_url && (
+          <div className="w-full h-[250px] overflow-hidden">
+            <img
+              src={fanfic.image_url}
+              alt={fanfic.title}
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+        )}
         <div className="p-6 space-y-4">
           {/* Title and Rating */}
           <div className="space-y-2">
