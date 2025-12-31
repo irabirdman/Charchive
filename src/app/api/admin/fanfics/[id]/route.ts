@@ -25,6 +25,7 @@ export async function GET(
         story_alias:story_aliases(id, name, slug, world_id),
         characters:fanfic_characters(id, oc_id, name, oc:ocs(id, name, slug)),
         relationships:fanfic_relationships(id, relationship_text, relationship_type),
+        chapters:fanfic_chapters(id, chapter_number, title, content, is_published, published_at, created_at, updated_at),
         tags:fanfic_tags(tag:tags(id, name))
       `)
       .eq('id', id)
@@ -194,6 +195,7 @@ export async function PUT(
         story_alias:story_aliases(id, name, slug, world_id),
         characters:fanfic_characters(id, oc_id, name, oc:ocs(id, name, slug)),
         relationships:fanfic_relationships(id, relationship_text, relationship_type),
+        chapters:fanfic_chapters(id, chapter_number, title, content, is_published, published_at, created_at, updated_at),
         tags:fanfic_tags(tag:tags(id, name))
       `)
       .eq('id', id)

@@ -53,6 +53,7 @@ export default async function AdminFanficDetailPage({
           story_alias:story_aliases(id, name, slug, world_id),
           characters:fanfic_characters(id, oc_id, name, oc:ocs(id, name, slug)),
           relationships:fanfic_relationships(id, relationship_text, relationship_type),
+          chapters:fanfic_chapters(id, chapter_number, title, content, is_published, published_at, created_at, updated_at),
           tags:fanfic_tags(tag:tags(id, name))
         `)
         .eq('id', resolvedParams.id)
@@ -64,6 +65,7 @@ export default async function AdminFanficDetailPage({
           story_alias:story_aliases(id, name, slug, world_id),
           characters:fanfic_characters(id, oc_id, name, oc:ocs(id, name, slug)),
           relationships:fanfic_relationships(id, relationship_text, relationship_type),
+          chapters:fanfic_chapters(id, chapter_number, title, content, is_published, published_at, created_at, updated_at),
           tags:fanfic_tags(tag:tags(id, name))
         `)
         .eq('slug', resolvedParams.id);
@@ -95,6 +97,23 @@ export default async function AdminFanficDetailPage({
           relationship_type: fr.relationship_type || null,
           created_at: '',
         }))
+      : [],
+    chapters: Array.isArray(fanficData.chapters)
+      ? fanficData.chapters
+          .filter((c: any) => c !== null && c !== undefined)
+          .map((c: any) => ({
+            id: c.id,
+            fanfic_id: fanficData.id,
+            chapter_number: c.chapter_number,
+            title: c.title || null,
+            content: c.content || null,
+            word_count: c.word_count || null,
+            is_published: c.is_published,
+            published_at: c.published_at || null,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+          }))
+          .sort((a: any, b: any) => a.chapter_number - b.chapter_number)
       : [],
     tags: Array.isArray(fanficData.tags)
       ? fanficData.tags

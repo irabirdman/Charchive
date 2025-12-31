@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, FormProvider, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray, Controller, Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Fanfic, World, OC, Tag, StoryAlias } from '@/types/oc';
@@ -26,7 +26,7 @@ const fanficSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   summary: optionalString,
   rating: z.enum(['G', 'PG', 'PG-13', 'R', 'M', 'Not Rated']).optional().nullable(),
-  alternative_titles: z.array(z.string()).optional().nullable(),
+  alternative_titles: z.array(z.string()).default([]),
   author: optionalString,
   world_id: z.string().uuid('Invalid world'),
   story_alias_id: optionalUuid,
@@ -132,7 +132,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
     slug: fanfic.slug,
     summary: fanfic.summary || '',
     rating: fanfic.rating || null,
-    alternative_titles: fanfic.alternative_titles || [],
+    alternative_titles: (fanfic.alternative_titles ?? []) as string[],
     author: fanfic.author || '',
     world_id: fanfic.world_id,
     story_alias_id: fanfic.story_alias_id || null,
@@ -253,7 +253,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
 
   const { fields: altTitleFields, append: appendAltTitle, remove: removeAltTitle } = useFieldArray({
     control,
-    name: 'alternative_titles',
+    name: 'alternative_titles' as const,
   });
 
   const { fields: characterFields, append: appendCharacter, remove: removeCharacter } = useFieldArray({
@@ -272,7 +272,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       slug: data.slug,
       summary: data.summary || null,
       rating: data.rating || null,
-      alternative_titles: data.alternative_titles?.filter(Boolean) || null,
+      alternative_titles: data.alternative_titles.filter(Boolean).length > 0 ? data.alternative_titles.filter(Boolean) : null,
       author: data.author || null,
       world_id: data.world_id,
       story_alias_id: data.story_alias_id || null,

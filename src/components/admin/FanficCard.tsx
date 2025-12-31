@@ -111,6 +111,12 @@ export function FanficCard({ fanfic }: FanficCardProps) {
           >
             Edit
           </Link>
+          <Link
+            href={`/admin/fanfics/${fanfic.id}/chapters`}
+            className="flex-1 px-3 py-2 text-sm font-medium text-center bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
+          >
+            Chapters
+          </Link>
           <button
             onClick={handleDelete}
             disabled={deleting}

@@ -9,7 +9,30 @@ ALTER TABLE timeline_event_characters
   CHECK (oc_id IS NOT NULL OR custom_name IS NOT NULL);
 
 -- Update unique constraint to allow multiple custom names per event
-ALTER TABLE timeline_event_characters DROP CONSTRAINT IF EXISTS timeline_event_characters_timeline_event_id_oc_id_key;
+-- Drop the constraint (which will also drop the underlying index)
+-- Handle both constraint and index cases
+DO $$ 
+BEGIN
+  -- Try to drop as constraint first
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'timeline_event_characters_timeline_event_id_oc_id_key'
+    AND conrelid = 'timeline_event_characters'::regclass
+  ) THEN
+    ALTER TABLE timeline_event_characters 
+    DROP CONSTRAINT timeline_event_characters_timeline_event_id_oc_id_key;
+  END IF;
+  
+  -- If it exists as an index (without constraint), drop it
+  IF EXISTS (
+    SELECT 1 FROM pg_indexes 
+    WHERE indexname = 'timeline_event_characters_timeline_event_id_oc_id_key'
+    AND tablename = 'timeline_event_characters'
+  ) THEN
+    DROP INDEX IF EXISTS timeline_event_characters_timeline_event_id_oc_id_key;
+  END IF;
+END $$;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_timeline_event_characters_unique_oc 
   ON timeline_event_characters(timeline_event_id, oc_id) 
   WHERE oc_id IS NOT NULL;

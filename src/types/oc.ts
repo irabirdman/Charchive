@@ -109,6 +109,7 @@ export interface Fanfic {
   characters?: FanficCharacter[];
   relationships?: FanficRelationship[];
   tags?: Tag[];
+  chapters?: FanficChapter[];
 }
 
 export interface FanficCharacter {
@@ -128,6 +129,21 @@ export interface FanficRelationship {
   relationship_text: string;
   relationship_type?: 'romantic' | 'platonic' | 'other' | null;
   created_at: string;
+  // Joined data
+  fanfic?: Fanfic;
+}
+
+export interface FanficChapter {
+  id: string;
+  fanfic_id: string;
+  chapter_number: number;
+  title?: string | null;
+  content?: string | null;
+  word_count?: number | null;
+  is_published: boolean;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
   // Joined data
   fanfic?: Fanfic;
 }
