@@ -472,7 +472,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
                       render={({ field: controllerField }) => {
                         // Get display value: use name if custom, or OC name if linked
                         const displayValue = controllerField.value?.name || 
-                          (controllerField.value?.oc_id ? ocs.find(oc => oc.id === controllerField.value.oc_id)?.name : '') || '';
+                          (controllerField.value?.oc_id ? ocs.find(oc => oc.id === controllerField.value?.oc_id)?.name : '') || '';
                         
                         return (
                           <>
@@ -589,9 +589,16 @@ export function FanficForm({ fanfic }: FanficFormProps) {
         <FormSection title="Tags" icon="tag" accentColor="purple" defaultOpen={true}>
           <div className="min-h-[200px]">
             <TagsInput
-              selectedTags={selectedTags}
-              availableTags={availableTags}
-              onTagsChange={setSelectedTags}
+              selectedTags={selectedTags.map(tag => ({ id: tag.id, name: tag.name, color: tag.color }))}
+              availableTags={availableTags.map(tag => ({ id: tag.id, name: tag.name, color: tag.color }))}
+              onTagsChange={(tags) => {
+                // Map simplified tags back to full Tag type by looking up in availableTags
+                const fullTags = tags.map(tag => {
+                  const fullTag = availableTags.find(at => at.id === tag.id);
+                  return fullTag || selectedTags.find(st => st.id === tag.id);
+                }).filter((tag): tag is Tag => tag !== undefined);
+                setSelectedTags(fullTags);
+              }}
               onCreateTag={async (name) => {
                 const { data, error } = await supabase
                   .from('tags')
@@ -600,7 +607,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
                   .single();
                 if (error || !data) return null;
                 setAvailableTags([...availableTags, data]);
-                return data;
+                return { id: data.id, name: data.name, color: data.color };
               }}
               placeholder="Add tags to categorize this fanfic..."
               disabled={isSubmitting}

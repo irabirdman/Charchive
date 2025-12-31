@@ -26,7 +26,7 @@ export async function GET(
       return errorResponse(error.message);
     }
 
-    return successResponse(chapters || []);
+    return successResponse({ chapters: chapters || [] });
   } catch (error) {
     return handleError(error, 'Failed to fetch chapters');
   }
@@ -63,7 +63,14 @@ export async function PUT(
     }
 
     // Delete all existing chapters
-    await supabase.from('fanfic_chapters').delete().eq('fanfic_id', id);
+    const { error: deleteError } = await supabase
+      .from('fanfic_chapters')
+      .delete()
+      .eq('fanfic_id', id);
+
+    if (deleteError) {
+      return errorResponse(deleteError.message || 'Failed to delete existing chapters');
+    }
 
     // Insert new chapters
     if (chapters.length > 0) {
@@ -96,7 +103,7 @@ export async function PUT(
       return errorResponse(fetchError.message || 'Failed to fetch updated chapters');
     }
 
-    return successResponse(updatedChapters || []);
+    return successResponse({ chapters: updatedChapters || [] });
   } catch (error) {
     return handleError(error, 'Failed to update chapters');
   }

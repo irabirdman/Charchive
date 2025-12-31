@@ -73,7 +73,7 @@ export function FanficChaptersManager({ fanficId }: FanficChaptersManagerProps) 
       }
 
       const data = await response.json();
-      setChapters(Array.isArray(data) ? data : []);
+      setChapters(data.chapters || []);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
