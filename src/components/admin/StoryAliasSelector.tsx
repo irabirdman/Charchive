@@ -6,6 +6,7 @@ import { FormSelect } from './forms/FormSelect';
 import { FormLabel } from './forms/FormLabel';
 import type { StoryAlias } from '@/types/oc';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface StoryAliasSelectorProps {
   worldId: string | null | undefined;
@@ -67,7 +68,7 @@ export function StoryAliasSelector({
         .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error fetching story aliases:', error);
+        logger.error('Component', 'StoryAliasSelector: Error fetching story aliases', error);
         setStoryAliases([]);
       } else {
         setStoryAliases(data || []);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTemplates, type TemplateField, type TemplateDefinition } from '@/lib/templates/ocTemplates';
+import { logger } from '@/lib/logger';
 
 interface TemplateRecord {
   id: string;
@@ -122,7 +123,7 @@ export function TemplatesManager({ initialTemplates }: TemplatesManagerProps) {
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving template:', err);
+      logger.error('Component', 'TemplatesManager: Error saving template', err);
       setError(err instanceof Error ? err.message : 'Failed to save template');
     } finally {
       setIsSaving(false);

@@ -7,6 +7,7 @@ import type { World, WorldFieldDefinitions, FieldSet, WorldFieldDefinition } fro
 import { slugify } from '@/lib/utils/slugify';
 import { getTemplateTypeFromWorldSlug } from '@/lib/templates/worldTemplateMap';
 import { useDropdownOptions } from '@/hooks/useDropdownOptions';
+import { logger } from '@/lib/logger';
 
 interface TemplateRecord {
   id: string;
@@ -92,7 +93,7 @@ export function TemplatesAndFieldsManager({ worlds: initialWorlds }: TemplatesAn
           return prev;
         });
       } catch (err) {
-        console.error('Error loading templates:', err);
+        logger.error('Component', 'TemplatesAndFieldsManager: Error loading templates', err);
         setError('Failed to load templates. Please refresh the page.');
       } finally {
         setIsLoadingTemplates(false);
@@ -240,7 +241,7 @@ export function TemplatesAndFieldsManager({ worlds: initialWorlds }: TemplatesAn
       router.refresh();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving World Custom Fields:', err);
+      logger.error('Component', 'TemplatesAndFieldsManager: Error saving World Custom Fields', err);
       setError(err instanceof Error ? err.message : 'Failed to save World Custom Fields');
     } finally {
       setIsSaving(false);
@@ -392,7 +393,7 @@ export function TemplatesAndFieldsManager({ worlds: initialWorlds }: TemplatesAn
       router.refresh();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving template:', err);
+      logger.error('Component', 'TemplatesAndFieldsManager: Error saving template', err);
       setError(err instanceof Error ? err.message : 'Failed to save template');
     } finally {
       setIsSaving(false);
@@ -521,7 +522,7 @@ export function TemplatesAndFieldsManager({ worlds: initialWorlds }: TemplatesAn
       router.refresh();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error creating template:', err);
+      logger.error('Component', 'TemplatesAndFieldsManager: Error creating template', err);
       setError(err instanceof Error ? err.message : 'Failed to create template');
     } finally {
       setIsSaving(false);

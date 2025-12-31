@@ -6,7 +6,6 @@ import { extractColorName } from '@/lib/utils/colorHexUtils';
 import { logger } from '@/lib/logger';
 
 interface GeneratedCharacter {
-  name: string;
   species?: string;
   gender?: string;
   pronouns?: string;
@@ -162,6 +161,125 @@ function randomElements<T>(array: T[], count: number): T[] {
   return shuffled.slice(0, Math.min(count, array.length));
 }
 
+// Weighted random selection - higher weight = more likely
+function weightedRandomElement<T>(items: T[], weights: number[]): T | undefined {
+  if (!items || items.length === 0) return undefined;
+  if (items.length !== weights.length) {
+    // If weights don't match, fall back to uniform random
+    return randomElement(items);
+  }
+  
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  let random = Math.random() * totalWeight;
+  
+  for (let i = 0; i < items.length; i++) {
+    random -= weights[i];
+    if (random <= 0) {
+      return items[i];
+    }
+  }
+  
+  return items[items.length - 1];
+}
+
+// Check if a species is human or human-like
+function isHumanLike(species?: string): boolean {
+  if (!species) return true; // Default to human-like if no species
+  const lower = species.toLowerCase();
+  return lower.includes('human') || lower === 'human';
+}
+
+// Filter out human-specific ethnicities for non-human species
+function filterEthnicities(ethnicities: string[], species?: string): string[] {
+  if (isHumanLike(species)) {
+    return ethnicities; // Keep all ethnicities for humans
+  }
+  
+  // Human-specific ethnicities to filter out
+  const humanSpecific = [
+    'asian', 'caucasian', 'african', 'hispanic', 'latino', 'latina',
+    'native american', 'indigenous', 'european', 'middle eastern',
+    'pacific islander', 'mixed', 'biracial', 'multiracial'
+  ];
+  
+  return ethnicities.filter(eth => {
+    const lower = eth.toLowerCase();
+    return !humanSpecific.some(hs => lower.includes(hs));
+  });
+}
+
+// Get weighted pronouns based on gender
+function getWeightedPronouns(pronouns: string[], gender?: string): string | undefined {
+  if (!pronouns || pronouns.length === 0) return undefined;
+  if (!gender) return randomElement(pronouns);
+  
+  const lowerGender = gender.toLowerCase();
+  const weights = pronouns.map(pronoun => {
+    const lowerPronoun = pronoun.toLowerCase();
+    
+    // Female-like genders -> prefer she/her (70% chance)
+    if (lowerGender.includes('female') || lowerGender.includes('woman') || lowerGender.includes('girl') || lowerGender === 'f') {
+      if (lowerPronoun.includes('she') || lowerPronoun.includes('her')) {
+        return 7; // Higher weight
+      }
+      return 1; // Lower weight for others
+    }
+    
+    // Male-like genders -> prefer he/him (70% chance)
+    if (lowerGender.includes('male') || lowerGender.includes('man') || lowerGender.includes('boy') || lowerGender === 'm') {
+      if (lowerPronoun.includes('he') || lowerPronoun.includes('him')) {
+        return 7; // Higher weight
+      }
+      return 1; // Lower weight for others
+    }
+    
+    // Neutral/other genders -> prefer they/them (50% chance)
+    if (lowerGender.includes('non-binary') || lowerGender.includes('nonbinary') || lowerGender.includes('agender') || lowerGender.includes('genderfluid')) {
+      if (lowerPronoun.includes('they') || lowerPronoun.includes('them')) {
+        return 5; // Higher weight
+      }
+      return 1; // Lower weight for others
+    }
+    
+    // Default: equal weight
+    return 1;
+  });
+  
+  return weightedRandomElement(pronouns, weights) || randomElement(pronouns);
+}
+
+// Get weighted sex based on gender
+function getWeightedSex(sexes: string[], gender?: string): string | undefined {
+  if (!sexes || sexes.length === 0) return undefined;
+  if (!gender) return randomElement(sexes);
+  
+  const lowerGender = gender.toLowerCase();
+  const weights = sexes.map(sex => {
+    const lowerSex = sex.toLowerCase();
+    
+    // Female-like genders -> prefer female sex (70% chance)
+    if (lowerGender.includes('female') || lowerGender.includes('woman') || lowerGender.includes('girl') || lowerGender === 'f') {
+      if (lowerSex.includes('female') || lowerSex === 'f') {
+        return 7;
+      }
+      return 1;
+    }
+    
+    // Male-like genders -> prefer male sex (70% chance)
+    if (lowerGender.includes('male') || lowerGender.includes('man') || lowerGender.includes('boy') || lowerGender === 'm') {
+      if (lowerSex.includes('male') || lowerSex === 'm') {
+        return 7;
+      }
+      return 1;
+    }
+    
+    // Default: equal weight
+    return 1;
+  });
+  
+  return weightedRandomElement(sexes, weights) || randomElement(sexes);
+}
+
 function generateWeightedAge(): number {
   const rand = Math.random();
   // 75% chance of being between 10-35 (common human-like ages)
@@ -180,41 +298,6 @@ function generateWeightedAge(): number {
     return Math.floor(exponential * ageRange) + 201; // 201-5000
   }
 }
-
-function generateName(): string {
-    const vowels = ['a', 'e', 'i', 'o', 'u'];
-    const softConsonants = ['l', 'n', 'r', 'm', 's', 'k', 't', 'y'];
-    const hardConsonants = ['z', 'd', 'g', 'b'];
-    const consonants = [...softConsonants, ...hardConsonants];
-  
-    const syllableEndings = ['ra', 'ri', 'ro', 'ka', 'ki', 'ko', 'la', 'li', 'ma', 'na', 'sa', 'ta', 'ya', 'za'];
-  
-    const syllableCount = Math.random() < 0.6 ? 2 : Math.random() < 0.85 ? 3 : 4;
-  
-    let name = '';
-  
-    for (let i = 0; i < syllableCount; i++) {
-      const start =
-        i === 0 && Math.random() < 0.4
-          ? randomElement(vowels)
-          : randomElement(consonants);
-  
-      const middle = Math.random() < 0.5 ? randomElement(vowels) : '';
-  
-      const end = Math.random() < 0.6 ? '' : randomElement(['l', 'n', 'r']);
-  
-      name += (start || '') + middle + end;
-    }
-  
-    // Optional clean ending
-    if (Math.random() < 0.8) {
-      name += randomElement(syllableEndings);
-    }
-  
-    // Capitalize first letter
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  }
-  
 
 export function CharacterGenerator({ className = '' }: { className?: string }) {
   const [generated, setGenerated] = useState<GeneratedCharacter | null>(null);
@@ -296,19 +379,31 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
     // Combine all trait options
     const allTraits = [...positive, ...neutral, ...negative];
 
+    // Generate species first (needed for ethnicity filtering)
+    const selectedSpecies = randomElement(species) || undefined;
+    
+    // Generate gender first (needed for pronouns/sex weighting)
+    const selectedGender = randomElement(genders) || undefined;
+    
+    // Filter ethnicities based on species
+    const filteredEthnicities = filterEthnicities(ethnicities, selectedSpecies);
+    
+    // Get weighted pronouns and sex based on gender
+    const selectedPronouns = getWeightedPronouns(pronouns, selectedGender);
+    const selectedSex = getWeightedSex(sexes, selectedGender);
+
     const character: GeneratedCharacter = {
-      name: generateName(),
-      species: randomElement(species) || undefined,
-      gender: randomElement(genders) || undefined,
-      pronouns: randomElement(pronouns) || undefined,
-      sex: randomElement(sexes) || undefined,
+      species: selectedSpecies,
+      gender: selectedGender,
+      pronouns: selectedPronouns,
+      sex: selectedSex,
       romantic_orientation: randomElement(romantic) || undefined,
       sexual_orientation: randomElement(sexual) || undefined,
       eye_color: randomElement(eyeColors) || undefined,
       hair_color: randomElement(hairColors) || undefined,
       skin_tone: randomElement(skinTones) || undefined,
       occupation: randomElement(occupations) || undefined,
-      ethnicity: randomElement(ethnicities) || undefined,
+      ethnicity: filteredEthnicities.length > 0 ? randomElement(filteredEthnicities) : undefined,
       setting: randomElement(settings) || undefined,
       trope: randomElement(tropes) || undefined,
       weapon: randomElement(weapons) || undefined,
@@ -326,30 +421,30 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-4 ${className}`}>
       {/* Header Card with Enhanced Styling */}
-      <div className="wiki-card p-6 md:p-8 relative overflow-hidden">
+      <div className="wiki-card p-4 md:p-6 relative overflow-hidden">
         {/* Subtle gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-pink-900/10 pointer-events-none"></div>
         <div className="relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 flex items-center gap-2">
             <span className="relative">
-              <i className="fas fa-dice text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 text-4xl animate-pulse"></i>
+              <i className="fas fa-dice text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 text-3xl animate-pulse"></i>
               <span className="absolute inset-0 text-purple-400 blur-sm opacity-50">
-                <i className="fas fa-dice text-4xl"></i>
+                <i className="fas fa-dice text-3xl"></i>
               </span>
             </span>
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
               Character Generator
             </span>
           </h2>
-          <p className="text-gray-300 text-lg mb-6 leading-relaxed">
+          <p className="text-gray-300 text-sm mb-4 leading-relaxed">
             Generate random character concepts using the same options available in the OC form. Click the button to create a new character!
           </p>
           <button
             onClick={generate}
             disabled={loading || isAnyLoading}
-            className="group relative w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 overflow-hidden"
+            className="group relative w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white rounded-lg font-bold text-base shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 overflow-hidden"
           >
             {/* Shimmer effect */}
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
@@ -371,17 +466,17 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
       </div>
 
       {generated && (
-        <div className="wiki-card p-6 md:p-8 border-l-4 border-purple-400 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-purple-500/10 relative overflow-hidden animate-[fadeIn_0.6s_ease-in-out]">
+        <div className="wiki-card p-4 md:p-6 border-l-4 border-purple-400 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-purple-500/10 relative overflow-hidden animate-[fadeIn_0.6s_ease-in-out]">
           {/* Animated background glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
           
           <div className="relative z-10">
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-100 mb-6 flex items-center gap-3">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-100 mb-4 flex items-center gap-2">
               <span className="relative">
-                <i className="fas fa-user-circle text-purple-400 text-3xl"></i>
+                <i className="fas fa-user-circle text-purple-400 text-2xl"></i>
                 <span className="absolute inset-0 text-purple-400 blur-md opacity-50">
-                  <i className="fas fa-user-circle text-3xl"></i>
+                  <i className="fas fa-user-circle text-2xl"></i>
                 </span>
               </span>
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -389,23 +484,15 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
               </span>
             </h3>
 
-            {/* Name - Featured */}
-            <div className="mb-6 pb-4 border-b border-purple-500/20">
-              <div className="text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Name</div>
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                {generated.name}
-              </div>
-            </div>
-
-            <div className="space-y-5">
+            <div className="space-y-3">
               {/* Identity Category */}
               {(generated.age || generated.species || generated.gender || generated.pronouns || generated.sex || generated.ethnicity) && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-id-card"></i>
                     Identity
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {generated.age && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Age</div>
@@ -448,12 +535,12 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
               {/* Appearance Category */}
               {(generated.eye_color || generated.hair_color || generated.skin_tone) && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-palette"></i>
                     Appearance
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {generated.eye_color && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Eye Color</div>
@@ -478,12 +565,12 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
               {/* Orientation Category */}
               {(generated.romantic_orientation || generated.sexual_orientation) && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-heart"></i>
                     Orientation
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {generated.romantic_orientation && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Romantic</div>
@@ -502,12 +589,12 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
               {/* Status & Role Category */}
               {(generated.occupation || generated.setting || generated.trope) && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-briefcase"></i>
                     Status & Role
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {generated.occupation && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Occupation</div>
@@ -532,12 +619,12 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
               {/* Combat & Powers Category */}
               {(generated.weapon || generated.element) && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-sword"></i>
                     Combat & Powers
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {generated.weapon && (
                       <div className="group">
                         <div className="text-gray-500 text-xs mb-1 font-medium">Weapon</div>
@@ -556,8 +643,8 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
               {/* Personality Traits */}
               {generated.personality_traits.length > 0 && (
-                <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                     <i className="fas fa-star"></i>
                     Personality Traits
                   </div>
@@ -575,12 +662,12 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
               )}
 
               {/* Background */}
-              <div className="p-4 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                <div className="text-purple-400 text-xs uppercase tracking-wider mb-3 font-bold flex items-center gap-2">
+              <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
                   <i className="fas fa-book"></i>
                   Background
                 </div>
-                <div className="text-gray-100 leading-relaxed text-sm p-4 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg border border-gray-700/30">
+                <div className="text-gray-100 leading-relaxed text-sm p-3 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg border border-gray-700/30">
                   {generated.background}
                 </div>
               </div>
@@ -591,25 +678,22 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
 
       {/* History Section */}
       {history.length > 0 && (
-        <div className="wiki-card p-6 md:p-8">
-          <h3 className="text-xl md:text-2xl font-bold text-gray-100 mb-6 flex items-center gap-3">
+        <div className="wiki-card p-4 md:p-6">
+          <h3 className="text-lg md:text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
             <i className="fas fa-history text-purple-400"></i>
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               Recent Generations
             </span>
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {history.map((char, index) => (
               <div
                 key={index}
-                className="group p-4 bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-xl border border-gray-700/50 hover:border-purple-500/50 hover:from-gray-800/70 hover:to-gray-800/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:scale-[1.02]"
+                className="group p-3 bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-lg border border-gray-700/50 hover:border-purple-500/50 hover:from-gray-800/70 hover:to-gray-800/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:scale-[1.01]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <span className="font-bold text-lg bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-300 transition-all">
-                      {char.name}
-                    </span>
-                    <span className="text-gray-400 ml-3 text-sm">
+                    <span className="text-gray-400 text-sm">
                       {[
                         char.species,
                         char.gender
@@ -618,7 +702,7 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
                   </div>
                   <button
                     onClick={() => setGenerated(char)}
-                    className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/40"
+                    className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/40"
                   >
                     View
                   </button>

@@ -6,6 +6,7 @@ import { type TemplateField, type TemplateDefinition } from '@/lib/templates/ocT
 import { getTemplateTypeFromWorldSlug } from '@/lib/templates/worldTemplateMap';
 import type { World } from '@/types/oc';
 import { useDropdownOptions } from '@/hooks/useDropdownOptions';
+import { logger } from '@/lib/logger';
 
 interface WorldTemplateManagerProps {
   world: World;
@@ -196,7 +197,7 @@ export function WorldTemplateManager({ world }: WorldTemplateManagerProps) {
       router.refresh();
       alert('Templates saved successfully!');
     } catch (error) {
-      console.error('Error saving templates:', error);
+      logger.error('Component', 'WorldTemplateManager: Error saving templates', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save templates. Please try again.';
       alert(errorMessage);
     } finally {

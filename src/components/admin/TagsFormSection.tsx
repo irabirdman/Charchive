@@ -94,7 +94,7 @@ export function TagsFormSection({ ocId, currentTags: initialTags }: TagsFormSect
       .single();
 
     if (error) {
-      console.error('Error creating tag:', error);
+      logger.error('Component', 'TagsFormSection: Error creating tag', error);
       return null;
     }
 

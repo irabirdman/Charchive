@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { StoryAlias } from '@/types/oc';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface WorldStorySwitcherProps {
   worldId: string;
@@ -41,7 +42,7 @@ export function WorldStorySwitcher({
         .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error fetching story aliases:', error);
+        logger.error('Component', 'WorldStorySwitcher: Error fetching story aliases', error);
         setStoryAliases([]);
       } else {
         setStoryAliases(data || []);

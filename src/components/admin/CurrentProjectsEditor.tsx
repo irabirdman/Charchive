@@ -64,7 +64,7 @@ export function CurrentProjectsEditor() {
             const error = await response.json();
             errorMessage = error.error || errorMessage;
           } catch (parseError) {
-            console.error('Failed to parse error response:', parseError);
+            logger.error('Component', 'CurrentProjectsEditor: Failed to parse error response', parseError);
           }
         } else {
           const text = await response.text();
@@ -112,7 +112,7 @@ export function CurrentProjectsEditor() {
             const error = await response.json();
             errorMessage = error.error || errorMessage;
           } catch (parseError) {
-            console.error('Failed to parse error response:', parseError);
+            logger.error('Component', 'CurrentProjectsEditor: Failed to parse error response', parseError);
           }
         } else {
           // If it's HTML (like an error page), try to get text for debugging

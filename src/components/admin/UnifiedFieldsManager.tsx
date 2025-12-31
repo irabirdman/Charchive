@@ -52,7 +52,7 @@ export function UnifiedFieldsManager({ worlds: initialWorlds, initialTemplates }
           return availableTemplates.length > 0 ? availableTemplates[0] : '';
         });
       } catch (err) {
-        console.error('Error loading templates:', err);
+        logger.error('Component', 'UnifiedFieldsManager: Error loading templates', err);
         setError('Failed to load templates. Please refresh the page.');
       } finally {
         setIsLoadingTemplates(false);
@@ -170,7 +170,7 @@ export function UnifiedFieldsManager({ worlds: initialWorlds, initialTemplates }
       router.refresh();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving World Custom Fields:', err);
+      logger.error('Component', 'UnifiedFieldsManager: Error saving World Custom Fields', err);
       setError(err instanceof Error ? err.message : 'Failed to save World Custom Fields');
     } finally {
       setIsSaving(false);
@@ -292,7 +292,7 @@ export function UnifiedFieldsManager({ worlds: initialWorlds, initialTemplates }
       router.refresh();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving Template Fields:', err);
+      logger.error('Component', 'UnifiedFieldsManager: Error saving Template Fields', err);
       setError(err instanceof Error ? err.message : 'Failed to save Template Fields');
     } finally {
       setIsSaving(false);

@@ -65,7 +65,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error generating OG image:', error);
+    logger.error('Page', 'og-image: Error generating OG image', error);
     // Fallback to a simple image
     return new ImageResponse(
       (

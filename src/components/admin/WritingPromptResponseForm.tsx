@@ -89,7 +89,7 @@ export function WritingPromptResponseForm({ response }: WritingPromptResponseFor
         router.push('/admin/writing-prompt-responses');
       }, 1000);
     } catch (err: any) {
-      console.error('Error updating response:', err);
+      logger.error('Component', 'WritingPromptResponseForm: Error updating response', err);
       setError(err.message || 'Failed to update response');
     } finally {
       setIsSubmitting(false);
