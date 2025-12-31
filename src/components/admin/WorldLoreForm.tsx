@@ -19,6 +19,7 @@ import { FormLabel } from './forms/FormLabel';
 import { FormInput } from './forms/FormInput';
 import { FormSelect } from './forms/FormSelect';
 import { FormAutocomplete } from './forms/FormAutocomplete';
+import { logger } from '@/lib/logger';
 import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
@@ -190,14 +191,14 @@ export function WorldLoreForm({ lore, worldId }: WorldLoreFormProps) {
       }
     } catch (error) {
       // Log but don't block form submission if option creation fails
-      console.warn('[WorldLoreForm] Failed to auto-create some options:', error);
+      logger.warn('Component', 'WorldLoreForm: Failed to auto-create some options', error);
     }
 
     await submit(data);
   };
 
   const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
+    logger.debug('Component', 'WorldLoreForm: Form validation errors', errors);
   };
 
   const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {

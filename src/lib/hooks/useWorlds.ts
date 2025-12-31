@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { World } from '@/types/oc';
+import { logger } from '@/lib/logger';
 
 type WorldListItem = Pick<World, 'id' | 'name'> & { slug?: string };
 
@@ -53,7 +54,7 @@ export function useWorlds(options: UseWorldsOptions = {}): UseWorldsResult {
         setWorlds((data as unknown as WorldListItem[]) || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch worlds');
-        console.error('Error fetching worlds:', err);
+        logger.error('Hook', 'useWorlds: Error fetching worlds', err);
       } finally {
         setLoading(false);
       }

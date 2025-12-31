@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface OC {
   id: string;
@@ -60,7 +61,7 @@ export function useOCsByWorld(
         setOCs(data || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch characters');
-        console.error('Error fetching characters:', err);
+        logger.error('Hook', 'useOCsByWorld: Error fetching characters', err);
       } finally {
         setLoading(false);
       }

@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 export type TemplateField = {
   key: string;
   label: string;
@@ -47,7 +49,7 @@ export async function getTemplates(): Promise<Record<string, TemplateDefinition>
     const data = await response.json();
     return data.templates || { none: defaultTemplate };
   } catch (error) {
-    console.error('Error fetching templates:', error);
+    logger.error('Utility', 'ocTemplates: Error fetching templates', error);
     return { none: defaultTemplate };
   }
 }

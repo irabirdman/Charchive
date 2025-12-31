@@ -1,6 +1,7 @@
 import type { TemplateDefinition } from './ocTemplates';
 import { createClient } from '@/lib/supabase/server';
 import { defaultFallbackTemplate } from './defaultTemplates';
+import { logger } from '@/lib/logger';
 
 /**
  * Fetch all templates from worlds.oc_templates (server-only)
@@ -18,7 +19,7 @@ export async function fetchTemplates(): Promise<Record<string, TemplateDefinitio
       .not('oc_templates', 'is', null);
 
     if (error) {
-      console.error('Error fetching templates from worlds:', error);
+      logger.error('Utility', 'ocTemplates.server: Error fetching templates from worlds', error);
       return { none: defaultFallbackTemplate };
     }
 
@@ -52,7 +53,7 @@ export async function fetchTemplates(): Promise<Record<string, TemplateDefinitio
 
     return templates;
   } catch (error) {
-    console.error('Error fetching templates:', error);
+    logger.error('Utility', 'ocTemplates.server: Error fetching templates', error);
     return { none: defaultFallbackTemplate };
   }
 }
@@ -72,7 +73,7 @@ export async function fetchTemplatesForWorld(worldId: string): Promise<Record<st
       .single();
 
     if (error || !world) {
-      console.error('Error fetching world templates:', error);
+      logger.error('Utility', 'ocTemplates.server: Error fetching world templates', error);
       return { none: defaultFallbackTemplate };
     }
 

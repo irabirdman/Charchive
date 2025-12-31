@@ -4,6 +4,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 interface SessionData {
   token: string;
@@ -34,10 +35,10 @@ export async function createSession(token: string): Promise<void> {
     });
   
   if (error) {
-    console.error('Error creating session:', error);
+    logger.error('Utility', 'session-store: Error creating session', error);
     // If table doesn't exist, log a helpful message
     if (error.code === '42P01') {
-      console.error('admin_sessions table does not exist. Please run the SQL migration to create it.');
+      logger.error('Utility', 'session-store: admin_sessions table does not exist. Please run the SQL migration to create it.');
     }
     throw error;
   }
@@ -57,7 +58,7 @@ export async function getSession(token: string): Promise<SessionData | null> {
   if (error || !data) {
     // If table doesn't exist, log a helpful message
     if (error?.code === '42P01') {
-      console.error('admin_sessions table does not exist. Please run the SQL migration to create it.');
+      logger.error('Utility', 'session-store: admin_sessions table does not exist. Please run the SQL migration to create it.');
     }
     return null;
   }
@@ -106,7 +107,7 @@ export async function cleanupSessions(): Promise<void> {
 // Clean up expired sessions every hour
 if (typeof setInterval !== 'undefined' && typeof window === 'undefined') {
   setInterval(() => {
-    cleanupSessions().catch(console.error);
+    cleanupSessions().catch((error) => logger.error('Utility', 'session-store: Error in cleanup', error));
   }, 60 * 60 * 1000);
 }
 

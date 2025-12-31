@@ -3,6 +3,7 @@ import { CharacterCard } from '@/components/discovery/CharacterCard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { generatePageMetadata } from '@/lib/config/metadata-helpers';
 import { getSiteConfig } from '@/lib/config/site-config';
+import { logger } from '@/lib/logger';
 
 export async function generateMetadata() {
   const config = await getSiteConfig();
@@ -25,7 +26,7 @@ export default async function CharacterCardsPage() {
     .order('name');
 
   if (error) {
-    console.error('Error fetching OCs:', error);
+    logger.error('Page', 'ocs/cards: Error fetching OCs', error);
   }
 
   return (

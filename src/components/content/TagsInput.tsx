@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 
 interface Tag {
   id: string;
@@ -25,239 +25,180 @@ export function TagsInput({
   placeholder = 'Add tags...',
   disabled = false,
 }: TagsInputProps) {
-  const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [customInput, setCustomInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLSelectElement>(null);
 
-  // Get unselected tags for dropdown
-  const unselectedTags = availableTags.filter(
-    tag => !selectedTags.some(st => st.id === tag.id)
-  );
+  // Get selected tag IDs for quick lookup
+  const selectedTagIds = useMemo(() => {
+    return new Set(selectedTags.map(tag => tag.id));
+  }, [selectedTags]);
 
-  // Filter available tags based on input
-  useEffect(() => {
-    if (inputValue.trim()) {
-      const searchLower = inputValue.toLowerCase().trim();
-      // More flexible matching: check if tag name contains the search string or all words match
-      const filtered = availableTags.filter(
-        tag => {
-          const tagLower = tag.name.toLowerCase();
-          
-          // Simple substring match (exact or partial)
-          if (tagLower.includes(searchLower)) {
-            return !selectedTags.some(st => st.id === tag.id);
-          }
-          
-          // Word-based matching: check if all search words appear in tag (allowing partial word matches)
-          const searchWords = searchLower.split(/\s+/).filter(w => w.length > 2); // Only match words 3+ chars
-          if (searchWords.length > 0) {
-            const allWordsMatch = searchWords.every(searchWord => {
-              // Check if any word in the tag starts with or contains this search word
-              return tagLower.includes(searchWord) || 
-                     tagLower.split(/\s+/).some(tagWord => tagWord.startsWith(searchWord.substring(0, Math.min(4, searchWord.length))));
-            });
-            if (allWordsMatch) {
-              return !selectedTags.some(st => st.id === tag.id);
-            }
-          }
-          
-          return false;
-        }
+  // Filter available tags based on search query (show all tags, including selected ones)
+  const filteredTags = useMemo(() => {
+    let tags = availableTags;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      tags = tags.filter(tag =>
+        tag.name.toLowerCase().includes(query)
       );
-      setFilteredTags(filtered);
-      setShowSuggestions(filtered.length > 0 || !!onCreateTag);
-    } else {
-      // When input is empty, show first 10 unselected tags
-      const unselected = availableTags.filter(
-        tag => !selectedTags.some(st => st.id === tag.id)
-      );
-      setFilteredTags(unselected.slice(0, 10));
-      // Don't show suggestions when empty unless explicitly focused
-      // We'll handle showing on focus separately
     }
-  }, [inputValue, availableTags, selectedTags, onCreateTag]);
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
+    return tags;
+  }, [availableTags, searchQuery]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    // Show suggestions when typing
-    if (newValue.trim()) {
-      setShowSuggestions(true);
-    }
-  };
-
-  const handleInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
-      e.preventDefault();
-      await handleAddTag(inputValue.trim());
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-      setInputValue('');
-    } else if (e.key === 'ArrowDown' && filteredTags.length > 0) {
-      e.preventDefault();
-      // Could implement keyboard navigation here
-    }
-  };
-
-  const handleAddTag = async (tagName: string) => {
-    // Check if tag already exists
+  // Handle adding custom tag
+  const handleAddCustom = async () => {
+    if (!customInput.trim() || disabled || !onCreateTag) return;
+    
+    const trimmed = customInput.trim();
+    
+    // Check if tag already exists (case-insensitive)
     const existingTag = availableTags.find(
-      tag => tag.name.toLowerCase() === tagName.toLowerCase()
+      tag => tag.name.toLowerCase() === trimmed.toLowerCase()
     );
 
     if (existingTag) {
-      if (!selectedTags.some(st => st.id === existingTag.id)) {
+      // If exists but not selected, add it
+      if (!selectedTagIds.has(existingTag.id)) {
         onTagsChange([...selectedTags, existingTag]);
       }
-      setInputValue('');
-      setShowSuggestions(false);
+      setCustomInput('');
       return;
     }
 
-    // Create new tag if onCreateTag is provided
-    if (onCreateTag) {
-      const newTag = await onCreateTag(tagName);
-      if (newTag) {
-        onTagsChange([...selectedTags, newTag]);
-        setInputValue('');
-        setShowSuggestions(false);
-      }
+    // Create new tag
+    const newTag = await onCreateTag(trimmed);
+    if (newTag) {
+      onTagsChange([...selectedTags, newTag]);
+      setCustomInput('');
     }
   };
 
-  const handleRemoveTag = (tagId: string) => {
-    onTagsChange(selectedTags.filter(tag => tag.id !== tagId));
-  };
-
-  const handleSelectSuggestion = (tag: Tag) => {
-    if (!selectedTags.some(st => st.id === tag.id)) {
+  // Handle tag toggle
+  const handleTagToggle = (tag: Tag) => {
+    if (disabled) return;
+    
+    if (selectedTagIds.has(tag.id)) {
+      // Remove tag
+      onTagsChange(selectedTags.filter(t => t.id !== tag.id));
+    } else {
+      // Add tag
       onTagsChange([...selectedTags, tag]);
-    }
-    setInputValue('');
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-  };
-
-  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const tagId = e.target.value;
-    if (tagId) {
-      const tag = availableTags.find(t => t.id === tagId);
-      if (tag && !selectedTags.some(st => st.id === tag.id)) {
-        onTagsChange([...selectedTags, tag]);
-      }
-      // Reset dropdown
-      e.target.value = '';
     }
   };
 
   return (
-    <div ref={containerRef} className="relative space-y-3">
-      {/* Selected tags display with input */}
+    <div ref={containerRef} className="space-y-3">
+      {/* Add Custom Tag */}
+      {onCreateTag && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddCustom();
+              }
+            }}
+            placeholder="Add custom tag..."
+            disabled={disabled}
+            className="flex-1 px-3 py-2 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <button
+            type="button"
+            onClick={handleAddCustom}
+            disabled={disabled || !customInput.trim()}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
+      {/* Search Bar */}
       <div>
-        {selectedTags.length > 0 && (
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Selected tags:
-          </label>
-        )}
-        <div className="relative">
-          <div className="flex flex-wrap gap-2 p-3 border border-gray-600 rounded-lg bg-gray-800/30 min-h-[72px] focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500">
-            {selectedTags.map(tag => (
-              <span
-                key={tag.id}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                style={tag.color ? { borderColor: tag.color, backgroundColor: `${tag.color}20`, color: tag.color } : {}}
-              >
-                {tag.name}
-                {!disabled && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag.id)}
-                    className="hover:text-red-400 transition-colors"
-                    aria-label={`Remove ${tag.name} tag`}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={`Search ${placeholder.toLowerCase()}...`}
+          disabled={disabled}
+          className="w-full px-3 py-2 bg-gray-900/60 border border-gray-500/60 rounded-lg text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </div>
+
+      {/* Tags List */}
+      <div className="w-full bg-gray-900/60 border border-gray-500/60 rounded-lg overflow-hidden">
+        <div className="max-h-[240px] overflow-y-auto">
+          {filteredTags.length > 0 ? (
+            <div className="p-1">
+              {filteredTags.map((tag) => {
+                const isSelected = selectedTagIds.has(tag.id);
+                return (
+                  <div
+                    key={tag.id}
+                    onClick={() => handleTagToggle(tag)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-purple-500/20 text-purple-200'
+                        : 'text-gray-200 hover:bg-gray-700/50'
+                    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    style={isSelected && tag.color ? {
+                      backgroundColor: `${tag.color}20`,
+                      color: tag.color,
+                    } : {}}
                   >
-                    <i className="fas fa-times text-xs"></i>
-                  </button>
-                )}
-              </span>
-            ))}
-            {!disabled && (
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => {
-                  // Show suggestions when focused, even if input is empty
-                  const unselected = availableTags.filter(
-                    tag => !selectedTags.some(st => st.id === tag.id)
-                  );
-                  setFilteredTags(unselected.slice(0, 10));
-                  setShowSuggestions(unselected.length > 0);
-                }}
-                placeholder={selectedTags.length === 0 ? placeholder : 'Type to search or create new tag...'}
-                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-gray-200 placeholder-gray-500"
-              />
-            )}
-          </div>
-          
-          {/* Autocomplete suggestions dropdown */}
-          {showSuggestions && !disabled && (
-            <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {filteredTags.length > 0 && (
-                <>
-                  {filteredTags.map(tag => (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onClick={() => handleSelectSuggestion(tag)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200"
+                    {/* Checkmark */}
+                    <div className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded border-2 ${
+                      isSelected
+                        ? tag.color
+                          ? `bg-[${tag.color}] border-[${tag.color}]`
+                          : 'bg-purple-500 border-purple-500'
+                        : 'border-gray-500'
+                    }`}
+                    style={isSelected && tag.color ? {
+                      backgroundColor: tag.color,
+                      borderColor: tag.color,
+                    } : {}}
                     >
-                      {tag.name}
-                    </button>
-                  ))}
-                  {onCreateTag && inputValue.trim() && !availableTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) && (
-                    <div className="border-t border-gray-600"></div>
-                  )}
-                </>
-              )}
-              {onCreateTag && inputValue.trim() && !availableTags.some(tag => tag.name.toLowerCase() === inputValue.toLowerCase()) && (
-                <button
-                  type="button"
-                  onClick={() => handleAddTag(inputValue.trim())}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-gray-200 text-purple-300"
-                >
-                  <i className="fas fa-plus mr-2"></i>
-                  Create &quot;{inputValue.trim()}&quot;
-                </button>
-              )}
-              {filteredTags.length === 0 && !onCreateTag && inputValue.trim() && (
-                <div className="px-4 py-2 text-gray-400 text-sm">
-                  No tags found
-                </div>
-              )}
+                      {isSelected && (
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    {/* Tag Name */}
+                    <span className="flex-1 text-sm">{tag.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-4 text-center text-gray-400 text-sm">
+              {searchQuery.trim() ? 'No tags found' : 'No tags available'}
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-1">
-          Type to search existing tags or press Enter to create a new one
-        </p>
       </div>
+
+      {/* Selected count */}
+      {selectedTags.length > 0 && (
+        <p className="text-xs text-gray-400/80">
+          Selected: {selectedTags.length} {selectedTags.length === 1 ? 'tag' : 'tags'}
+        </p>
+      )}
     </div>
   );
 }
@@ -291,4 +232,3 @@ export function TagsDisplay({ tags, onTagClick, className = '' }: TagsDisplayPro
     </div>
   );
 }
-

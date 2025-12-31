@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // Predefined tags that should exist in the database
 // These match the tags seeded in the migration
 
@@ -133,11 +135,11 @@ export async function ensurePredefinedTags(supabase: any): Promise<void> {
         );
 
       if (error) {
-        console.error('Error creating predefined tags:', error);
+        logger.error('Utility', 'predefinedTags: Error creating predefined tags', error);
       }
     }
   } catch (error) {
-    console.error('Error ensuring predefined tags:', error);
+    logger.error('Utility', 'predefinedTags: Error ensuring predefined tags', error);
   }
 }
 

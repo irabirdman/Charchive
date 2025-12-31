@@ -6,6 +6,7 @@ import { getSiteConfig } from '@/lib/config/site-config';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { getSession } from '@/lib/auth/session-store';
+import { logger } from '@/lib/logger';
 
 const checkAdminAuth = cache(async () => {
   try {
@@ -47,7 +48,7 @@ export default async function WritingPromptsPage() {
     .eq('is_public', true);
 
   if (ocsError) {
-    console.error('Error fetching OCs:', ocsError);
+    logger.error('Page', 'tools/prompts: Error fetching OCs', ocsError);
   }
 
   // Transform the data to match the expected type (Supabase returns world as array)
@@ -67,7 +68,7 @@ export default async function WritingPromptsPage() {
     .order('category', { ascending: true });
 
   if (promptsError) {
-    console.error('Error fetching prompts:', promptsError);
+    logger.error('Page', 'tools/prompts: Error fetching prompts', promptsError);
   }
 
   return (

@@ -8,7 +8,7 @@ import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
-import type { World } from '@/types/oc';
+import type { World, TimelineEvent as TimelineEventType } from '@/types/oc';
 import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
 
 // Type for timeline world response
@@ -21,12 +21,7 @@ interface TimelineWorldResponse {
 // Type for timeline event association response
 interface TimelineEventAssociation {
   position: number;
-  event: {
-    id: string;
-    date_data?: unknown;
-    date_text?: string | null;
-    [key: string]: unknown;
-  } | null;
+  event: TimelineEventType | null;
 }
 
 export const revalidate = 300;
@@ -52,7 +47,10 @@ export async function generateMetadata({
   }
 
   const config = await getSiteConfig();
-  const world = timeline.world as TimelineWorldResponse | null;
+  // Handle array case from Supabase relation query
+  const world = Array.isArray(timeline.world) 
+    ? (timeline.world[0] as TimelineWorldResponse | undefined) || null
+    : (timeline.world as TimelineWorldResponse | null);
   
   // Use description_markdown for description, clean up markdown syntax
   const descriptionText = timeline.description_markdown || '';
@@ -137,9 +135,9 @@ export default async function TimelinePage({
         }
       }
       
-      return event;
+      return event as TimelineEventType;
     })
-    .filter((e): e is NonNullable<typeof e> => e !== null && e.id !== undefined) || [];
+    .filter((e): e is TimelineEventType => e !== null && e.id !== undefined) || [];
 
   return (
     <div>

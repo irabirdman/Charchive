@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useDropdownOptionsContext } from '@/contexts/DropdownOptionsContext';
+import { logger } from '@/lib/logger';
 
 type DropdownField = string;
 
@@ -71,14 +72,14 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
         if (!res.ok) {
           // Don't throw for 401/403 - just return empty
           if (res.status === 401 || res.status === 403) {
-            console.warn(`[useDropdownOptions] Auth error for field "${field}":`, res.status);
+            logger.warn('Hook', `useDropdownOptions: Auth error for field "${field}"`, res.status);
             setDbOptions([]);
             setDbHexCodes({});
             setIsLoading(false);
             return null;
           }
           // Log error details
-          console.error(`[useDropdownOptions] Failed to fetch options for field "${field}":`, res.status, res.statusText);
+          logger.error('Hook', `useDropdownOptions: Failed to fetch options for field "${field}"`, { status: res.status, statusText: res.statusText });
           throw new Error(`Failed to fetch options: ${res.statusText}`);
         }
         return res.json();
@@ -105,7 +106,7 @@ export function useDropdownOptions(field: DropdownField | undefined): UseDropdow
         setIsLoading(false);
       })
       .catch(err => {
-        console.error(`[useDropdownOptions] Error fetching options for field "${field}":`, err);
+        logger.error('Hook', `useDropdownOptions: Error fetching options for field "${field}"`, err);
         setError(err);
         setDbOptions([]);
         setDbHexCodes({});

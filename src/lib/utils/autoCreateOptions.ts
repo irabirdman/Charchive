@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Field mapping: form field name -> optionsSource field name
  * This maps the form field names to the dropdown_options table field names
@@ -128,7 +130,7 @@ async function createOption(
       option: data.option || option,
     };
   } catch (error) {
-    console.error(`[autoCreateOptions] Failed to create option "${option}" for field "${field}":`, error);
+    logger.error('Utility', `autoCreateOptions: Failed to create option "${option}" for field "${field}"`, error);
     return {
       success: false,
       created: false,
@@ -178,7 +180,7 @@ export async function autoCreateOptions(
           options = data.options?.[optionsSource] || [];
         }
       } catch (error) {
-        console.warn(`[autoCreateOptions] Failed to fetch options for ${optionsSource}:`, error);
+        logger.warn('Utility', `autoCreateOptions: Failed to fetch options for ${optionsSource}`, error);
         // Continue without options - will create anyway if needed
       }
     }
@@ -268,7 +270,7 @@ export async function autoCreateTemplateOptions(
         options = data.options?.[optionsSource] || [];
       }
     } catch (error) {
-      console.warn(`[autoCreateOptions] Failed to fetch options for ${optionsSource}:`, error);
+      logger.warn('Utility', `autoCreateOptions: Failed to fetch options for ${optionsSource}`, error);
     }
     
     const stringValue = String(value).trim();
@@ -318,7 +320,7 @@ export async function autoCreateWorldFieldOptions(
         options = data.options?.[optionsSource] || [];
       }
     } catch (error) {
-      console.warn(`[autoCreateOptions] Failed to fetch options for ${optionsSource}:`, error);
+      logger.warn('Utility', `autoCreateOptions: Failed to fetch options for ${optionsSource}`, error);
     }
     
     const stringValue = String(value).trim();

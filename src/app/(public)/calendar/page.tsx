@@ -3,6 +3,7 @@ import { BirthdayCalendar } from '@/components/discovery/BirthdayCalendar';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { generatePageMetadata } from '@/lib/config/metadata-helpers';
 import { getSiteConfig } from '@/lib/config/site-config';
+import { logger } from '@/lib/logger';
 
 export async function generateMetadata() {
   const config = await getSiteConfig();
@@ -25,7 +26,7 @@ export default async function CalendarPage() {
     .not('date_of_birth', 'is', null);
 
   if (error) {
-    console.error('Error fetching OCs:', error);
+    logger.error('Page', 'calendar: Error fetching OCs', error);
   }
 
   return (

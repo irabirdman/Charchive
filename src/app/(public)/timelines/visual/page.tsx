@@ -3,6 +3,7 @@ import { InteractiveTimeline } from '@/components/timeline/InteractiveTimeline';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { generatePageMetadata } from '@/lib/config/metadata-helpers';
 import { getSiteConfig } from '@/lib/config/site-config';
+import { logger } from '@/lib/logger';
 
 export async function generateMetadata() {
   const config = await getSiteConfig();
@@ -25,7 +26,7 @@ export default async function InteractiveTimelinePage() {
     .order('year', { ascending: true });
 
   if (error) {
-    console.error('Error fetching timeline events:', error);
+    logger.error('Page', 'timelines/visual: Error fetching timeline events', error);
   }
 
   return (

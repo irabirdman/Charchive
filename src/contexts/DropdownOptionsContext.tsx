@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 interface DropdownOptionsData {
   options: Record<string, string[]>;
@@ -45,7 +46,7 @@ export function DropdownOptionsProvider({ children }: DropdownOptionsProviderPro
         if (!response.ok) {
           // Don't throw for 401/403 - just return empty data
           if (response.status === 401 || response.status === 403) {
-            console.warn('[DropdownOptionsContext] Auth error:', response.status);
+            logger.warn('Context', 'DropdownOptionsContext: Auth error', response.status);
             setData({ options: {}, hexCodes: {} });
             setIsLoading(false);
             setLastFetchTime(Date.now());
@@ -63,7 +64,7 @@ export function DropdownOptionsProvider({ children }: DropdownOptionsProviderPro
         setLastFetchTime(Date.now());
         setError(null);
       } catch (err) {
-        console.error('[DropdownOptionsContext] Error fetching dropdown options:', err);
+        logger.error('Context', 'DropdownOptionsContext: Error fetching dropdown options', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch dropdown options'));
         // Keep existing data on error (stale-while-revalidate)
       } finally {

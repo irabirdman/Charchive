@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -128,7 +129,7 @@ export async function queryOCWithFallback<T>(
       result.error.details?.includes('fk_ocs_story_alias_id')) {
     
     if (logContext) {
-      console.log(`[${logContext}] FK hint failed, falling back to inferred relationship`);
+      logger.debug('Utility', `${logContext}: FK hint failed, falling back to inferred relationship`);
     }
     
     // Retry with fallback query (no FK hint)
