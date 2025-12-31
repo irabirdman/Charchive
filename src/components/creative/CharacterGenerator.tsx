@@ -276,17 +276,26 @@ function getWeightedPronouns(pronouns: string[], gender?: string): string | unde
       return 1; // Lower weight for others
     }
     
-    // Neutral/non-binary genders -> prefer they/them (60% chance)
+    // Neutral/non-binary genders -> prefer they/them (65% chance)
     const neutralTerms = ['non-binary', 'nonbinary', 'agender', 'genderfluid', 'genderqueer', 
                          'androgynous', 'androgyne', 'bigender', 'demigender', 'neutrois',
                          'pangender', 'polygender', 'third gender', 'two-spirit'];
     if (neutralTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
-      if (lowerPronoun.includes('they') || lowerPronoun.includes('them') || lowerPronoun.includes('their')) {
-        return 6; // Higher weight
+      // Pure they/them pronouns get highest weight
+      if ((lowerPronoun.includes('they') || lowerPronoun.includes('them') || lowerPronoun.includes('their')) && 
+          !lowerPronoun.includes('/')) {
+        return 7; // Highest weight for pure they/them
       }
-      // Also allow mixed pronouns like "she/they" or "he/they" for neutral genders
+      // Mixed pronouns like "they/he", "they/she", "he/they", "she/they" are also good for neutral genders
       if (lowerPronoun.includes('/') && (lowerPronoun.includes('they') || lowerPronoun.includes('them'))) {
-        return 4; // Medium weight
+        return 5; // Good weight for mixed pronouns with they/them
+      }
+      // Pure binary pronouns (he/him, she/her) are less likely but still possible
+      if (lowerPronoun.includes('he') && !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 2; // Lower weight for pure he/him
+      }
+      if (lowerPronoun.includes('she') && !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 2; // Lower weight for pure she/her
       }
       return 1; // Lower weight for others
     }
@@ -298,43 +307,70 @@ function getWeightedPronouns(pronouns: string[], gender?: string): string | unde
   return weightedRandomElement(pronouns, weights) || randomElement(pronouns);
 }
 
-// Get weighted sex based on gender - more flexible matching
-function getWeightedSex(sexes: string[], gender?: string): string | undefined {
+// Get weighted sex based on gender and pronouns - stricter matching
+function getWeightedSex(sexes: string[], gender?: string, pronouns?: string): string | undefined {
   if (!sexes || sexes.length === 0) return undefined;
   if (!gender) return randomElement(sexes);
   
   const lowerGender = gender.toLowerCase().trim();
+  const lowerPronouns = pronouns?.toLowerCase().trim() || '';
+  
+  // Check if pronouns suggest non-binary (they/them or mixed pronouns)
+  const hasNonBinaryPronouns = lowerPronouns.includes('they') || 
+                               lowerPronouns.includes('them') || 
+                               (lowerPronouns.includes('/') && (lowerPronouns.includes('they') || lowerPronouns.includes('them')));
+  
   const weights = sexes.map(sex => {
     const lowerSex = sex.toLowerCase();
     
-    // Female-like genders -> prefer female sex (75% chance)
+    // Check if sex is non-binary/neutral
+    const isNonBinarySex = lowerSex.includes('intersex') || 
+                          lowerSex.includes('other') || 
+                          lowerSex.includes('x') ||
+                          lowerSex.includes('neutral') ||
+                          lowerSex === 'n' ||
+                          lowerSex.includes('non-binary');
+    
+    // Check if sex is binary
+    const isFemaleSex = lowerSex.includes('female') || lowerSex === 'f';
+    const isMaleSex = lowerSex.includes('male') || lowerSex === 'm';
+    
+    // Female-like genders -> strongly prefer female sex (80% chance)
     const femaleTerms = ['female', 'woman', 'girl', 'f', 'feminine'];
     if (femaleTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
-      if (lowerSex.includes('female') || lowerSex === 'f') {
-        return 8;
+      if (isFemaleSex) {
+        return 10; // Very high weight
       }
       return 1;
     }
     
-    // Male-like genders -> prefer male sex (75% chance)
+    // Male-like genders -> strongly prefer male sex (80% chance)
     const maleTerms = ['male', 'man', 'boy', 'm', 'masculine'];
     if (maleTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
-      if (lowerSex.includes('male') || lowerSex === 'm') {
-        return 8;
+      if (isMaleSex) {
+        return 10; // Very high weight
       }
       return 1;
     }
     
-    // Neutral/non-binary genders -> prefer intersex/other options (40% chance) or equal weight
+    // Neutral/non-binary genders -> STRONGLY prefer non-binary sex options (70% chance)
     const neutralTerms = ['non-binary', 'nonbinary', 'agender', 'genderfluid', 'genderqueer', 
-                         'androgynous', 'androgyne', 'bigender', 'demigender'];
+                         'androgynous', 'androgyne', 'bigender', 'demigender', 'neutrois',
+                         'pangender', 'polygender', 'third gender', 'two-spirit'];
     if (neutralTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
-      // For neutral genders, allow any sex but slightly prefer intersex/other
-      if (lowerSex.includes('intersex') || lowerSex.includes('other') || lowerSex.includes('x')) {
-        return 5; // Medium weight
+      // If pronouns also suggest non-binary, make it even more likely
+      if (hasNonBinaryPronouns && isNonBinarySex) {
+        return 9; // Very high weight for non-binary sex with non-binary pronouns
       }
-      // Still allow male/female but less likely
-      return 2; // Lower weight but still possible
+      if (isNonBinarySex) {
+        return 7; // High weight for non-binary sex
+      }
+      // Binary sexes are much less likely for neutral genders
+      if (isFemaleSex || isMaleSex) {
+        return 1; // Very low weight - only 10-15% chance
+      }
+      // Unknown/other options get medium weight
+      return 3;
     }
     
     // Default: equal weight
@@ -453,8 +489,9 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
     const filteredEthnicities = filterEthnicities(ethnicities, selectedSpecies);
     
     // Get weighted pronouns and sex based on gender
+    // Generate pronouns first, then use them to inform sex selection
     const selectedPronouns = getWeightedPronouns(pronouns, selectedGender);
-    const selectedSex = getWeightedSex(sexes, selectedGender);
+    const selectedSex = getWeightedSex(sexes, selectedGender, selectedPronouns);
 
     // Only assign ethnicity if we have valid filtered options
     // For non-humans, if all ethnicities were filtered out, don't assign one

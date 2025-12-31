@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray, Controller, type UseFormSetValue, type UseFormWatch } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, type UseFormSetValue, type UseFormWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { OC, TemplateType, World, RelationshipType } from '@/types/oc';
