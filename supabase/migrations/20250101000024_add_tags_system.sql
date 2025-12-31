@@ -42,3 +42,4 @@ CREATE TRIGGER update_tags_updated_at
   EXECUTE FUNCTION update_tags_updated_at();
 
 
+

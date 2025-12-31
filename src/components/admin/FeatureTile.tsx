@@ -41,7 +41,7 @@ export function FeatureTile({
     >
       <div className="flex items-start justify-between mb-2 sm:mb-3">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-          <i className={`${icon} text-xl sm:text-2xl ${textColorClass} flex-shrink-0`}></i>
+          <i className={`${icon} text-xl sm:text-2xl ${textColorClass} flex-shrink-0`} aria-hidden="true"></i>
           <h3 className="text-base sm:text-lg font-semibold text-gray-100 group-hover:text-white transition-colors truncate">
             {title}
           </h3>

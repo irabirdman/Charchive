@@ -29,7 +29,7 @@ body {
 
 @layer utilities {
   .text-balance {
-    text-wrap: balance;
+    text-wrap: balance; /* Supported in Firefox 121+, Chrome 114+, Safari 17+. Falls back to normal wrapping in older browsers */
   }
   
   .scrollbar-hide {

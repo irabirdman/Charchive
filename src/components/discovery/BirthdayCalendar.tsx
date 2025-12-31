@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
+import { getDateInEST, formatDateOfBirth } from '@/lib/utils/dateFormat';
 
 // Minimal type for birthday calendar - only requires the fields we actually use
 interface BirthdayOC {
@@ -28,47 +29,120 @@ interface BirthdayEvent {
 
 export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Parse birthdays and group by date
-  const birthdayEvents: BirthdayEvent[] = [];
-  const birthdayMap = new Map<string, BirthdayOC[]>();
+  // Build birthday map - use useMemo to avoid recreating on every render
+  // Only build on client side to avoid SSR issues with Intl.DateTimeFormat
+  const birthdayMap = useMemo(() => {
+    const map = new Map<string, BirthdayOC[]>();
 
-  ocs.forEach((oc) => {
-    if (oc.date_of_birth) {
+    // Only build map on client side
+    if (typeof window === 'undefined') {
+      return map;
+    }
+
+    ocs.forEach((oc) => {
+      if (!oc.date_of_birth) {
+        return;
+      }
+
       try {
-        const date = new Date(oc.date_of_birth);
-        if (!isNaN(date.getTime())) {
-          // Use month-day as key (ignore year for display)
-          const key = `${date.getMonth()}-${date.getDate()}`;
-          if (!birthdayMap.has(key)) {
-            birthdayMap.set(key, []);
+        const dateStr = oc.date_of_birth.trim();
+        let month: number | undefined;
+        let day: number | undefined;
+        
+        // Parse date string directly - extract month and day from string to avoid timezone issues
+        // This works for both YYYY-MM-DD and MM/DD formats
+        const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/); // YYYY-MM-DD
+        const mmddMatch = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})/); // MM/DD or MM-DD
+        
+        if (isoMatch) {
+          // ISO format: YYYY-MM-DD
+          month = parseInt(isoMatch[2], 10) - 1; // Convert to 0-indexed (0-11)
+          day = parseInt(isoMatch[3], 10);
+        } else if (mmddMatch) {
+          // MM/DD or MM-DD format
+          month = parseInt(mmddMatch[1], 10) - 1; // Convert to 0-indexed (0-11)
+          day = parseInt(mmddMatch[2], 10);
+        } else {
+          // Try parsing as Date and extracting month/day using EST
+          try {
+            const date = new Date(dateStr + (dateStr.includes('T') ? '' : 'T12:00:00.000Z'));
+            if (!isNaN(date.getTime())) {
+              const estDate = getDateInEST(date);
+              month = estDate.month - 1;
+              day = estDate.day;
+            }
+          } catch (e) {
+            // Failed to parse date - skip this OC
           }
-          birthdayMap.get(key)!.push(oc);
+        }
+        
+        // Validate and add to map
+        if (month !== undefined && day !== undefined && month >= 0 && month <= 11 && day >= 1 && day <= 31) {
+          const key = `${month}-${day}`;
+          if (!map.has(key)) {
+            map.set(key, []);
+          }
+          map.get(key)!.push(oc);
         }
       } catch (e) {
-        // Invalid date, skip
+        // Failed to parse date_of_birth - skip this OC
       }
-    }
-  });
+    });
 
-  // Convert map to array
-  birthdayMap.forEach((characters, key) => {
-    const [month, day] = key.split('-').map(Number);
-    const date = new Date(2024, month, day); // Use current year for display
-    birthdayEvents.push({ date, characters });
-  });
+    return map;
+  }, [ocs]);
 
-  // Get characters for a specific date
+  // Parse birthdays and group by date (using EST timezone)
+  const birthdayEvents: BirthdayEvent[] = useMemo(() => {
+    const events: BirthdayEvent[] = [];
+    birthdayMap.forEach((characters, key) => {
+      const [month, day] = key.split('-').map(Number);
+      const date = new Date(2024, month, day); // Use current year for display
+      events.push({ date, characters });
+    });
+    return events;
+  }, [birthdayMap]);
+
+  // Get characters for a specific date - use same method as map building
   const getCharactersForDate = (date: Date): BirthdayOC[] => {
-    const month = date.getMonth();
-    const day = date.getDate();
-    const key = `${month}-${day}`;
-    return birthdayMap.get(key) || [];
+    if (!date || isNaN(date.getTime())) {
+      return [];
+    }
+    
+    // Extract month and day - try EST first, fallback to local time
+    let month: number;
+    let day: number;
+    
+    try {
+      // Try EST conversion first
+      const estDate = getDateInEST(date);
+      month = estDate.month - 1; // Convert to 0-indexed
+      day = estDate.day;
+    } catch (e) {
+      // Fallback to local time (direct extraction from date object)
+      month = date.getMonth(); // Already 0-indexed (0-11)
+      day = date.getDate(); // 1-indexed (1-31)
+    }
+    
+    // Validate and lookup
+    if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
+      const key = `${month}-${day}`;
+      return birthdayMap.get(key) || [];
+    }
+    
+    return [];
   };
 
-  // Custom tile content
+  // Set mounted state on client side only to avoid hydration mismatches
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Custom tile content - only render after mount to avoid hydration mismatch
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
+    if (view === 'month' && isMounted) {
       const characters = getCharactersForDate(date);
       if (characters.length > 0) {
         return (
@@ -92,9 +166,9 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
     return null;
   };
 
-  // Custom tile className
+  // Custom tile className - only apply after mount to avoid hydration mismatch
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
+    if (view === 'month' && isMounted) {
       const characters = getCharactersForDate(date);
       if (characters.length > 0) {
         return 'has-birthday';
@@ -103,6 +177,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
     return null;
   };
 
+  // Get characters for selected date - use same function as tileContent
   const selectedCharacters = selectedDate ? getCharactersForDate(selectedDate) : [];
 
   return (
@@ -110,7 +185,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
       <div className="wiki-card p-4 md:p-6">
         <div className="mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-100 mb-2 flex items-center gap-3">
-            <i className="fas fa-calendar-alt text-purple-400 text-2xl"></i>
+            <i className="fas fa-calendar-alt text-purple-400 text-2xl" aria-hidden="true"></i>
             Character Birthdays
           </h2>
           <p className="text-gray-400 text-sm md:text-base">
@@ -328,7 +403,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
         <div className="wiki-card p-4 md:p-6">
           <div className="mb-4 pb-3 border-b border-gray-700">
             <h3 className="text-xl md:text-2xl font-bold text-gray-100 flex items-center gap-2">
-              <i className="fas fa-birthday-cake text-purple-400"></i>
+              <i className="fas fa-birthday-cake text-purple-400" aria-hidden="true"></i>
               Birthdays on {format(selectedDate, 'MMMM d')}
             </h3>
             <p className="text-gray-400 text-sm mt-1">
@@ -364,12 +439,12 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
                     <h4 className="text-gray-100 font-semibold text-lg truncate mb-1">{oc.name}</h4>
                     {oc.date_of_birth && (
                       <p className="text-gray-400 text-sm flex items-center gap-2">
-                        <i className="fas fa-calendar text-purple-400/60 text-xs"></i>
-                        {format(new Date(oc.date_of_birth), 'MMMM d')}
+                        <i className="fas fa-calendar text-purple-400/60 text-xs" aria-hidden="true"></i>
+                        {formatDateOfBirth(oc.date_of_birth)}
                       </p>
                     )}
                   </div>
-                  <i className="fas fa-chevron-right text-gray-400 group-hover:text-purple-400 transition-colors flex-shrink-0"></i>
+                  <i className="fas fa-chevron-right text-gray-400 group-hover:text-purple-400 transition-colors flex-shrink-0" aria-hidden="true"></i>
                 </div>
               </Link>
             ))}
@@ -380,7 +455,7 @@ export function BirthdayCalendar({ ocs, className = '' }: BirthdayCalendarProps)
       {selectedDate && selectedCharacters.length === 0 && (
         <div className="wiki-card p-4 md:p-6 text-center">
           <div className="py-8">
-            <i className="fas fa-calendar-times text-4xl text-gray-600 mb-4"></i>
+            <i className="fas fa-calendar-times text-4xl text-gray-600 mb-4" aria-hidden="true"></i>
             <p className="text-gray-400 text-lg">
               No birthdays on {format(selectedDate, 'MMMM d')}
             </p>

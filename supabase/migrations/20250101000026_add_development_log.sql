@@ -17,3 +17,4 @@ COMMENT ON COLUMN character_development_log.change_type IS 'Type of change (pers
 COMMENT ON COLUMN character_development_log.notes IS 'Description of what changed and why';
 
 
+

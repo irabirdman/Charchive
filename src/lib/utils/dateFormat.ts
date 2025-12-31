@@ -2,12 +2,16 @@
  * Timezone constant for EST/EDT (America/New_York)
  * This automatically handles EST (UTC-5) and EDT (UTC-4) transitions
  */
-const EST_TIMEZONE = 'America/New_York';
+export const EST_TIMEZONE = 'America/New_York';
 
 /**
  * Converts a date to EST timezone and returns the date components
  */
-function getDateInEST(date: Date) {
+export function getDateInEST(date: Date) {
+  if (!date || isNaN(date.getTime())) {
+    throw new Error('Invalid date provided to getDateInEST');
+  }
+  
   // Format the date in EST timezone
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: EST_TIMEZONE,
@@ -20,9 +24,21 @@ function getDateInEST(date: Date) {
   });
   
   const parts = formatter.formatToParts(date);
-  const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
-  const month = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
-  const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+  const yearPart = parts.find(p => p.type === 'year');
+  const monthPart = parts.find(p => p.type === 'month');
+  const dayPart = parts.find(p => p.type === 'day');
+  
+  if (!yearPart || !monthPart || !dayPart) {
+    throw new Error('Failed to parse date parts from EST formatter');
+  }
+  
+  const year = parseInt(yearPart.value, 10);
+  const month = parseInt(monthPart.value, 10);
+  const day = parseInt(dayPart.value, 10);
+  
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+    throw new Error(`Invalid date components parsed: year=${year}, month=${month}, day=${day}`);
+  }
   
   return { year, month, day };
 }

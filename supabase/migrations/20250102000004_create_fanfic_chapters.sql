@@ -68,3 +68,4 @@ COMMENT ON COLUMN fanfic_chapters.content IS 'Full chapter content (supports mar
 COMMENT ON COLUMN fanfic_chapters.is_published IS 'Whether the chapter is published and visible to the public';
 COMMENT ON COLUMN fanfic_chapters.published_at IS 'Timestamp when the chapter was published';
 
+

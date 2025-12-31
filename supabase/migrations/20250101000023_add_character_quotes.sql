@@ -32,3 +32,4 @@ CREATE TRIGGER update_character_quotes_updated_at
   EXECUTE FUNCTION update_character_quotes_updated_at();
 
 
+

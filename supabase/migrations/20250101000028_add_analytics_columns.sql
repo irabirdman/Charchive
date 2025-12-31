@@ -12,3 +12,4 @@ COMMENT ON COLUMN ocs.view_count IS 'Number of times the character page has been
 COMMENT ON COLUMN ocs.last_viewed_at IS 'Timestamp of the last view';
 
 
+

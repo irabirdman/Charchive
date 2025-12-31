@@ -45,12 +45,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const revalidate = 60;
 
-// Generate a seed based on the current date (same seed for the same day)
+// Generate a seed based on the current date in EST (same seed for the same day)
 function getDaySeed(): number {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  // Get date components in EST timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', // EST/EDT
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const parts = formatter.formatToParts(today);
+  const year = parts.find(p => p.type === 'year')?.value || '';
+  const month = parts.find(p => p.type === 'month')?.value || '';
+  const day = parts.find(p => p.type === 'day')?.value || '';
   const dateString = `${year}-${month}-${day}`;
   
   // Better hash function to convert date string to number
@@ -193,17 +201,29 @@ export default async function HomePage() {
     .eq('is_public', true)
     .not('date_of_birth', 'is', null);
 
+  // Get today's date in EST timezone
   const today = new Date();
-  const todayMonth = today.getMonth();
-  const todayDay = today.getDate();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', // EST/EDT
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const todayParts = formatter.formatToParts(today);
+  const todayMonth = parseInt(todayParts.find(p => p.type === 'month')?.value || '0', 10) - 1; // Month is 0-indexed
+  const todayDay = parseInt(todayParts.find(p => p.type === 'day')?.value || '0', 10);
 
   const birthdayOCs = (allOCsWithBirthdays || []).filter((oc) => {
     if (!oc.date_of_birth) return false;
     try {
       const birthDate = new Date(oc.date_of_birth);
       if (isNaN(birthDate.getTime())) return false;
+      // Convert birth date to EST for comparison
+      const birthParts = formatter.formatToParts(birthDate);
+      const birthMonth = parseInt(birthParts.find(p => p.type === 'month')?.value || '0', 10) - 1; // Month is 0-indexed
+      const birthDay = parseInt(birthParts.find(p => p.type === 'day')?.value || '0', 10);
       // Match month and day, ignore year
-      return birthDate.getMonth() === todayMonth && birthDate.getDate() === todayDay;
+      return birthMonth === todayMonth && birthDay === todayDay;
     } catch {
       return false;
     }
@@ -337,7 +357,7 @@ export default async function HomePage() {
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-3xl md:text-4xl animate-bounce">
-                  <i className="fas fa-birthday-cake text-white"></i>
+                  <i className="fas fa-birthday-cake text-white" aria-hidden="true"></i>
                 </div>
               </div>
               <div className="flex-1 text-center md:text-left">
@@ -371,7 +391,7 @@ export default async function HomePage() {
                   href="/calendar"
                   className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg transition-all hover:scale-105 shadow-lg text-sm md:text-base flex items-center gap-2"
                 >
-                  <i className="fas fa-calendar-alt"></i>
+                  <i className="fas fa-calendar-alt" aria-hidden="true"></i>
                   View Calendar
                 </Link>
               </div>
@@ -395,14 +415,14 @@ export default async function HomePage() {
       <section className="slide-up">
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-100 flex items-center gap-2 md:gap-3">
-            <i className="fas fa-chart-bar text-purple-400 text-xl md:text-2xl"></i>
+            <i className="fas fa-chart-bar text-purple-400 text-xl md:text-2xl" aria-hidden="true"></i>
             Statistics
           </h2>
           <Link
             href="/stats"
             className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 text-sm md:text-base transition-colors"
           >
-            View Full Stats <i className="fas fa-arrow-right"></i>
+            View Full Stats <i className="fas fa-arrow-right" aria-hidden="true"></i>
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
@@ -452,7 +472,7 @@ export default async function HomePage() {
       {/* Quick Navigation Cards */}
       <section className="slide-up">
         <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-          <i className="fas fa-compass text-xl md:text-2xl text-purple-400"></i>
+          <i className="fas fa-compass text-xl md:text-2xl text-purple-400" aria-hidden="true"></i>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Explore</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -500,7 +520,7 @@ export default async function HomePage() {
       (recentLore.data && recentLore.data.length > 0) ? (
         <section className="slide-up">
           <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-            <i className="fas fa-clock text-xl md:text-2xl text-blue-400"></i>
+            <i className="fas fa-clock text-xl md:text-2xl text-blue-400" aria-hidden="true"></i>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Recently Updated</h2>
           </div>
           <div className="wiki-card p-4 md:p-6">
@@ -555,7 +575,7 @@ export default async function HomePage() {
       {/* Current Projects Section */}
       <section className="slide-up">
         <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-          <i className="fas fa-folder-open text-xl md:text-2xl text-purple-400"></i>
+          <i className="fas fa-folder-open text-xl md:text-2xl text-purple-400" aria-hidden="true"></i>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Current Projects</h2>
         </div>
         <div className="wiki-card p-4 md:p-6">
@@ -579,7 +599,7 @@ export default async function HomePage() {
                     key={index}
                     className={`flex items-start gap-3 p-4 bg-gradient-to-br ${color.bg} rounded-lg`}
                   >
-                    <i className={`${item.icon} ${color.icon} text-xl mt-1`}></i>
+                    <i className={`${item.icon} ${color.icon} text-xl mt-1`} aria-hidden="true"></i>
                     <div>
                       <h3 className="font-semibold text-gray-100 mb-1">{item.title}</h3>
                       <p className="text-sm text-gray-300">{item.description}</p>
@@ -596,7 +616,7 @@ export default async function HomePage() {
       <section className="slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div className="flex items-center gap-2 md:gap-3">
-            <i className="fas fa-dice text-purple-400 text-xl md:text-2xl"></i>
+            <i className="fas fa-dice text-purple-400 text-xl md:text-2xl" aria-hidden="true"></i>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Random Worlds</h2>
           </div>
           <Link
@@ -604,7 +624,7 @@ export default async function HomePage() {
             prefetch={true}
             className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 text-sm md:text-base"
           >
-            View All <i className="fas fa-arrow-right"></i>
+            View All <i className="fas fa-arrow-right" aria-hidden="true"></i>
           </Link>
         </div>
         {randomWorlds.length > 0 ? (
@@ -624,7 +644,7 @@ export default async function HomePage() {
       <section className="slide-up">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div className="flex items-center gap-2 md:gap-3">
-            <i className="fas fa-dice text-pink-400 text-xl md:text-2xl"></i>
+            <i className="fas fa-dice text-pink-400 text-xl md:text-2xl" aria-hidden="true"></i>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-100">Random Characters</h2>
           </div>
           <Link
@@ -632,7 +652,7 @@ export default async function HomePage() {
             prefetch={true}
             className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 text-sm md:text-base"
           >
-            View All <i className="fas fa-arrow-right"></i>
+            View All <i className="fas fa-arrow-right" aria-hidden="true"></i>
           </Link>
         </div>
         {randomOCs.length > 0 ? (

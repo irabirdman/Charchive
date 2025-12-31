@@ -83,3 +83,4 @@ timelines (1) ←→ (many) timeline_event_timelines (many) ←→ (1) timeline_
 
 **All tables are necessary and actively used.** The only cleanup opportunity is the legacy `timeline_id` column on `timeline_events`, which should be removed after updating seed scripts to use the junction table pattern.
 
+

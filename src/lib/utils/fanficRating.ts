@@ -13,3 +13,4 @@ export function getRatingColorClasses(rating?: string | null): string {
   }
 }
 
+

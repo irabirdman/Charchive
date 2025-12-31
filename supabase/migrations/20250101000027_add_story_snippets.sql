@@ -32,3 +32,4 @@ CREATE TRIGGER update_story_snippets_updated_at
   EXECUTE FUNCTION update_story_snippets_updated_at();
 
 
+

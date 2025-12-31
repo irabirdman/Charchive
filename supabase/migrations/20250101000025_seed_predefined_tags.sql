@@ -98,3 +98,4 @@ ON CONFLICT (name) DO NOTHING;
 COMMENT ON TABLE tags IS 'Tag definitions for categorizing characters. Includes predefined tags and user-created tags.';
 
 
+
