@@ -21,6 +21,7 @@ import { FormButton } from './forms/FormButton';
 import { StoryAliasSelector } from './StoryAliasSelector';
 import { optionalUuid, optionalUrl } from '@/lib/utils/zodSchemas';
 import { calculateAge } from '@/lib/utils/ageCalculation';
+import { logger } from '@/lib/logger';
 
 const eventSchema = z.object({
   world_id: z.string().uuid('Invalid world'),
@@ -193,7 +194,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
   };
 
   const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
+    logger.debug('Component', 'TimelineEventForm: Form validation errors', errors);
   };
 
   const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {

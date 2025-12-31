@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { formatDateToEST } from '@/lib/utils/dateFormat';
+import { logger } from '@/lib/logger';
 
 interface WritingPrompt {
   id: string;
@@ -39,13 +40,13 @@ export function WritingPromptsManager() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading prompts:', error);
+        logger.error('Component', 'WritingPromptsManager: Error loading prompts', error);
         alert('Failed to load prompts');
       } else {
         setPrompts(data || []);
       }
     } catch (error) {
-      console.error('Error loading prompts:', error);
+      logger.error('Component', 'WritingPromptsManager: Error loading prompts', error);
       alert('Failed to load prompts');
     } finally {
       setIsLoading(false);
@@ -69,7 +70,7 @@ export function WritingPromptsManager() {
 
       await loadPrompts();
     } catch (error: any) {
-      console.error('Error deleting prompt:', error);
+      logger.error('Component', 'WritingPromptsManager: Error deleting prompt', error);
       alert(error.message || 'Failed to delete prompt');
     }
   };
@@ -92,7 +93,7 @@ export function WritingPromptsManager() {
 
       await loadPrompts();
     } catch (error: any) {
-      console.error('Error updating prompt:', error);
+      logger.error('Component', 'WritingPromptsManager: Error updating prompt', error);
       alert(error.message || 'Failed to update prompt');
     }
   };

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 import { FilterContainer } from './FilterContainer';
 import { FilterInput } from './FilterInput';
 import { FilterSelect } from './FilterSelect';
@@ -58,12 +59,12 @@ export function FanficFilters() {
           .eq('category', 'fanfic')
           .order('name');
         if (error) {
-          console.error('Error fetching fanfic tags:', error);
+          logger.error('Component', 'FanficFilters: Error fetching fanfic tags', error);
         } else if (data) {
           setTags(data);
         }
       } catch (error) {
-        console.error('Error fetching fanfic tags:', error);
+        logger.error('Component', 'FanficFilters: Error fetching fanfic tags', error);
       }
     }
     fetchTags();

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { TimelineEventForm } from './TimelineEventForm';
 import { getCategoryColorClasses } from '@/lib/utils/categoryColors';
 import { calculateAge } from '@/lib/utils/ageCalculation';
+import { logger } from '@/lib/logger';
 
 interface TimelineEventsManagerProps {
   timelineId: string;
@@ -128,7 +129,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
       await loadTimelineAndEvents();
     } catch (error) {
-      console.error('Error removing event from timeline:', error);
+      logger.error('Component', 'TimelineEventsManager: Error removing event from timeline', error);
       alert(error instanceof Error ? error.message : 'Failed to remove event from timeline');
     } finally {
       setIsSaving(false);
@@ -152,7 +153,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
       await loadTimelineAndEvents();
     } catch (error) {
-      console.error('Error updating position:', error);
+      logger.error('Component', 'TimelineEventsManager: Error updating position', error);
       alert(error instanceof Error ? error.message : 'Failed to update event position');
     } finally {
       setIsSaving(false);

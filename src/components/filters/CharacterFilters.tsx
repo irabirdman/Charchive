@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { FilterContainer } from './FilterContainer';
 import { FilterInput } from './FilterInput';
 import { FilterSelect } from './FilterSelect';
+import { logger } from '@/lib/logger';
 
 interface World {
   id: string;
@@ -56,13 +57,13 @@ export function CharacterFilters() {
           .select('id, name')
           .order('name');
         if (error) {
-          console.error('Error fetching tags:', error);
+          logger.error('Component', 'CharacterFilters: Error fetching tags', error);
           // Silently fail - tags are optional
           return;
         }
         if (data) setTags(data);
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        logger.error('Component', 'CharacterFilters: Error fetching tags', error);
         // Silently fail - tags are optional
       }
     }

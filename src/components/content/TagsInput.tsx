@@ -175,7 +175,7 @@ export function TagsInput({
           </label>
         )}
         <div className="relative">
-          <div className="flex flex-wrap gap-2 p-2 border border-gray-600 rounded-lg bg-gray-800/30 min-h-[42px] focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500">
+          <div className="flex flex-wrap gap-2 p-3 border border-gray-600 rounded-lg bg-gray-800/30 min-h-[72px] focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500">
             {selectedTags.map(tag => (
               <span
                 key={tag.id}

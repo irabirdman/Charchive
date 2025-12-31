@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface SiteSettings {
   websiteName: string;
@@ -34,17 +35,16 @@ export function SiteSettingsForm() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API response not OK:', response.status, errorText);
+        logger.error('Component', 'SiteSettingsForm: API response not OK', { status: response.status, errorText });
         setMessage({ type: 'error', text: `Failed to load settings (${response.status})` });
         setIsLoading(false);
         return;
       }
 
       const result = await response.json();
-      console.log('Settings API response:', result);
 
       if (!result.success) {
-        console.error('API returned error:', result.error);
+        logger.error('Component', 'SiteSettingsForm: API returned error', result.error);
         setMessage({ type: 'error', text: result.error || 'Failed to load settings' });
         setIsLoading(false);
         return;
@@ -52,7 +52,6 @@ export function SiteSettingsForm() {
 
       // If data exists, populate the form. If null, leave form empty (no file fallback)
       if (result.data) {
-        console.log('Loading settings from database:', result.data);
         setSettings({
           websiteName: result.data.website_name || '',
           websiteDescription: result.data.website_description || '',
@@ -61,13 +60,9 @@ export function SiteSettingsForm() {
           authorName: result.data.author_name || '',
           shortName: result.data.short_name || '',
         });
-      } else {
-        // No data in database - form will be empty, user needs to fill it in
-        console.log('No database settings found. Form will be empty.');
-        // Settings state already initialized with empty strings, so no action needed
       }
     } catch (error) {
-      console.error('Failed to fetch settings:', error);
+      logger.error('Component', 'SiteSettingsForm: Failed to fetch settings', error);
       setMessage({ type: 'error', text: `Failed to load settings: ${error instanceof Error ? error.message : 'Unknown error'}` });
     } finally {
       setIsLoading(false);
@@ -87,7 +82,7 @@ export function SiteSettingsForm() {
         altIconUrl: settings.altIconUrl?.trim() || null,
       };
 
-      console.log('[SiteSettingsForm] Submitting data:', {
+      logger.debug('Component', 'SiteSettingsForm: Submitting data', {
         iconUrl: submitData.iconUrl,
         altIconUrl: submitData.altIconUrl,
         hasIconUrl: !!submitData.iconUrl,

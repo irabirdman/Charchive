@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { logger } from '@/lib/logger';
 
 interface WritingPromptResponse {
   id: string;
@@ -52,13 +53,13 @@ export function WritingPromptResponsesManager() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading responses:', error);
+        logger.error('Component', 'WritingPromptResponsesManager: Error loading responses', error);
         alert('Failed to load responses');
       } else {
         setResponses(data || []);
       }
     } catch (error) {
-      console.error('Error loading responses:', error);
+      logger.error('Component', 'WritingPromptResponsesManager: Error loading responses', error);
       alert('Failed to load responses');
     } finally {
       setIsLoading(false);
@@ -82,7 +83,7 @@ export function WritingPromptResponsesManager() {
 
       await loadResponses();
     } catch (error: any) {
-      console.error('Error deleting response:', error);
+      logger.error('Component', 'WritingPromptResponsesManager: Error deleting response', error);
       alert(error.message || 'Failed to delete response');
     }
   };

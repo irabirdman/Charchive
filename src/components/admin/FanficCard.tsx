@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getRatingColorClasses } from '@/lib/utils/fanficRating';
+import { logger } from '@/lib/logger';
 
 interface FanficCardProps {
   fanfic: {
@@ -45,7 +46,7 @@ export function FanficCard({ fanfic }: FanficCardProps) {
       // Refresh the page to update the list
       router.refresh();
     } catch (error) {
-      console.error('Error deleting fanfic:', error);
+      logger.error('Component', 'FanficCard: Error deleting fanfic', error);
       alert(error instanceof Error ? error.message : 'Failed to delete fanfic. Please try again.');
       setDeleting(false);
     }

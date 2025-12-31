@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 // Minimal type for writing prompts - only requires the fields we actually use
 interface PromptOC {
@@ -393,7 +394,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '', isAdmin = fa
         });
 
       if (error) {
-        console.error('Error saving response:', error);
+        logger.error('Component', 'WritingPrompts: Error saving response', error);
         setSaveMessage({ type: 'error', text: 'Failed to save response. Please try again.' });
       } else {
         setSaveMessage({ type: 'success', text: 'Response saved! View it on the character\'s page.' });
@@ -402,7 +403,7 @@ export function WritingPrompts({ ocs, prompts = [], className = '', isAdmin = fa
         setTimeout(() => setSaveMessage(null), 5000);
       }
     } catch (error) {
-      console.error('Error saving response:', error);
+      logger.error('Component', 'WritingPrompts: Error saving response', error);
       setSaveMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsSaving(false);

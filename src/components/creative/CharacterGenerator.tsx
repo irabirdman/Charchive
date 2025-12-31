@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 import { extractColorName } from '@/lib/utils/colorHexUtils';
+import { logger } from '@/lib/logger';
 
 interface GeneratedCharacter {
   name: string;
@@ -286,13 +287,6 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
     const weapons = getOptions(weaponOptions);
     const elements = getOptions(elementOptions);
     
-    // Debug logging to verify options are loaded
-    console.log('Character Generator Options:', {
-      settings: settings.length,
-      tropes: tropes.length,
-      weapons: weapons.length,
-      elements: elements.length,
-    });
     
     const positive = getOptions(positiveTraitsOptions);
     const neutral = getOptions(neutralTraitsOptions);
@@ -324,13 +318,7 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
       age: generateWeightedAge(), // Weighted toward 10-35
     };
 
-    // Debug logging to verify generated values
-    console.log('Generated Character Values:', {
-      setting: character.setting,
-      trope: character.trope,
-      weapon: character.weapon,
-      element: character.element,
-    });
+    // Debug logging removed
 
     setGenerated(character);
     setHistory((prev) => [character, ...prev].slice(0, 10)); // Keep last 10

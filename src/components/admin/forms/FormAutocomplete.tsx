@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { UseFormRegisterReturn, ControllerRenderProps } from 'react-hook-form';
 import { useDropdownOptions } from '@/hooks/useDropdownOptions';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
+import { logger } from '@/lib/logger';
 
 interface FormAutocompleteProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'onBlur' | 'onKeyDown'> {
   register?: UseFormRegisterReturn;
@@ -82,7 +83,7 @@ export const FormAutocomplete = React.forwardRef<HTMLInputElement, FormAutocompl
         // Debug logging in development
         if (process.env.NODE_ENV === 'development' && isLoading === false) {
           if (opts.length === 0 && !hookError) {
-            console.warn(`[FormAutocomplete] No options found for field "${optionsSource}"`);
+            logger.warn('Component', `FormAutocomplete: No options found for field "${optionsSource}"`);
           }
         }
         

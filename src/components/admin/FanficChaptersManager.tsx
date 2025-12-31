@@ -187,7 +187,7 @@ export function FanficChaptersManager({ fanficId }: FanficChaptersManagerProps) 
       setSuccess(`Chapter ${data.chapter?.chapter_number || ''} saved successfully!`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Error saving chapter:', err);
+      logger.error('Component', 'FanficChaptersManager: Error saving chapter', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to save chapter';
       setChapterErrors({ ...chapterErrors, [chapterId]: errorMessage });
     } finally {
@@ -235,7 +235,7 @@ export function FanficChaptersManager({ fanficId }: FanficChaptersManagerProps) 
         setTimeout(() => setSuccess(null), 5000);
       }
     } catch (err) {
-      console.error('Error creating chapter:', err);
+      logger.error('Component', 'FanficChaptersManager: Error creating chapter', err);
       setError(err instanceof Error ? err.message : 'Failed to create chapter');
     } finally {
       setSavingChapterId(null);
@@ -273,7 +273,7 @@ export function FanficChaptersManager({ fanficId }: FanficChaptersManagerProps) 
       setSuccess(`Chapter ${chapterNum} deleted successfully!`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Error deleting chapter:', err);
+      logger.error('Component', 'FanficChaptersManager: Error deleting chapter', err);
       setError(err instanceof Error ? err.message : 'Failed to delete chapter');
     } finally {
       setSavingChapterId(null);

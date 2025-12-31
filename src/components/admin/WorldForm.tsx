@@ -19,6 +19,7 @@ import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
 import { StoryAliasManager } from './StoryAliasManager';
 import { WorldStorySwitcher } from './WorldStorySwitcher';
+import { logger } from '@/lib/logger';
 import { WorldRacesManager } from './WorldRacesManager';
 import { optionalString, optionalUrl } from '@/lib/utils/zodSchemas';
 import { autoCreateWorldFieldOptions } from '@/lib/utils/autoCreateOptions';
@@ -128,7 +129,7 @@ export function WorldForm({ world }: WorldFormProps) {
         setStoryData(null);
       }
     } catch (error) {
-      console.error('Error loading story data:', error);
+      logger.error('Component', 'WorldForm: Error loading story data', error);
       setStoryData(null);
     } finally {
       setIsLoadingStoryData(false);
@@ -190,7 +191,7 @@ export function WorldForm({ world }: WorldFormProps) {
           // Clear draft races after successful creation
           setDraftRaces([]);
         } catch (err) {
-          console.error('Failed to create races after world creation:', err);
+          logger.error('Component', 'WorldForm: Failed to create races after world creation', err);
           // Don't block the success message, but log the error
         }
       }
@@ -492,7 +493,7 @@ export function WorldForm({ world }: WorldFormProps) {
       }
     } catch (error) {
       // Log but don't block form submission if option creation fails
-      console.warn('[WorldForm] Failed to auto-create some options:', error);
+      logger.warn('Component', 'WorldForm: Failed to auto-create some options', error);
     }
 
     if (world && selectedStoryAliasId) {
@@ -587,7 +588,7 @@ export function WorldForm({ world }: WorldFormProps) {
   const success = customSuccess || baseSubmit.success;
 
   const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
+    logger.debug('Component', 'WorldForm: Form validation errors', errors);
   };
 
   const handleCancel = useCallback(() => {

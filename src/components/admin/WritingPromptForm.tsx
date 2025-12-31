@@ -12,6 +12,7 @@ import { FormSelect } from './forms/FormSelect';
 import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
+import { logger } from '@/lib/logger';
 
 const promptSchema = z.object({
   category: z.string().min(1, 'Category is required'),
@@ -205,7 +206,7 @@ export function WritingPromptForm({ prompt }: WritingPromptFormProps) {
         router.push('/admin/writing-prompts');
       }, 1000);
     } catch (err: any) {
-      console.error('Error saving prompt:', err);
+      logger.error('Component', 'WritingPromptForm: Error saving prompt', err);
       setError(err.message || 'Failed to save prompt');
     } finally {
       setIsSubmitting(false);
