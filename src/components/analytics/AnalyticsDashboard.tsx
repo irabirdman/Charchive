@@ -3,6 +3,7 @@
 import type { OC } from '@/types/oc';
 import { StatCard } from '@/components/stats/StatCard';
 import Link from 'next/link';
+import { formatDateToEST } from '@/lib/utils/dateFormat';
 
 interface AnalyticsDashboardProps {
   ocs: OC[];
@@ -137,7 +138,7 @@ export function AnalyticsDashboard({ ocs, className = '' }: AnalyticsDashboardPr
                 >
                   <span className="text-gray-100 font-medium">{oc.name}</span>
                   <div className="text-gray-400 text-sm">
-                    {new Date(oc.updated_at).toLocaleDateString()}
+                    {formatDateToEST(oc.updated_at)}
                   </div>
                 </Link>
               ))}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { formatDateToEST } from '@/lib/utils/dateFormat';
 
 interface WritingPrompt {
   id: string;
@@ -224,7 +225,7 @@ export function WritingPromptsManager() {
                       </div>
                       <p className="text-gray-200">{prompt.prompt_text}</p>
                       <div className="mt-2 text-xs text-gray-400">
-                        Updated {new Date(prompt.updated_at).toLocaleDateString()}
+                        Updated {formatDateToEST(prompt.updated_at)}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -29,6 +29,7 @@ const colors = {
 const getTimestamp = () => {
   const now = new Date();
   return now.toLocaleTimeString('en-US', { 
+    timeZone: 'America/New_York', // EST/EDT
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',

@@ -1,4 +1,33 @@
 /**
+ * Timezone constant for EST/EDT (America/New_York)
+ * This automatically handles EST (UTC-5) and EDT (UTC-4) transitions
+ */
+const EST_TIMEZONE = 'America/New_York';
+
+/**
+ * Converts a date to EST timezone and returns the date components
+ */
+function getDateInEST(date: Date) {
+  // Format the date in EST timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: EST_TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
+  const month = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
+  const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+  
+  return { year, month, day };
+}
+
+/**
  * Formats a date string to "December 8" format
  * Handles various input formats:
  * - MM/DD (e.g., "12/08" -> "December 8")
@@ -37,13 +66,12 @@ export function formatDateOfBirth(dateStr: string | null | undefined): string {
     }
   }
 
-  // Try parsing as a Date object
+  // Try parsing as a Date object and convert to EST
   const date = new Date(trimmed);
   if (!isNaN(date.getTime())) {
-    const month = date.getMonth();
-    const day = date.getDate();
-    if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
-      return `${monthNames[month]} ${day}`;
+    const { month, day } = getDateInEST(date);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${monthNames[month - 1]} ${day}`;
     }
   }
 
@@ -52,7 +80,7 @@ export function formatDateOfBirth(dateStr: string | null | undefined): string {
 }
 
 /**
- * Formats a date string to a readable "Last updated" format
+ * Formats a date string to a readable "Last updated" format in EST timezone
  * Examples: "December 8, 2024" or "January 15, 2024"
  */
 export function formatLastUpdated(dateStr: string | null | undefined): string {
@@ -66,11 +94,44 @@ export function formatLastUpdated(dateStr: string | null | undefined): string {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const month = monthNames[date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
+  const { month, day, year } = getDateInEST(date);
 
-  return `${month} ${day}, ${year}`;
+  return `${monthNames[month - 1]} ${day}, ${year}`;
+}
+
+/**
+ * Formats a date to a locale date string in EST timezone
+ */
+export function formatDateToEST(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return '';
+  
+  return dateObj.toLocaleDateString('en-US', {
+    timeZone: EST_TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Formats a date to a locale time string in EST timezone
+ */
+export function formatTimeToEST(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return '';
+  
+  return dateObj.toLocaleTimeString('en-US', {
+    timeZone: EST_TIMEZONE,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 

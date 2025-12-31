@@ -104,12 +104,12 @@ export function FanficCard({ fanfic }: FanficCardProps) {
                   {fanfic.characters.slice(0, 4).map((char, idx) => (
                     <span key={idx} className="text-xs text-gray-300">
                       {char.oc?.name || char.name}
-                      {idx < Math.min(fanfic.characters.length, 4) - 1 ? ',' : ''}
+                      {idx < Math.min(fanfic.characters?.length ?? 0, 4) - 1 ? ',' : ''}
                     </span>
                   ))}
-                  {fanfic.characters.length > 4 && (
+                  {(fanfic.characters?.length ?? 0) > 4 && (
                     <span className="text-xs text-gray-500">
-                      +{fanfic.characters.length - 4} more
+                      +{(fanfic.characters?.length ?? 0) - 4} more
                     </span>
                   )}
                 </div>

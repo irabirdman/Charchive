@@ -7,6 +7,7 @@ import { FormSelect } from './forms/FormSelect';
 import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { createClient } from '@/lib/supabase/client';
+import { formatDateToEST } from '@/lib/utils/dateFormat';
 
 interface DevelopmentLogEntry {
   id: string;
@@ -110,7 +111,7 @@ export function DevelopmentLogFormSection({ ocId }: DevelopmentLogFormSectionPro
                         {changeTypes.find(t => t.value === entry.change_type)?.label || entry.change_type}
                       </span>
                       <span className="text-xs text-gray-400">
-                        {new Date(entry.created_at).toLocaleDateString()}
+                        {formatDateToEST(entry.created_at)}
                       </span>
                     </div>
                     <p className="text-gray-200 text-sm">{entry.notes}</p>
