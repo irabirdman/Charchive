@@ -83,8 +83,16 @@ export function SiteSettingsForm() {
       // Prepare data for submission, converting empty strings to null for optional fields
       const submitData = {
         ...settings,
+        iconUrl: settings.iconUrl?.trim() || '',
         altIconUrl: settings.altIconUrl?.trim() || null,
       };
+
+      console.log('[SiteSettingsForm] Submitting data:', {
+        iconUrl: submitData.iconUrl,
+        altIconUrl: submitData.altIconUrl,
+        hasIconUrl: !!submitData.iconUrl,
+        hasAltIconUrl: !!submitData.altIconUrl,
+      });
 
       const response = await fetch('/api/admin/site-settings', {
         method: 'PUT',

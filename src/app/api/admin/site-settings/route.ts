@@ -57,6 +57,14 @@ export async function PUT(request: Request) {
     const supabase = createAdminClient();
     const body = await request.json();
     
+    console.log('[PUT /api/admin/site-settings] Received body:', {
+      websiteName: body.websiteName,
+      iconUrl: body.iconUrl,
+      altIconUrl: body.altIconUrl,
+      hasIconUrl: !!body.iconUrl,
+      hasAltIconUrl: !!body.altIconUrl,
+    });
+    
     const {
       websiteName,
       websiteDescription,
@@ -66,19 +74,22 @@ export async function PUT(request: Request) {
       shortName,
     } = body;
 
+    // Normalize iconUrl: trim whitespace
+    const normalizedIconUrl = iconUrl && typeof iconUrl === 'string' ? iconUrl.trim() : '';
+    
     // Normalize altIconUrl: convert empty strings, null, or undefined to null
-    const normalizedAltIconUrl = altIconUrl && altIconUrl.trim() ? altIconUrl.trim() : null;
+    const normalizedAltIconUrl = altIconUrl && typeof altIconUrl === 'string' && altIconUrl.trim() ? altIconUrl.trim() : null;
 
     // Get site URL from environment variable
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 
     // Validate required fields
     const missingFields = [];
-    if (!websiteName) missingFields.push('websiteName');
-    if (!websiteDescription) missingFields.push('websiteDescription');
-    if (!iconUrl) missingFields.push('iconUrl');
-    if (!authorName) missingFields.push('authorName');
-    if (!shortName) missingFields.push('shortName');
+    if (!websiteName || !websiteName.trim()) missingFields.push('websiteName');
+    if (!websiteDescription || !websiteDescription.trim()) missingFields.push('websiteDescription');
+    if (!normalizedIconUrl) missingFields.push('iconUrl');
+    if (!authorName || !authorName.trim()) missingFields.push('authorName');
+    if (!shortName || !shortName.trim()) missingFields.push('shortName');
     
     if (missingFields.length > 0) {
       console.error('[PUT /api/admin/site-settings] Missing required fields:', missingFields);
@@ -103,15 +114,21 @@ export async function PUT(request: Request) {
     if (existing) {
       // Update existing row
       const updateData = {
-        website_name: websiteName,
-        website_description: websiteDescription,
-        icon_url: iconUrl,
+        website_name: websiteName.trim(),
+        website_description: websiteDescription.trim(),
+        icon_url: normalizedIconUrl,
         alt_icon_url: normalizedAltIconUrl,
         site_url: siteUrl,
-        author_name: authorName,
-        short_name: shortName,
+        author_name: authorName.trim(),
+        short_name: shortName.trim(),
         updated_at: new Date().toISOString(),
       };
+      
+      console.log('[PUT /api/admin/site-settings] Updating with data:', {
+        icon_url: updateData.icon_url,
+        alt_icon_url: updateData.alt_icon_url,
+        id: existing.id,
+      });
       
       const { data, error } = await supabase
         .from('site_settings')
@@ -124,22 +141,34 @@ export async function PUT(request: Request) {
         console.error('[PUT /api/admin/site-settings] Update error:', {
           code: error.code,
           message: error.message,
+          details: error.details,
+          hint: error.hint,
         });
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
       }
+
+      console.log('[PUT /api/admin/site-settings] Successfully updated:', {
+        icon_url: data?.icon_url,
+        alt_icon_url: data?.alt_icon_url,
+      });
 
       result = data;
     } else {
       // Insert new row
       const insertData = {
-        website_name: websiteName,
-        website_description: websiteDescription,
-        icon_url: iconUrl,
+        website_name: websiteName.trim(),
+        website_description: websiteDescription.trim(),
+        icon_url: normalizedIconUrl,
         alt_icon_url: normalizedAltIconUrl,
         site_url: siteUrl,
-        author_name: authorName,
-        short_name: shortName,
+        author_name: authorName.trim(),
+        short_name: shortName.trim(),
       };
+      
+      console.log('[PUT /api/admin/site-settings] Inserting with data:', {
+        icon_url: insertData.icon_url,
+        alt_icon_url: insertData.alt_icon_url,
+      });
       
       const { data, error } = await supabase
         .from('site_settings')
@@ -151,9 +180,16 @@ export async function PUT(request: Request) {
         console.error('[PUT /api/admin/site-settings] Insert error:', {
           code: error.code,
           message: error.message,
+          details: error.details,
+          hint: error.hint,
         });
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
       }
+
+      console.log('[PUT /api/admin/site-settings] Successfully inserted:', {
+        icon_url: data?.icon_url,
+        alt_icon_url: data?.alt_icon_url,
+      });
 
       result = data;
     }
