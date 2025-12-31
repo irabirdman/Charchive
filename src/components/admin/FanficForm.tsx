@@ -553,7 +553,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
           </p>
           <div className="space-y-4">
             {characterFields.map((field, index) => {
-              const characterValue = watch(`characters.${index}`);
+              const characterValue = watch(`characters.${index}` as any);
               
               return (
                 <div key={field.id} className="border border-gray-700 rounded p-4 space-y-3">
