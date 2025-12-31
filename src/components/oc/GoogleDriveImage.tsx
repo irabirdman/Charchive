@@ -2,6 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect, memo } from 'react';
 import { getProxyUrl } from '@/lib/utils/googleDriveImage';
+import { logger } from '@/lib/logger';
 
 interface GoogleDriveImageProps {
   src: string;
@@ -51,7 +52,7 @@ function GoogleDriveImageComponent({
     if (img.naturalWidth === 1 && img.naturalHeight === 1 && !hasError) {
       // This is the transparent PNG fallback from the proxy
       setHasError(true);
-      console.warn('Google Drive image not accessible. File may need to be shared publicly.', {
+      logger.warn('Component', 'GoogleDriveImage: Google Drive image not accessible. File may need to be shared publicly.', {
         originalUrl: src,
         proxyUrl: imageUrl,
         fileId: src.includes('drive.google.com') ? src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] : null,
@@ -59,7 +60,7 @@ function GoogleDriveImageComponent({
     } else if (errorCountRef.current >= 2 && !hasError) {
       // After 2 attempts, show fallback
       setHasError(true);
-      console.error('Failed to load image after multiple attempts.', {
+      logger.error('Component', 'GoogleDriveImage: Failed to load image after multiple attempts.', {
         originalUrl: src,
         proxyUrl: imageUrl,
         attempts: errorCountRef.current,

@@ -14,6 +14,7 @@ import { FormInput } from './forms/FormInput';
 import { FormSelect } from './forms/FormSelect';
 import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
+import { logger } from '@/lib/logger';
 import { FormMessage } from './forms/FormMessage';
 import { StoryAliasSelector } from './StoryAliasSelector';
 import { EraSystemManager } from './EraSystemManager';
@@ -88,7 +89,7 @@ export function TimelineForm({ timeline }: TimelineFormProps) {
   };
 
   const onError = (errors: any) => {
-    console.error('Form validation errors:', errors);
+    logger.debug('Component', 'TimelineForm: Form validation errors', errors);
   };
 
   const handleSaveAndClose = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {

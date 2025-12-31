@@ -94,7 +94,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
       await loadTimelineAndEvents();
     } catch (error) {
-      console.error('Error adding event to timeline:', error);
+      logger.error('Component', 'TimelineEventsManager: Error adding event to timeline', error);
       alert(error instanceof Error ? error.message : 'Failed to add event to timeline');
     } finally {
       setIsSaving(false);

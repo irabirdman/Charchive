@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { convertGoogleDriveUrl, isGoogleSitesUrl, getProxyUrl, getGoogleDriveFileId } from '@/lib/utils/googleDriveImage';
 import { GoogleDriveImage } from '@/components/oc/GoogleDriveImage';
+import { logger } from '@/lib/logger';
 
 interface OCGalleryProps {
   images: string[];
@@ -137,8 +138,7 @@ export function OCGallery({ images, ocName }: OCGalleryProps) {
       // All URLs failed
       setImageLoading(false);
       setImageError(true);
-      console.error('Failed to load image. Tried URLs:', imageUrls);
-      console.error('Original URL:', selectedImage);
+      logger.error('Component', 'OCGallery: Failed to load image', { imageUrls, originalUrl: selectedImage });
     }
   };
 

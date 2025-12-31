@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FormLabel } from './forms/FormLabel';
 import { FormInput } from './forms/FormInput';
 import { FormButton } from './forms/FormButton';
+import { logger } from '@/lib/logger';
 
 export interface EraDefinition {
   name: string;
@@ -70,7 +71,7 @@ export function EraSystemManager({ value, onChange, disabled }: EraSystemManager
     try {
       return parseEras(value);
     } catch (error) {
-      console.warn('Error parsing eras:', error);
+      logger.warn('Component', 'EraSystemManager: Error parsing eras', error);
       return [];
     }
   });
@@ -80,7 +81,7 @@ export function EraSystemManager({ value, onChange, disabled }: EraSystemManager
       const parsed = parseEras(value);
       setEras(parsed);
     } catch (error) {
-      console.warn('Error parsing eras in useEffect:', error);
+      logger.warn('Component', 'EraSystemManager: Error parsing eras in useEffect', error);
       setEras([]);
     }
   }, [value]);
