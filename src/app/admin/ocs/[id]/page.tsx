@@ -186,7 +186,7 @@ export default async function EditOCPage({
   }
 
   if (ocError) {
-    console.error('[EditOCPage] Supabase OC query error:', {
+    logger.error('Page', 'admin/ocs/[id]: Supabase OC query error', {
       id: params.id,
       error: ocError.message,
       code: ocError.code,
@@ -194,7 +194,7 @@ export default async function EditOCPage({
   }
 
   if (!oc) {
-    console.error('[EditOCPage] Character not found:', params.id);
+    logger.error('Page', 'admin/ocs/[id]: Character not found', params.id);
     notFound();
   }
 
@@ -204,7 +204,7 @@ export default async function EditOCPage({
     .select('id, name, slug, family, friends_allies, rivals_enemies, romantic, other_relationships');
 
   if (allOCsError) {
-    console.error('[EditOCPage] Error fetching all OCs for reverse relationships:', {
+    logger.error('Page', 'admin/ocs/[id]: Error fetching all OCs for reverse relationships', {
       error: allOCsError.message,
       code: allOCsError.code,
     });
