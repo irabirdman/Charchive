@@ -258,11 +258,38 @@ function getWeightedPronouns(pronouns: string[], gender?: string): string | unde
   const weights = pronouns.map(pronoun => {
     const lowerPronoun = pronoun.toLowerCase();
     
+    // Cisgender people use binary pronouns matching their identity - no mixed pronouns
+    if (lowerGender.includes('cisgender') || lowerGender === 'cis') {
+      // Pure binary pronouns only - no "they" in mixed pronouns
+      if (lowerPronoun.includes('she') && lowerPronoun.includes('her') && 
+          !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 9; // Very high weight for pure she/her
+      }
+      if (lowerPronoun.includes('he') && lowerPronoun.includes('him') && 
+          !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 9; // Very high weight for pure he/him
+      }
+      // Mixed pronouns like "he/they" or "she/they" are very unlikely for cisgender
+      if (lowerPronoun.includes('/') && (lowerPronoun.includes('they') || lowerPronoun.includes('them'))) {
+        return 0.5; // Very low weight - almost never
+      }
+      // Pure they/them is also unlikely for cisgender
+      if (lowerPronoun.includes('they') || lowerPronoun.includes('them')) {
+        return 1; // Low weight
+      }
+      return 1;
+    }
+    
     // Female-like genders -> strongly prefer she/her (75% chance)
     const femaleTerms = ['female', 'woman', 'girl', 'f', 'feminine', 'girl', 'lady'];
     if (femaleTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
+      // Prefer pure she/her over mixed pronouns
+      if (lowerPronoun.includes('she') && lowerPronoun.includes('her') && 
+          !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 9; // Very high weight for pure she/her
+      }
       if (lowerPronoun.includes('she') || lowerPronoun.includes('her')) {
-        return 8; // Higher weight
+        return 7; // High weight for she/her (including mixed)
       }
       return 1; // Lower weight for others
     }
@@ -270,8 +297,13 @@ function getWeightedPronouns(pronouns: string[], gender?: string): string | unde
     // Male-like genders -> strongly prefer he/him (75% chance)
     const maleTerms = ['male', 'man', 'boy', 'm', 'masculine', 'guy', 'gentleman'];
     if (maleTerms.some(term => lowerGender.includes(term) || lowerGender === term)) {
+      // Prefer pure he/him over mixed pronouns
+      if (lowerPronoun.includes('he') && lowerPronoun.includes('him') && 
+          !lowerPronoun.includes('they') && !lowerPronoun.includes('them')) {
+        return 9; // Very high weight for pure he/him
+      }
       if (lowerPronoun.includes('he') || lowerPronoun.includes('him')) {
-        return 8; // Higher weight
+        return 7; // High weight for he/him (including mixed)
       }
       return 1; // Lower weight for others
     }
@@ -334,6 +366,34 @@ function getWeightedSex(sexes: string[], gender?: string, pronouns?: string): st
     // Check if sex is binary
     const isFemaleSex = lowerSex.includes('female') || lowerSex === 'f';
     const isMaleSex = lowerSex.includes('male') || lowerSex === 'm';
+    
+    // Cisgender people have binary sex that matches their gender identity
+    if (lowerGender.includes('cisgender') || lowerGender === 'cis') {
+      // If pronouns are he/him, prefer male sex
+      if ((lowerPronouns.includes('he') || lowerPronouns.includes('him')) && 
+          !lowerPronouns.includes('they') && !lowerPronouns.includes('them')) {
+        if (isMaleSex) {
+          return 10; // Very high weight
+        }
+        return 1;
+      }
+      // If pronouns are she/her, prefer female sex
+      if ((lowerPronouns.includes('she') || lowerPronouns.includes('her')) && 
+          !lowerPronouns.includes('they') && !lowerPronouns.includes('them')) {
+        if (isFemaleSex) {
+          return 10; // Very high weight
+        }
+        return 1;
+      }
+      // For cisgender, strongly prefer binary sex over non-binary
+      if (isFemaleSex || isMaleSex) {
+        return 8; // High weight for binary sex
+      }
+      if (isNonBinarySex) {
+        return 1; // Low weight for non-binary sex
+      }
+      return 1;
+    }
     
     // Female-like genders -> strongly prefer female sex (80% chance)
     const femaleTerms = ['female', 'woman', 'girl', 'f', 'feminine'];

@@ -541,8 +541,8 @@ function OCAutocompleteInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
-  const nameValue = watch(`${fieldPath}.${index}.name`);
-  const ocIdValue = watch(`${fieldPath}.${index}.oc_id`);
+  const nameValue = watch(`${fieldPath}.${index}.name` as any);
+  const ocIdValue = watch(`${fieldPath}.${index}.oc_id` as any);
 
   // Get all characters that already link to the current character
   const getLinkedCharacterIds = useCallback(() => {
@@ -795,8 +795,8 @@ function RelationshipEntryInput({
     
     // Get current values from the form to avoid duplicates
     const currentValues = fields.map((field: any, idx: number) => {
-      const name = watch(`${fieldPath}.${idx}.name`);
-      const ocId = watch(`${fieldPath}.${idx}.oc_id`);
+      const name = watch(`${fieldPath}.${idx}.name` as any);
+      const ocId = watch(`${fieldPath}.${idx}.oc_id` as any);
       return { name, ocId };
     }).filter(v => v.name);
     
@@ -966,9 +966,9 @@ function RelationshipEntryInput({
                 placeholder="https://example.com/image.jpg"
                 disabled={isSubmitting}
               />
-              {watch(`${fieldPath}.${index}.image_url`) && (
+              {watch(`${fieldPath}.${index}.image_url` as any) && (
                 <ImagePreview 
-                  url={watch(`${fieldPath}.${index}.image_url`)} 
+                  url={watch(`${fieldPath}.${index}.image_url` as any)} 
                   maxHeight="150px"
                   className="mt-2"
                 />
