@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { OCForm } from '@/components/admin/OCForm';
 import type { RelationshipType } from '@/types/oc';
+import { logger } from '@/lib/logger';
 
 // Helper function to check if a string is a UUID
 function isUUID(str: string): boolean {
@@ -25,7 +26,7 @@ export async function generateMetadata({
   const { data: oc, error } = await query.single();
 
   if (error) {
-    console.error('[generateMetadata - Admin] Supabase query error:', {
+    logger.error('Page', 'admin/ocs/[id]: Supabase query error in generateMetadata', {
       id: params.id,
       error: error.message,
       code: error.code,
@@ -33,7 +34,7 @@ export async function generateMetadata({
   }
 
   if (!oc) {
-    console.warn('[generateMetadata - Admin] Character not found:', params.id);
+    logger.warn('Page', 'admin/ocs/[id]: Character not found in generateMetadata', params.id);
     return {
       title: 'Edit Character',
     };
