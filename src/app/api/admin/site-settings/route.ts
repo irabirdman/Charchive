@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { errorResponse, successResponse, handleError } from '@/lib/api/route-helpers';
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 // Ensure runtime is set to nodejs for proper route handler execution
 export const runtime = 'nodejs';
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
 
     // PGRST116 is "not found" - this is normal if no settings exist yet
     if (error && error.code !== 'PGRST116') {
-      console.error('[GET /api/admin/site-settings] Error fetching site settings:', {
+      logger.error('SiteSettings', 'Error fetching site settings', {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
     // Return database data
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('[GET /api/admin/site-settings] Request failed:', {
+    logger.error('SiteSettings', 'Request failed', {
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     return handleError(error, 'Failed to fetch site settings');
@@ -50,14 +51,14 @@ export async function PUT(request: Request) {
     const user = await checkAuth();
     
     if (!user) {
-      console.warn('[PUT /api/admin/site-settings] Unauthorized request');
+      logger.warn('SiteSettings', 'Unauthorized request');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = createAdminClient();
     const body = await request.json();
     
-    console.log('[PUT /api/admin/site-settings] Received body:', {
+    logger.debug('SiteSettings', 'Received body', {
       websiteName: body.websiteName,
       iconUrl: body.iconUrl,
       altIconUrl: body.altIconUrl,
@@ -92,7 +93,7 @@ export async function PUT(request: Request) {
     if (!shortName || !shortName.trim()) missingFields.push('shortName');
     
     if (missingFields.length > 0) {
-      console.error('[PUT /api/admin/site-settings] Missing required fields:', missingFields);
+      logger.error('SiteSettings', 'Missing required fields', missingFields);
       return NextResponse.json({ 
         success: false, 
         error: 'Missing required fields',
@@ -107,7 +108,7 @@ export async function PUT(request: Request) {
       .single();
     
     if (checkError && checkError.code !== 'PGRST116') {
-      console.error('[PUT /api/admin/site-settings] Error checking existing row:', checkError);
+      logger.error('SiteSettings', 'Error checking existing row', checkError);
     }
 
     let result;
@@ -124,7 +125,7 @@ export async function PUT(request: Request) {
         updated_at: new Date().toISOString(),
       };
       
-      console.log('[PUT /api/admin/site-settings] Updating with data:', {
+      logger.debug('SiteSettings', 'Updating with data', {
         icon_url: updateData.icon_url,
         alt_icon_url: updateData.alt_icon_url,
         id: existing.id,
@@ -138,7 +139,7 @@ export async function PUT(request: Request) {
         .single();
 
       if (error) {
-        console.error('[PUT /api/admin/site-settings] Update error:', {
+        logger.error('SiteSettings', 'Update error', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -147,7 +148,7 @@ export async function PUT(request: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
       }
 
-      console.log('[PUT /api/admin/site-settings] Successfully updated:', {
+      logger.info('SiteSettings', 'Successfully updated', {
         icon_url: data?.icon_url,
         alt_icon_url: data?.alt_icon_url,
       });
@@ -165,7 +166,7 @@ export async function PUT(request: Request) {
         short_name: shortName.trim(),
       };
       
-      console.log('[PUT /api/admin/site-settings] Inserting with data:', {
+      logger.debug('SiteSettings', 'Inserting with data', {
         icon_url: insertData.icon_url,
         alt_icon_url: insertData.alt_icon_url,
       });
@@ -177,7 +178,7 @@ export async function PUT(request: Request) {
         .single();
 
       if (error) {
-        console.error('[PUT /api/admin/site-settings] Insert error:', {
+        logger.error('SiteSettings', 'Insert error', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -186,7 +187,7 @@ export async function PUT(request: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
       }
 
-      console.log('[PUT /api/admin/site-settings] Successfully inserted:', {
+      logger.info('SiteSettings', 'Successfully inserted', {
         icon_url: data?.icon_url,
         alt_icon_url: data?.alt_icon_url,
       });
@@ -202,7 +203,7 @@ export async function PUT(request: Request) {
         .single();
 
       if (projectsCheckError && projectsCheckError.code !== 'PGRST116') {
-        console.warn('[PUT /api/admin/site-settings] Error checking current_projects:', projectsCheckError);
+        logger.warn('SiteSettings', 'Error checking current_projects', projectsCheckError);
       }
 
       const projectsDescription = `Welcome to ${websiteName}! ${websiteDescription}`;
@@ -218,7 +219,7 @@ export async function PUT(request: Request) {
           .eq('id', existingProjects.id);
 
         if (updateProjectsError) {
-          console.error('[PUT /api/admin/site-settings] Error updating current_projects:', updateProjectsError);
+          logger.error('SiteSettings', 'Error updating current_projects', updateProjectsError);
         }
       } else {
         // Create current_projects with synced description
@@ -243,17 +244,17 @@ export async function PUT(request: Request) {
           });
 
         if (insertProjectsError) {
-          console.error('[PUT /api/admin/site-settings] Error inserting current_projects:', insertProjectsError);
+          logger.error('SiteSettings', 'Error inserting current_projects', insertProjectsError);
         }
       }
     } catch (projectsError) {
       // Log but don't fail the request if current_projects update fails
-      console.warn('[PUT /api/admin/site-settings] Failed to sync current_projects description:', projectsError);
+      logger.warn('SiteSettings', 'Failed to sync current_projects description', projectsError);
     }
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
-    console.error('[PUT /api/admin/site-settings] Request failed:', {
+    logger.error('SiteSettings', 'Request failed', {
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     return handleError(error, 'Failed to update site settings');

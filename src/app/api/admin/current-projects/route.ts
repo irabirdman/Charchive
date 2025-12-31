@@ -3,6 +3,7 @@ import { errorResponse, successResponse, handleError } from '@/lib/api/route-hel
 import { checkAuth } from '@/lib/auth/require-auth';
 import { NextResponse } from 'next/server';
 import { getSiteConfig } from '@/lib/config/site-config';
+import { logger } from '@/lib/logger';
 
 // Ensure runtime is set to nodejs for proper route handler execution
 export const runtime = 'nodejs';
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 is "not found" - return default if not found
-      console.error('[GET /api/admin/current-projects] Error fetching:', {
+      logger.error('CurrentProjects', 'Error fetching current projects', {
         code: error.code,
         message: error.message,
       });
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
 
     return successResponse(data);
   } catch (error) {
-    console.error('[GET /api/admin/current-projects] Request failed:', {
+    logger.error('CurrentProjects', 'Request failed', {
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     return handleError(error, 'Failed to fetch current projects');
@@ -61,7 +62,7 @@ export async function PUT(request: Request) {
     const user = await checkAuth();
     
     if (!user) {
-      console.warn('[PUT /api/admin/current-projects] Unauthorized request');
+      logger.warn('CurrentProjects', 'Unauthorized request');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -75,7 +76,7 @@ export async function PUT(request: Request) {
     if (project_items === undefined) missingFields.push('project_items');
     
     if (missingFields.length > 0) {
-      console.error('[PUT /api/admin/current-projects] Missing required fields:', missingFields);
+      logger.error('CurrentProjects', 'Missing required fields', missingFields);
       return errorResponse(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
@@ -86,7 +87,7 @@ export async function PUT(request: Request) {
       .single();
     
     if (checkError && checkError.code !== 'PGRST116') {
-      console.error('[PUT /api/admin/current-projects] Error checking existing row:', {
+      logger.error('CurrentProjects', 'Error checking existing row', {
         code: checkError.code,
         message: checkError.message,
       });
@@ -109,7 +110,7 @@ export async function PUT(request: Request) {
         .single();
 
       if (error) {
-        console.error('[PUT /api/admin/current-projects] Update error:', {
+        logger.error('CurrentProjects', 'Update error', {
           code: error.code,
           message: error.message,
         });
@@ -131,7 +132,7 @@ export async function PUT(request: Request) {
         .single();
 
       if (error) {
-        console.error('[PUT /api/admin/current-projects] Insert error:', {
+        logger.error('CurrentProjects', 'Insert error', {
           code: error.code,
           message: error.message,
         });
@@ -143,17 +144,12 @@ export async function PUT(request: Request) {
 
     return successResponse(result);
   } catch (error) {
-    console.error('[PUT /api/admin/current-projects] Request failed:', {
+    logger.error('CurrentProjects', 'Request failed', {
       errorMessage: error instanceof Error ? error.message : String(error),
     });
     return handleError(error, 'Failed to update current projects');
   }
 }
-
-
-
-
-
 
 
 

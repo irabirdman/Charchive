@@ -9,7 +9,45 @@ import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { getSiteConfig } from '@/lib/config/site-config';
 import { getRatingColorClasses } from '@/lib/utils/fanficRating';
 import { ChapterList } from '@/components/fanfic/ChapterList';
-import type { Fanfic } from '@/types/oc';
+import type { Fanfic, FanficCharacter, FanficRelationship, FanficChapter, Tag, OC } from '@/types/oc';
+
+// Types for Supabase query responses
+interface FanficCharacterResponse {
+  id: string;
+  oc_id: string | null;
+  name: string | null;
+  oc?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+}
+
+interface FanficRelationshipResponse {
+  id: string;
+  relationship_text: string;
+  relationship_type: 'romantic' | 'platonic' | 'other' | null;
+}
+
+interface FanficTagResponse {
+  tag: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+interface FanficChapterResponse {
+  id: string;
+  chapter_number: number;
+  title: string | null;
+  content: string | null;
+  word_count: number | null;
+  image_url: string | null;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export async function generateMetadata({
   params,
@@ -93,17 +131,21 @@ export default async function FanficDetailPage({
   const fanfic: Fanfic = {
     ...fanficData,
     characters: Array.isArray(fanficData.characters)
-      ? fanficData.characters.map((fc: any) => ({
+      ? fanficData.characters.map((fc: FanficCharacterResponse): FanficCharacter => ({
           id: fc.id,
           fanfic_id: fanficData.id,
           oc_id: fc.oc_id || null,
           name: fc.name || null,
           created_at: '',
-          oc: fc.oc || undefined,
+          oc: fc.oc ? {
+            id: fc.oc.id,
+            name: fc.oc.name,
+            slug: fc.oc.slug,
+          } as OC : undefined,
         }))
       : [],
     relationships: Array.isArray(fanficData.relationships)
-      ? fanficData.relationships.map((fr: any) => ({
+      ? fanficData.relationships.map((fr: FanficRelationshipResponse): FanficRelationship => ({
           id: fr.id,
           fanfic_id: fanficData.id,
           relationship_text: fr.relationship_text,
@@ -113,14 +155,13 @@ export default async function FanficDetailPage({
       : [],
     tags: Array.isArray(fanficData.tags)
       ? fanficData.tags
-          .map((ft: any) => ft.tag)
-          .filter((t: any) => t !== null && t !== undefined)
-          .flat()
+          .map((ft: FanficTagResponse) => ft.tag)
+          .filter((t: Tag | null): t is Tag => t !== null && t !== undefined)
       : [],
     chapters: Array.isArray(fanficData.chapters)
       ? fanficData.chapters
-          .filter((c: any) => c !== null && c !== undefined && c.is_published)
-          .map((c: any) => ({
+          .filter((c: FanficChapterResponse) => c !== null && c !== undefined && c.is_published)
+          .map((c: FanficChapterResponse): FanficChapter => ({
             id: c.id,
             fanfic_id: fanficData.id,
             chapter_number: c.chapter_number,
@@ -133,7 +174,7 @@ export default async function FanficDetailPage({
             created_at: c.created_at,
             updated_at: c.updated_at,
           }))
-          .sort((a: any, b: any) => a.chapter_number - b.chapter_number)
+          .sort((a: FanficChapter, b: FanficChapter) => a.chapter_number - b.chapter_number)
       : [],
   };
 

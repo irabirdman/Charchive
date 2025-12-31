@@ -36,6 +36,7 @@ import { getGoogleDriveImageUrls } from '@/lib/utils/googleDriveImage';
 import { slugify } from '@/lib/utils/slugify';
 import { autoCreateOptions, autoCreateTemplateOptions, autoCreateWorldFieldOptions } from '@/lib/utils/autoCreateOptions';
 import { DropdownOptionsProvider } from '@/contexts/DropdownOptionsContext';
+import { logger } from '@/lib/logger';
 
 // Component to preview images from URLs
 function ImagePreview({ url, maxHeight = '200px', className = '' }: { url: string; maxHeight?: string; className?: string }) {
@@ -312,8 +313,8 @@ function NameAutocompleteInput({
   currentOCId,
 }: {
   fieldName: 'first_name' | 'last_name';
-  setValue: any;
-  watch: any;
+  setValue: UseFormSetValue<OCFormData>;
+  watch: UseFormWatch<OCFormData>;
   isSubmitting: boolean;
   currentOCId?: string;
 }) {
@@ -370,13 +371,13 @@ function NameAutocompleteInput({
           .limit(15);
 
         if (error) {
-          console.error('Error fetching OCs:', error);
+          logger.error('OCForm', 'Error fetching OCs', error);
           setSuggestions([]);
         } else {
           setSuggestions(data || []);
         }
       } catch (err) {
-        console.error('Error fetching OCs:', err);
+        logger.error('OCForm', 'Error fetching OCs', err);
         setSuggestions([]);
       }
     };
@@ -526,9 +527,9 @@ function OCAutocompleteInput({
 }: {
   fieldPath: string;
   index: number;
-  control: any;
-  setValue: any;
-  watch: any;
+  control: Control<OCFormData>;
+  setValue: UseFormSetValue<OCFormData>;
+  watch: UseFormWatch<OCFormData>;
   isSubmitting: boolean;
   currentOCId?: string;
   reverseRelationships?: ReverseRelationships;
@@ -606,7 +607,7 @@ function OCAutocompleteInput({
           .limit(15);
 
         if (error) {
-          console.error('Error fetching OCs:', error);
+          logger.error('OCForm', 'Error fetching OCs', error);
           setSuggestions([]);
         } else {
           const linkedIds = getLinkedCharacterIds();
@@ -626,7 +627,7 @@ function OCAutocompleteInput({
           setSuggestions(suggestionsWithLinked);
         }
       } catch (err) {
-        console.error('Error fetching OCs:', err);
+        logger.error('OCForm', 'Error fetching OCs', err);
         setSuggestions([]);
       }
     };
@@ -788,9 +789,7 @@ function RelationshipEntryInput({
   // This runs when the component mounts and when defaultValue changes
   useEffect(() => {
     if (!defaultValue || defaultValue.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`RelationshipEntryInput [${fieldPath}]: No default values to initialize`);
-      }
+      logger.debug('OCForm', `RelationshipEntryInput [${fieldPath}]: No default values to initialize`);
       return;
     }
     
@@ -804,9 +803,7 @@ function RelationshipEntryInput({
     const existingNames = new Set(currentValues.map(v => v.name?.toLowerCase().trim()).filter(Boolean));
     const existingIds = new Set(currentValues.map(v => v.ocId).filter(Boolean));
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`RelationshipEntryInput [${fieldPath}]: Initializing with`, defaultValue.length, 'items. Current fields:', fields.length);
-    }
+    logger.debug('OCForm', `RelationshipEntryInput [${fieldPath}]: Initializing with ${defaultValue.length} items. Current fields: ${fields.length}`);
     
     // Add any default values that aren't already in the form
     let addedCount = 0;
@@ -828,14 +825,12 @@ function RelationshipEntryInput({
           image_url: val.image_url || '',
         });
         addedCount++;
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`RelationshipEntryInput [${fieldPath}]: Added`, val.name, val.oc_id ? `(linked: ${val.oc_id})` : '(unlinked)');
-        }
+        logger.debug('OCForm', `RelationshipEntryInput [${fieldPath}]: Added ${val.name} ${val.oc_id ? `(linked: ${val.oc_id})` : '(unlinked)'}`);
       }
     });
     
-    if (process.env.NODE_ENV === 'development' && addedCount > 0) {
-      console.log(`RelationshipEntryInput [${fieldPath}]: Added ${addedCount} new relationship(s)`);
+    if (addedCount > 0) {
+      logger.debug('OCForm', `RelationshipEntryInput [${fieldPath}]: Added ${addedCount} new relationship(s)`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultValue]); // Re-run when defaultValue changes
@@ -1719,8 +1714,8 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
   
   // Debug: Log default values including relationships
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && oc) {
-      console.log('OC Form Default Values for', oc.name, ':', {
+    if (oc) {
+      logger.debug('OCForm', `OC Form Default Values for ${oc.name}`, {
         other_relationships: defaultValues.other_relationships,
         reverseRelationships: reverseRelationships,
       });
@@ -1900,7 +1895,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         setValue('template_type', templateType, { shouldDirty: false });
         setValue('series_type', worldData.series_type, { shouldDirty: false });
       } else {
-        console.error('[OCForm] Failed to fetch world data');
+        logger.error('OCForm', 'Failed to fetch world data');
       }
     }
     loadWorld();
@@ -2071,11 +2066,11 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         }
         
         if (createdOptions.length > 0) {
-          console.log('[OCForm] Auto-created options:', createdOptions);
+          logger.info('OCForm', 'Auto-created options', createdOptions);
         }
       } catch (error) {
         // Log but don't block form submission if option creation fails
-        console.warn('[OCForm] Failed to auto-create some options:', error);
+        logger.warn('OCForm', 'Failed to auto-create some options', error);
       }
 
       // Validate slug uniqueness per world (only when creating)
@@ -2247,7 +2242,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Response error:', errorData);
+        logger.error('OCForm', 'Response error', errorData);
         throw new Error(errorData.error || `Failed to save OC: ${response.statusText}`);
       }
 
@@ -2315,7 +2310,7 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         // with potentially stale data. The form is already updated with the saved data above.
       }
     } catch (err) {
-      console.error('Error saving OC:', err);
+      logger.error('OCForm', 'Error saving OC', err);
       setError(err instanceof Error ? err.message : 'Failed to save OC. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -2386,17 +2381,16 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
 
   // Add handler for form submission errors (validation errors)
   const onError = (errors: any) => {
-    console.error('=== FORM VALIDATION ERRORS ===');
-    console.error('Validation errors:', errors);
+    logger.error('OCForm', 'FORM VALIDATION ERRORS', errors);
     // Avoid JSON.stringify on errors object as it may contain circular references
     
     // Build a detailed error message
     const errorMessages: string[] = [];
-    Object.entries(errors).forEach(([field, error]: [string, any]) => {
+    Object.entries(errors).forEach(([field, error]) => {
       if (Array.isArray(error)) {
         error.forEach((item, index) => {
           if (item && typeof item === 'object') {
-            Object.entries(item).forEach(([subField, subError]: [string, any]) => {
+            Object.entries(item).forEach(([subField, subError]) => {
               if (subError?.message) {
                 errorMessages.push(`${field}[${index}].${subField}: ${subError.message}`);
               }

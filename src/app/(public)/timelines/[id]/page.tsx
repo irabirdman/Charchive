@@ -8,6 +8,25 @@ import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
+import type { World } from '@/types/oc';
+
+// Type for timeline world response
+interface TimelineWorldResponse {
+  name: string;
+  slug: string;
+  is_public?: boolean;
+}
+
+// Type for timeline event association response
+interface TimelineEventAssociation {
+  position: number;
+  event: {
+    id: string;
+    date_data?: unknown;
+    date_text?: string | null;
+    [key: string]: unknown;
+  } | null;
+}
 
 export const revalidate = 300;
 
@@ -34,7 +53,7 @@ export async function generateMetadata({
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const url = `${baseUrl}/timelines/${resolvedParams.id}`;
-  const world = timeline.world as any;
+  const world = timeline.world as TimelineWorldResponse | null;
   const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
   // Use description_markdown for description, clean up markdown syntax
   const descriptionText = timeline.description_markdown || '';
@@ -121,8 +140,8 @@ export default async function TimelinePage({
     .order('position', { ascending: true });
 
   // Extract events from associations and sanitize date_data
-  const events = associations
-    ?.map((assoc: any) => {
+  const events = (associations as TimelineEventAssociation[] | null)
+    ?.map((assoc) => {
       const event = assoc.event;
       if (!event?.id) return null;
       
@@ -139,7 +158,7 @@ export default async function TimelinePage({
       
       return event;
     })
-    .filter((e: any) => e?.id) || [];
+    .filter((e): e is NonNullable<typeof e> => e !== null && e.id !== undefined) || [];
 
   return (
     <div>

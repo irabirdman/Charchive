@@ -40,18 +40,15 @@ export default async function WorldsPage({ searchParams }: WorldsPageProps) {
     query = query.eq('series_type', seriesType);
   }
 
+  // Apply search filter on server-side
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,summary.ilike.%${search}%`);
+  }
+
   const { data: worlds } = await query.order('name', { ascending: true });
 
-  // Filter by search term (name or summary) on the client side
-  let filteredWorlds = worlds || [];
-  if (search) {
-    const searchLower = search.toLowerCase();
-    filteredWorlds = filteredWorlds.filter(
-      (world) =>
-        world.name.toLowerCase().includes(searchLower) ||
-        world.summary?.toLowerCase().includes(searchLower)
-    );
-  }
+  // Use worlds directly (already filtered on server)
+  const filteredWorlds = worlds || [];
 
   // Group by series type if no series type filter is applied
   const canonWorlds = !seriesType

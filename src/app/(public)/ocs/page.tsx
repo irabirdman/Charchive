@@ -64,11 +64,16 @@ export default async function OCsPage({ searchParams }: OCsPageProps) {
     query = query.eq('sex', sex);
   }
 
+  // Apply search filter on server-side if provided
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,history_summary.ilike.%${search}%`);
+  }
+
   let { data: ocs, error: ocsError } = await query.order('name', { ascending: true });
 
   // If query fails (possibly due to tags relationship), retry without tags
   if (ocsError) {
-    console.error('Error fetching OCs with tags, retrying without tags:', ocsError);
+    // Error is expected in some cases, silently retry without tags
     let fallbackQuery = supabase
       .from('ocs')
       .select('*, world:worlds(*)')
@@ -92,11 +97,13 @@ export default async function OCsPage({ searchParams }: OCsPageProps) {
       fallbackQuery = fallbackQuery.eq('sex', sex);
     }
 
+    // Reapply search filter
+    if (search) {
+      fallbackQuery = fallbackQuery.or(`name.ilike.%${search}%,history_summary.ilike.%${search}%`);
+    }
+
     const fallbackResult = await fallbackQuery.order('name', { ascending: true });
     ocs = fallbackResult.data;
-    if (fallbackResult.error) {
-      console.error('Error fetching OCs (fallback):', fallbackResult.error);
-    }
   }
 
   // Filter by tag (client-side since we need to check character_tags relationship)
@@ -108,15 +115,13 @@ export default async function OCsPage({ searchParams }: OCsPageProps) {
     });
   }
 
-  // Filter by search term (name) on the client side since Supabase text search might be complex
+  // Filter by world name on client-side (since it's a joined field)
+  // Note: name and history_summary are already filtered server-side
   let filteredOCs = filteredByTag;
   if (search) {
     const searchLower = search.toLowerCase();
     filteredOCs = filteredOCs.filter(
-      (oc) =>
-        oc.name.toLowerCase().includes(searchLower) ||
-        oc.history_summary?.toLowerCase().includes(searchLower) ||
-        oc.world?.name.toLowerCase().includes(searchLower)
+      (oc) => oc.world?.name.toLowerCase().includes(searchLower)
     );
   }
 
