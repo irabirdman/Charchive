@@ -101,6 +101,45 @@ export function getProxyUrl(url: string | null | undefined): string {
   return url;
 }
 
+/**
+ * Get absolute icon URL with proper Google Drive conversion
+ * For metadata use, we need absolute URLs
+ * @param url - The icon URL (can be relative, absolute, or Google Drive)
+ * @param baseUrl - The base URL of the site
+ * @param useProxy - Whether to use proxy API for Google Drive URLs (default: false)
+ * @returns Absolute URL ready for metadata
+ */
+export function getAbsoluteIconUrl(
+  url: string | null | undefined,
+  baseUrl: string,
+  useProxy: boolean = false
+): string {
+  if (!url) {
+    return url?.startsWith('http') ? url : `${baseUrl}/images/logo.png`;
+  }
+
+  // Convert Google Drive URLs
+  const convertedUrl = convertGoogleDriveUrl(url);
+
+  // For Google Drive URLs in metadata, use proxy API if requested
+  if (useProxy && url.includes('drive.google.com')) {
+    const fileId = getGoogleDriveFileId(url);
+    if (fileId) {
+      return `${baseUrl}/api/images/proxy?fileId=${encodeURIComponent(fileId)}&url=${encodeURIComponent(url)}`;
+    }
+  }
+
+  // Return absolute URL
+  if (convertedUrl.startsWith('http://') || convertedUrl.startsWith('https://')) {
+    return convertedUrl;
+  }
+
+  // Make relative URLs absolute
+  const cleanUrl = convertedUrl.startsWith('/') ? convertedUrl : `/${convertedUrl}`;
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  return `${cleanBase}${cleanUrl}`;
+}
+
 
 
 

@@ -146,7 +146,7 @@ export function generateOpenGraphImage(
     alt?: string;
     fallbackToOgImage?: boolean;
   } = {}
-): Metadata['openGraph']['images'] {
+): Array<{ url: string; width?: number; height?: number; alt?: string }> {
   const { width = 1200, height = 630, alt = 'Image', fallbackToOgImage = true } = options;
 
   if (imageUrl) {

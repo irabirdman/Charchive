@@ -26,6 +26,10 @@ import { formatHeightWithMetric, formatWeightWithMetric } from '@/lib/utils/unit
 import { getRelationshipTypeConfig } from '@/lib/relationships/relationshipTypes';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { getSiteConfig } from '@/lib/config/site-config';
+import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
+import { getAbsoluteUrl } from '@/lib/seo/metadata-helpers';
+import { logger } from '@/lib/logger';
+import { generateProfilePageSchema } from '@/lib/seo/structured-data';
 
 export async function generateMetadata({
   params,
@@ -43,7 +47,7 @@ export async function generateMetadata({
     .single();
 
   if (error) {
-    console.error('[generateMetadata] Supabase query error:', {
+    logger.error('OCMetadata', 'Supabase query error', {
       slug: resolvedParams.slug,
       error: error.message,
       code: error.code,
@@ -51,7 +55,7 @@ export async function generateMetadata({
   }
 
   if (!oc) {
-    console.warn('[generateMetadata] Character not found:', resolvedParams.slug);
+    logger.warn('OCMetadata', 'Character not found', { slug: resolvedParams.slug });
     return {
       title: 'Character Not Found',
     };
@@ -59,17 +63,20 @@ export async function generateMetadata({
 
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const url = `${baseUrl}/ocs/${resolvedParams.slug}`;
+  
   // Use history_summary for description, clean up markdown syntax
   const descriptionText = oc.history_summary || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
-    : `${oc.name}${oc.world ? ` from ${(oc.world as any).name}` : ''} - Original Character on ${config.websiteName}`;
-  const world = oc.world as any;
+    : `${oc.name}${oc.world ? ` from ${(oc.world as { name: string }).name}` : ''} - Original Character on ${config.websiteName}`;
 
-  return {
+  const world = oc.world as { name: string; slug: string } | null;
+  const ogImageUrl = getAbsoluteUrl(`/api/og/oc/${resolvedParams.slug}`, baseUrl);
+
+  return generateDetailPageMetadata({
     title: oc.name,
     description,
+    path: `/ocs/${resolvedParams.slug}`,
     keywords: [
       oc.name,
       'original character',
@@ -77,31 +84,13 @@ export async function generateMetadata({
       world?.name || '',
       'character wiki',
       'fictional character',
-    ].filter(Boolean),
-    openGraph: {
-      title: `${oc.name} | ${config.websiteName}`,
-      description,
-      url,
-      type: 'profile',
-      images: [
-        {
-          url: `${baseUrl}/api/og/oc/${resolvedParams.slug}`,
-          width: 1200,
-          height: 630,
-          alt: oc.name,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${oc.name} | ${config.websiteName}`,
-      description,
-      images: oc.image_url ? [convertGoogleDriveUrl(oc.image_url)] : [`${baseUrl}${convertGoogleDriveUrl(config.iconUrl || '/images/logo.png')}`],
-    },
-    alternates: {
-      canonical: url,
-    },
-  };
+    ],
+    entityName: oc.name,
+    entityImage: oc.image_url || null,
+    entityType: 'profile',
+    imageUrl: ogImageUrl,
+    imageAlt: oc.name,
+  });
 }
 
 export const revalidate = 300;
@@ -172,7 +161,7 @@ export default async function OCDetailPage({
   }
 
   if (error) {
-    console.error('[OCDetailPage] Supabase query error:', {
+    logger.error('OCDetailPage', 'Supabase query error', {
       slug: resolvedParams.slug,
       error: error.message,
       code: error.code,
@@ -180,9 +169,21 @@ export default async function OCDetailPage({
   }
 
   if (!oc) {
-    console.error('[OCDetailPage] Character not found:', resolvedParams.slug);
+    logger.error('OCDetailPage', 'Character not found', { slug: resolvedParams.slug });
     notFound();
   }
+  
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const imageUrl = oc.image_url ? getAbsoluteUrl(convertGoogleDriveUrl(oc.image_url), baseUrl) : null;
+  
+  // Generate structured data for OC profile page
+  const profileSchema = generateProfilePageSchema(oc.name, {
+    description: oc.history_summary || undefined,
+    image: imageUrl ? [imageUrl] : undefined,
+    mainEntityName: oc.name,
+    mainEntityImage: imageUrl || undefined,
+  });
 
   // Fetch quotes
   const { data: quotes } = await supabase
@@ -308,6 +309,10 @@ export default async function OCDetailPage({
 
   return (
     <div suppressHydrationWarning>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema) }}
+      />
       <nav className="flex mb-6 text-sm text-gray-400" suppressHydrationWarning>
         <Link href="/" prefetch={true} className="hover:text-purple-400 transition-colors">
           Home

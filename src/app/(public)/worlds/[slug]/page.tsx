@@ -12,6 +12,7 @@ import { TimelineList } from '@/components/timeline/TimelineList';
 import { LoreCard } from '@/components/lore/LoreCard';
 import { WorldRelationships } from '@/components/world/WorldRelationships';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
+import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
 import Link from 'next/link';
 
 export async function generateMetadata({
@@ -37,17 +38,20 @@ export async function generateMetadata({
 
   const config = await getSiteConfig();
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const url = `${baseUrl}/worlds/${resolvedParams.slug}`;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
+  
   // Prioritize description_markdown, then summary, then fallback
   const descriptionText = world.description_markdown || world.summary || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
     : `${world.name} - ${world.series_type} world on ${config.websiteName}`;
 
-  return {
+  // Use header_image_url or icon_url for OG image
+  const imageUrl = world.header_image_url || world.icon_url || null;
+
+  return generateDetailPageMetadata({
     title: world.name,
     description,
+    path: `/worlds/${resolvedParams.slug}`,
     keywords: [
       world.name,
       world.series_type,
@@ -56,39 +60,12 @@ export async function generateMetadata({
       'universe',
       'OC wiki',
     ],
-    openGraph: {
-      title: `${world.name} | ${config.websiteName}`,
-      description,
-      url,
-      type: 'website',
-      images: world.header_image_url || world.icon_url
-        ? [
-            {
-              url: world.header_image_url || world.icon_url || (iconUrl.startsWith('http') ? iconUrl : `${baseUrl}${iconUrl}`),
-              alt: world.name,
-              width: 1200,
-              height: 630,
-            },
-          ]
-        : [
-            {
-              url: `${baseUrl}/og-image`,
-              width: 1200,
-              height: 630,
-              alt: world.name,
-            },
-          ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${world.name} | ${config.websiteName}`,
-      description,
-      images: world.header_image_url || world.icon_url ? [world.header_image_url || world.icon_url || (iconUrl.startsWith('http') ? iconUrl : `${baseUrl}${iconUrl}`)] : [iconUrl.startsWith('http') ? iconUrl : `${baseUrl}${iconUrl}`],
-    },
-    alternates: {
-      canonical: url,
-    },
-  };
+    entityName: world.name,
+    entityImage: imageUrl,
+    entityType: 'website',
+    imageUrl,
+    imageAlt: world.name,
+  });
 }
 
 export const revalidate = 300;

@@ -71,4 +71,15 @@ export const getSiteConfig = unstable_cache(
   }
 );
 
+/**
+ * Get icon URL for a given context (admin or public)
+ * Returns altIconUrl for admin pages if available, otherwise iconUrl
+ */
+export function getIconForContext(config: SiteConfig, isAdmin: boolean = false): string {
+  if (isAdmin && config.altIconUrl) {
+    return config.altIconUrl;
+  }
+  return config.iconUrl;
+}
+
 

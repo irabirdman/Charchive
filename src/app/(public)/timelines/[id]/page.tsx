@@ -9,6 +9,7 @@ import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
 import type { World } from '@/types/oc';
+import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
 
 // Type for timeline world response
 interface TimelineWorldResponse {
@@ -51,19 +52,18 @@ export async function generateMetadata({
   }
 
   const config = await getSiteConfig();
-  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const url = `${baseUrl}/timelines/${resolvedParams.id}`;
   const world = timeline.world as TimelineWorldResponse | null;
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
+  
   // Use description_markdown for description, clean up markdown syntax
   const descriptionText = timeline.description_markdown || '';
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
     : `${timeline.name}${world ? ` - Timeline from ${world.name}` : ''} on ${config.websiteName}`;
 
-  return {
+  return generateDetailPageMetadata({
     title: timeline.name,
     description,
+    path: `/timelines/${resolvedParams.id}`,
     keywords: [
       timeline.name,
       'timeline',
@@ -71,31 +71,12 @@ export async function generateMetadata({
       'chronology',
       world?.name || '',
       'OC wiki',
-    ].filter(Boolean),
-    openGraph: {
-      title: `${timeline.name} | ${config.websiteName}`,
-      description,
-      url,
-      type: 'website',
-      images: [
-        {
-          url: iconUrl.startsWith('http') ? iconUrl : `${baseUrl}${iconUrl}`,
-          width: 512,
-          height: 512,
-          alt: timeline.name,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${timeline.name} | ${config.websiteName}`,
-      description,
-      images: [iconUrl.startsWith('http') ? iconUrl : `${baseUrl}${iconUrl}`],
-    },
-    alternates: {
-      canonical: url,
-    },
-  };
+    ],
+    entityName: timeline.name,
+    entityType: 'website',
+    imageUrl: null,
+    imageAlt: timeline.name,
+  });
 }
 
 export default async function TimelinePage({

@@ -10,6 +10,10 @@ import { getSiteConfig } from '@/lib/config/site-config';
 import { getRatingColorClasses } from '@/lib/utils/fanficRating';
 import { ChapterList } from '@/components/fanfic/ChapterList';
 import type { Fanfic, FanficCharacter, FanficRelationship, FanficChapter, Tag, OC } from '@/types/oc';
+import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
+import { generateArticleSchema, generatePersonSchema } from '@/lib/seo/structured-data';
+import { getAbsoluteUrl } from '@/lib/seo/metadata-helpers';
+import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
 
 // Types for Supabase query responses
 interface FanficCharacterResponse {
@@ -71,31 +75,20 @@ export async function generateMetadata({
   }
 
   const config = await getSiteConfig();
-  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const url = `${baseUrl}/fanfics/${resolvedParams.slug}`;
   const description = fanfic.summary
     ? fanfic.summary.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (fanfic.summary.length > 155 ? '...' : '')
     : `${fanfic.title} - Fanfiction on ${config.websiteName}`;
 
-  return {
+  return generateDetailPageMetadata({
     title: fanfic.title,
     description,
-    keywords: [fanfic.title, 'fanfiction', 'fanfic', config.websiteName].filter(Boolean),
-    openGraph: {
-      title: `${fanfic.title} | ${config.websiteName}`,
-      description,
-      url,
-      type: 'article',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${fanfic.title} | ${config.websiteName}`,
-      description,
-    },
-    alternates: {
-      canonical: url,
-    },
-  };
+    path: `/fanfics/${resolvedParams.slug}`,
+    keywords: [fanfic.title, 'fanfiction', 'fanfic', config.websiteName],
+    entityName: fanfic.title,
+    entityType: 'article',
+    imageUrl: null,
+    imageAlt: fanfic.title,
+  });
 }
 
 export const revalidate = 300;
@@ -181,7 +174,26 @@ export default async function FanficDetailPage({
   // Calculate total word count from chapters
   const totalWordCount = fanfic.chapters?.reduce((sum, ch) => sum + (ch.word_count || 0), 0) || 0;
 
+  // Generate structured data for fanfic article
+  const config = await getSiteConfig();
+  const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const imageUrl = fanfic.image_url ? getAbsoluteUrl(convertGoogleDriveUrl(fanfic.image_url), baseUrl) : null;
+  const authorSchema = generatePersonSchema(config.authorName);
+  
+  const articleSchema = generateArticleSchema(fanfic.title, {
+    description: fanfic.summary || undefined,
+    image: imageUrl ? [imageUrl] : undefined,
+    datePublished: fanfic.created_at,
+    dateModified: fanfic.updated_at,
+    author: authorSchema,
+  });
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
     <div>
       <PageHeader
         title={fanfic.title}
@@ -401,6 +413,7 @@ export default async function FanficDetailPage({
         </div>
       </div>
     </div>
+    </>
   );
 }
 

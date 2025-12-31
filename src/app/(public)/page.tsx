@@ -5,43 +5,20 @@ import { SimpleWorldCard } from '@/components/world/SimpleWorldCard';
 import { SimpleOCCard } from '@/components/oc/SimpleOCCard';
 import { FeatureTile } from '@/components/admin/FeatureTile';
 import { QuoteOfTheDay } from '@/components/content/QuotesSection';
+import { generatePageMetadata } from '@/lib/seo/page-metadata';
 import { getSiteConfig } from '@/lib/config/site-config';
-import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
 import { getDaySeed, getRandomItems, seededShuffle } from '@/lib/utils/random';
+import { generateWebSiteSchema, generateOrganizationSchema, generatePersonSchema } from '@/lib/seo/structured-data';
+import { getAbsoluteIconUrl } from '@/lib/seo/metadata-helpers';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig();
-  const siteUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const iconUrl = convertGoogleDriveUrl(config.iconUrl || '/images/logo.png');
-  
-  return {
+  return generatePageMetadata({
     title: 'Home',
     description: `Welcome to ${config.websiteName} - ${config.websiteDescription}`,
+    path: '/',
     keywords: ['original characters', 'OC wiki', 'character wiki', 'world building', 'character development', 'fictional characters'],
-    openGraph: {
-      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
-      description: config.websiteDescription,
-      url: '/',
-      type: 'website',
-      images: [
-        {
-          url: `${siteUrl}/og-image`,
-          width: 1200,
-          height: 630,
-          alt: `${config.websiteName} Logo`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${config.websiteName} - ${config.websiteDescription.split('.')[0]}`,
-      description: config.websiteDescription,
-      images: [`${siteUrl}/og-image`],
-    },
-    alternates: {
-      canonical: '/',
-    },
-  };
+  });
 }
 
 export const revalidate = 60;
@@ -197,30 +174,32 @@ export default async function HomePage() {
   };
 
   const baseUrl = config.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const iconUrl = getAbsoluteIconUrl(config, baseUrl, false, true);
   
   // Structured data for SEO
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: config.websiteName,
+  const websiteSchema = generateWebSiteSchema(config.websiteName, baseUrl, {
     description: config.websiteDescription,
-    url: baseUrl,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${baseUrl}/ocs?search={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
-  };
+    searchUrlTemplate: `${baseUrl}/ocs?search={search_term_string}`,
+  });
+  
+  const organizationSchema = generateOrganizationSchema(config.websiteName, baseUrl, {
+    logo: iconUrl,
+    description: config.websiteDescription,
+  });
+  
+  const authorSchema = generatePersonSchema(config.authorName);
+  
+  const structuredData = [websiteSchema, organizationSchema, authorSchema];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+      {structuredData.map((schema, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
       <div className="space-y-12 md:space-y-16">
       {/* Hero Section */}
       <section className="hero-gradient rounded-2xl p-6 md:p-8 lg:p-12 text-center fade-in">
