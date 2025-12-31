@@ -5,6 +5,7 @@ import { FormSection } from './forms/FormSection';
 import { TagsInput } from '@/components/content/TagsInput';
 import { createClient } from '@/lib/supabase/client';
 import { ensurePredefinedTags } from '@/lib/tags/predefinedTags';
+import { logger } from '@/lib/logger';
 
 interface Tag {
   id: string;

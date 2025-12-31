@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface SetupData {
   websiteName: string;
@@ -50,7 +51,7 @@ export default function SetupPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to check setup status:', error);
+      logger.error('Page', 'admin/setup: Failed to check setup status', error);
       setError('Failed to check setup status');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface ProjectItem {
   title: string;
@@ -67,7 +68,7 @@ export function CurrentProjectsEditor() {
           }
         } else {
           const text = await response.text();
-          console.error('Non-JSON error response:', text.substring(0, 200));
+          logger.error('Component', 'CurrentProjectsEditor: Non-JSON error response', text.substring(0, 200));
         }
         
         throw new Error(errorMessage);
@@ -77,7 +78,7 @@ export function CurrentProjectsEditor() {
       // Handle both direct data and wrapped success response
       setData(result.data || result);
     } catch (error) {
-      console.error('Error fetching current projects:', error);
+      logger.error('Component', 'CurrentProjectsEditor: Error fetching current projects', error);
       setMessage({ 
         type: 'error', 
         text: error instanceof Error ? error.message : 'Failed to load current projects' 
@@ -116,7 +117,7 @@ export function CurrentProjectsEditor() {
         } else {
           // If it's HTML (like an error page), try to get text for debugging
           const text = await response.text();
-          console.error('Non-JSON error response:', text.substring(0, 200));
+          logger.error('Component', 'CurrentProjectsEditor: Non-JSON error response', text.substring(0, 200));
         }
         
         throw new Error(errorMessage);
@@ -126,7 +127,7 @@ export function CurrentProjectsEditor() {
       setMessage({ type: 'success', text: 'Current projects updated successfully!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
-      console.error('Error saving current projects:', error);
+      logger.error('Component', 'CurrentProjectsEditor: Error saving current projects', error);
       setMessage({
         type: 'error',
         text: error instanceof Error ? error.message : 'Failed to save current projects',

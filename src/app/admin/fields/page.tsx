@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { TemplatesAndFieldsManager } from '@/components/admin/TemplatesAndFieldsManager';
 import { requireAuth } from '@/lib/auth/require-auth';
+import { logger } from '@/lib/logger';
 
 export const metadata: Metadata = {
   title: 'Fields Management',
@@ -18,7 +19,7 @@ export default async function FieldsPage() {
     .order('name');
 
   if (error) {
-    console.error('Error fetching worlds:', error);
+    logger.error('Page', 'admin/fields: Error fetching worlds', error);
   }
 
   return (

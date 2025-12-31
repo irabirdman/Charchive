@@ -100,7 +100,7 @@ export async function fetchTemplatesForWorld(worldId: string): Promise<Record<st
 
     return templates;
   } catch (error) {
-    console.error('Error fetching world templates:', error);
+    logger.error('Utility', 'ocTemplates.server: Error fetching world templates', error);
     return { none: defaultFallbackTemplate };
   }
 }

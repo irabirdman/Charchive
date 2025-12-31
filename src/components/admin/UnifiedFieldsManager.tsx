@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getTemplates, type TemplateField, type TemplateDefinition } from '@/lib/templates/ocTemplates';
 import type { World, WorldFieldDefinitions, FieldSet, WorldFieldDefinition } from '@/types/oc';
+import { logger } from '@/lib/logger';
 
 interface TemplateRecord {
   id: string;

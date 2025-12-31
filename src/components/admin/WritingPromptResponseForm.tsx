@@ -11,6 +11,7 @@ import { FormLabel } from './forms/FormLabel';
 import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { FormMessage } from './forms/FormMessage';
+import { logger } from '@/lib/logger';
 
 const responseSchema = z.object({
   response_text: z.string().min(1, 'Response text is required'),
