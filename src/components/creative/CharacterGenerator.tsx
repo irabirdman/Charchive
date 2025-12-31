@@ -183,10 +183,13 @@ function weightedRandomElement<T>(items: T[], weights: number[]): T | undefined 
 }
 
 // Check if a species is human or human-like
+// Based on the race options, only exact "Human" should get human-specific ethnicities
 function isHumanLike(species?: string): boolean {
   if (!species) return true; // Default to human-like if no species
-  const lower = species.toLowerCase();
-  return lower.includes('human') || lower === 'human';
+  const lower = species.toLowerCase().trim();
+  // Only exact match for "Human" or "Humanoid" (though Humanoid is debatable)
+  // Half-elf, Half-orc, etc. are their own distinct races and shouldn't get human ethnicities
+  return lower === 'human' || lower === 'humanoid';
 }
 
 // Filter out human-specific ethnicities for non-human species
@@ -195,16 +198,27 @@ function filterEthnicities(ethnicities: string[], species?: string): string[] {
     return ethnicities; // Keep all ethnicities for humans
   }
   
-  // Human-specific ethnicities to filter out
+  // Human-specific ethnicities to filter out for non-human species
+  // These are real-world human ethnic/racial categories that don't apply to fantasy races
   const humanSpecific = [
-    'asian', 'caucasian', 'african', 'hispanic', 'latino', 'latina',
-    'native american', 'indigenous', 'european', 'middle eastern',
-    'pacific islander', 'mixed', 'biracial', 'multiracial'
+    'asian', 'caucasian', 'white', 'black', 'african', 'african-american',
+    'hispanic', 'latino', 'latina', 'latinx', 'latin',
+    'native american', 'indigenous', 'aboriginal', 'first nations',
+    'european', 'middle eastern', 'arab', 'arabic',
+    'pacific islander', 'polynesian', 'hawaiian',
+    'mixed', 'biracial', 'multiracial', 'multi-racial',
+    'east asian', 'south asian', 'southeast asian',
+    'mediterranean', 'scandinavian', 'slavic'
   ];
   
   return ethnicities.filter(eth => {
-    const lower = eth.toLowerCase();
-    return !humanSpecific.some(hs => lower.includes(hs));
+    if (!eth) return false;
+    const lower = eth.toLowerCase().trim();
+    // Check if ethnicity contains any human-specific term
+    const isHumanEthnicity = humanSpecific.some(hs => lower.includes(hs));
+    // Also check for exact matches or common patterns
+    if (lower === 'human' || lower.startsWith('human ')) return false;
+    return !isHumanEthnicity;
   });
 }
 
@@ -385,12 +399,18 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
     // Generate gender first (needed for pronouns/sex weighting)
     const selectedGender = randomElement(genders) || undefined;
     
-    // Filter ethnicities based on species
+    // Filter ethnicities based on species - must be done AFTER species is selected
     const filteredEthnicities = filterEthnicities(ethnicities, selectedSpecies);
     
     // Get weighted pronouns and sex based on gender
     const selectedPronouns = getWeightedPronouns(pronouns, selectedGender);
     const selectedSex = getWeightedSex(sexes, selectedGender);
+
+    // Only assign ethnicity if we have valid filtered options
+    // For non-humans, if all ethnicities were filtered out, don't assign one
+    const selectedEthnicity = filteredEthnicities.length > 0 
+      ? randomElement(filteredEthnicities) 
+      : undefined;
 
     const character: GeneratedCharacter = {
       species: selectedSpecies,
@@ -403,7 +423,7 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
       hair_color: randomElement(hairColors) || undefined,
       skin_tone: randomElement(skinTones) || undefined,
       occupation: randomElement(occupations) || undefined,
-      ethnicity: filteredEthnicities.length > 0 ? randomElement(filteredEthnicities) : undefined,
+      ethnicity: selectedEthnicity,
       setting: randomElement(settings) || undefined,
       trope: randomElement(tropes) || undefined,
       weapon: randomElement(weapons) || undefined,
@@ -484,48 +504,29 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
               </span>
             </h3>
 
-            <div className="space-y-3">
-              {/* Identity Category */}
-              {(generated.age || generated.species || generated.gender || generated.pronouns || generated.sex || generated.ethnicity) && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-id-card"></i>
-                    Identity
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {generated.age && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Age</div>
-                        <div className="text-gray-100 text-sm font-medium">{generated.age} years</div>
-                      </div>
-                    )}
+            {/* Grouped Layout - Related fields together */}
+            <div className="space-y-2">
+              {/* Age - Standalone */}
+              {generated.age && (
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="text-gray-500 text-xs mb-0.5">Age</div>
+                  <div className="text-gray-100 text-sm font-medium">{generated.age} years</div>
+                </div>
+              )}
+
+              {/* Species & Ethnicity - Grouped */}
+              {(generated.species || generated.ethnicity) && (
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-2 gap-2">
                     {generated.species && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Species / Race</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Species</div>
                         <div className="text-gray-100 text-sm">{generated.species}</div>
                       </div>
                     )}
-                    {generated.gender && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Gender</div>
-                        <div className="text-gray-100 text-sm">{generated.gender}</div>
-                      </div>
-                    )}
-                    {generated.pronouns && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Pronouns</div>
-                        <div className="text-gray-100 text-sm">{generated.pronouns}</div>
-                      </div>
-                    )}
-                    {generated.sex && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Sex</div>
-                        <div className="text-gray-100 text-sm">{generated.sex}</div>
-                      </div>
-                    )}
                     {generated.ethnicity && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Ethnicity / Race</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Ethnicity</div>
                         <div className="text-gray-100 text-sm">{generated.ethnicity}</div>
                       </div>
                     )}
@@ -533,29 +534,51 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
                 </div>
               )}
 
-              {/* Appearance Category */}
-              {(generated.eye_color || generated.hair_color || generated.skin_tone) && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-palette"></i>
-                    Appearance
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    {generated.eye_color && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Eye Color</div>
-                        <div className="text-gray-100 text-sm">{extractColorName(generated.eye_color) || generated.eye_color}</div>
+              {/* Gender, Pronouns, Sex - Grouped */}
+              {(generated.gender || generated.pronouns || generated.sex) && (
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-3 gap-2">
+                    {generated.gender && (
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Gender</div>
+                        <div className="text-gray-100 text-sm">{generated.gender}</div>
                       </div>
                     )}
+                    {generated.pronouns && (
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Pronouns</div>
+                        <div className="text-gray-100 text-sm">{generated.pronouns}</div>
+                      </div>
+                    )}
+                    {generated.sex && (
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Sex</div>
+                        <div className="text-gray-100 text-sm">{generated.sex}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Appearance - Hair, Eye, Skin - Grouped */}
+              {(generated.hair_color || generated.eye_color || generated.skin_tone) && (
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-3 gap-2">
                     {generated.hair_color && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Hair Color</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Hair</div>
                         <div className="text-gray-100 text-sm">{extractColorName(generated.hair_color) || generated.hair_color}</div>
                       </div>
                     )}
+                    {generated.eye_color && (
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Eyes</div>
+                        <div className="text-gray-100 text-sm">{extractColorName(generated.eye_color) || generated.eye_color}</div>
+                      </div>
+                    )}
                     {generated.skin_tone && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Skin Tone</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Skin</div>
                         <div className="text-gray-100 text-sm">{extractColorName(generated.skin_tone) || generated.skin_tone}</div>
                       </div>
                     )}
@@ -563,23 +586,19 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
                 </div>
               )}
 
-              {/* Orientation Category */}
+              {/* Orientation - Romantic & Sexual - Grouped */}
               {(generated.romantic_orientation || generated.sexual_orientation) && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-heart"></i>
-                    Orientation
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-2 gap-2">
                     {generated.romantic_orientation && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Romantic</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Romantic</div>
                         <div className="text-gray-100 text-sm">{generated.romantic_orientation}</div>
                       </div>
                     )}
                     {generated.sexual_orientation && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Sexual</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Sexual</div>
                         <div className="text-gray-100 text-sm">{generated.sexual_orientation}</div>
                       </div>
                     )}
@@ -587,29 +606,25 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
                 </div>
               )}
 
-              {/* Status & Role Category */}
+              {/* Status & Role - Occupation, Setting, Trope - Grouped */}
               {(generated.occupation || generated.setting || generated.trope) && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-briefcase"></i>
-                    Status & Role
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-3 gap-2">
                     {generated.occupation && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Occupation</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Occupation</div>
                         <div className="text-gray-100 text-sm">{generated.occupation}</div>
                       </div>
                     )}
                     {generated.setting && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Setting</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Setting</div>
                         <div className="text-gray-100 text-sm">{generated.setting}</div>
                       </div>
                     )}
                     {generated.trope && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Trope</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Trope</div>
                         <div className="text-gray-100 text-sm">{generated.trope}</div>
                       </div>
                     )}
@@ -617,59 +632,55 @@ export function CharacterGenerator({ className = '' }: { className?: string }) {
                 </div>
               )}
 
-              {/* Combat & Powers Category */}
+              {/* Combat & Powers - Weapon & Element - Grouped */}
               {(generated.weapon || generated.element) && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-sword"></i>
-                    Combat & Powers
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="p-2 rounded border border-purple-500/20 bg-gray-800/30">
+                  <div className="grid grid-cols-2 gap-2">
                     {generated.weapon && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Weapon</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Weapon</div>
                         <div className="text-gray-100 text-sm">{generated.weapon}</div>
                       </div>
                     )}
                     {generated.element && (
-                      <div className="group">
-                        <div className="text-gray-500 text-xs mb-1 font-medium">Element</div>
+                      <div>
+                        <div className="text-gray-500 text-xs mb-0.5">Element</div>
                         <div className="text-gray-100 text-sm">{generated.element}</div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Personality Traits */}
-              {generated.personality_traits.length > 0 && (
-                <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                  <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                    <i className="fas fa-star"></i>
-                    Personality Traits
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {generated.personality_traits.map((trait, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 rounded-full text-xs font-medium border border-purple-500/40 hover:border-purple-400/60 hover:bg-gradient-to-r hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-200 hover:scale-105 shadow-sm shadow-purple-500/10"
-                      >
-                        {trait}
-                      </span>
-                    ))}
-                  </div>
+            {/* Personality Traits - Full Width */}
+            {generated.personality_traits.length > 0 && (
+              <div className="mt-2 p-2 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+                <div className="text-purple-400 text-xs uppercase tracking-wider mb-1.5 font-bold flex items-center gap-2">
+                  <i className="fas fa-star text-xs"></i>
+                  Personality Traits
                 </div>
-              )}
+                <div className="flex flex-wrap gap-1.5">
+                  {generated.personality_traits.map((trait, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 rounded text-xs font-medium border border-purple-500/40"
+                    >
+                      {trait}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-              {/* Background */}
-              <div className="p-3 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
-                <div className="text-purple-400 text-xs uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                  <i className="fas fa-book"></i>
-                  Background
-                </div>
-                <div className="text-gray-100 leading-relaxed text-sm p-3 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg border border-gray-700/30">
-                  {generated.background}
-                </div>
+            {/* Background - Full Width */}
+            <div className="mt-2 p-2 rounded-lg border border-purple-500/30 bg-gradient-to-br from-gray-800/30 to-gray-900/20">
+              <div className="text-purple-400 text-xs uppercase tracking-wider mb-1.5 font-bold flex items-center gap-2">
+                <i className="fas fa-book text-xs"></i>
+                Background
+              </div>
+              <div className="text-gray-100 leading-relaxed text-xs p-2 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded border border-gray-700/30">
+                {generated.background}
               </div>
             </div>
           </div>
