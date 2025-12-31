@@ -6,7 +6,7 @@ import type { Fanfic } from '@/types/oc';
 
 interface Chapter {
   chapter_number: number;
-  title: string | null;
+  title?: string | null;
 }
 
 interface ChapterNavigationProps {
