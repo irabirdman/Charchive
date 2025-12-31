@@ -9,7 +9,7 @@ ALTER TABLE timeline_event_characters
   CHECK (oc_id IS NOT NULL OR custom_name IS NOT NULL);
 
 -- Update unique constraint to allow multiple custom names per event
-DROP INDEX IF EXISTS timeline_event_characters_timeline_event_id_oc_id_key;
+ALTER TABLE timeline_event_characters DROP CONSTRAINT IF EXISTS timeline_event_characters_timeline_event_id_oc_id_key;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_timeline_event_characters_unique_oc 
   ON timeline_event_characters(timeline_event_id, oc_id) 
   WHERE oc_id IS NOT NULL;

@@ -90,18 +90,20 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       if (ocsData) setOCs(ocsData);
 
 
-      // Load fanfic-specific tags only (check both 'fanfic' category and null/empty for backwards compatibility)
+      // Load fanfic-specific tags only
       const { data: tagsData, error: tagsError } = await supabase
         .from('tags')
         .select('*')
-        .or('category.eq.fanfic,category.is.null')
+        .eq('category', 'fanfic')
         .order('name');
       if (tagsError) {
-        console.error('Error loading tags:', tagsError);
+        console.error('Error loading fanfic tags:', tagsError);
       }
       if (tagsData) {
-        console.log('Loaded tags:', tagsData.length, tagsData);
+        console.log('Fanfic tags loaded:', tagsData.length, tagsData.map(t => t.name));
         setAvailableTags(tagsData);
+      } else {
+        console.warn('No fanfic tags found in database. Make sure the migration has been run.');
       }
 
       // If editing, load existing data
@@ -137,8 +139,8 @@ export function FanficForm({ fanfic }: FanficFormProps) {
     external_link: fanfic.external_link || '',
     is_public: fanfic.is_public,
     characters: fanfic.characters?.map(c => ({
-      oc_id: c.oc_id || null,
-      name: c.name || null,
+      oc_id: c.oc_id ?? null,
+      name: c.name === null ? undefined : c.name,
     })) || [],
     relationships: fanfic.relationships?.map(r => ({
       relationship_text: r.relationship_text,
@@ -285,7 +287,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
   const { submit, error, success, isSubmitting } = useFormSubmission({
     apiRoute: '/api/admin/fanfics',
     entity: fanfic,
-    successRoute: (data: any) => `/admin/fanfics/${data.id}`,
+    successRoute: (data: any) => `/admin/fanfics/${data.slug}`,
     transformData,
     shouldNavigateRef: shouldNavigateAfterSaveRef,
   });
@@ -487,7 +489,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
                                 if (selectedOC) {
                                   controllerField.onChange({
                                     oc_id: selectedOC.id,
-                                    name: null,
+                                    name: undefined,
                                   });
                                 } else {
                                   controllerField.onChange({
@@ -521,7 +523,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
             <FormButton
               type="button"
               variant="secondary"
-              onClick={() => appendCharacter({ oc_id: null, name: null })}
+              onClick={() => appendCharacter({ oc_id: null, name: undefined })}
               disabled={isSubmitting}
             >
               Add Character
