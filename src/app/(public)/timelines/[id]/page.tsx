@@ -8,7 +8,7 @@ import { TimelineEvent } from '@/components/timeline/TimelineEvent';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { convertGoogleDriveUrl } from '@/lib/utils/googleDriveImage';
-import type { World, TimelineEvent as TimelineEventType } from '@/types/oc';
+import type { World, TimelineEvent as TimelineEventType, StoryAlias } from '@/types/oc';
 import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
 
 // Type for timeline world response
@@ -143,21 +143,27 @@ export default async function TimelinePage({
     
     // Fetch story_aliases separately for events that need them
     if (associations) {
-      const eventIdsWithStoryAlias = associations
+      // Flatten events (handle both single objects and arrays from Supabase)
+      const events = associations
         .map(a => a.event)
+        .flatMap(e => {
+          if (Array.isArray(e)) {
+            return e.filter((ev): ev is TimelineEventType => ev !== null);
+          }
+          return e !== null ? [e] : [];
+        })
         .filter((e): e is TimelineEventType => 
-          e !== null && 
-          !Array.isArray(e) &&
+          e !== null &&
           typeof e === 'object' &&
           'id' in e &&
           typeof e.id === 'string' &&
           'story_alias_id' in e &&
           e.story_alias_id !== null &&
           e.story_alias_id !== undefined
-        )
-        .map(e => ({ id: e.id, story_alias_id: e.story_alias_id }));
+        );
       
-      if (eventIdsWithStoryAlias.length > 0) {
+      if (events.length > 0) {
+        const eventIdsWithStoryAlias = events.map(e => ({ id: e.id, story_alias_id: e.story_alias_id }));
         const storyAliasIds = [...new Set(eventIdsWithStoryAlias.map(e => e.story_alias_id))];
         const { data: storyAliases } = await supabase
           .from('story_aliases')
@@ -167,10 +173,21 @@ export default async function TimelinePage({
         if (storyAliases) {
           const storyAliasMap = new Map(storyAliases.map(sa => [sa.id, sa]));
           associations.forEach(assoc => {
-            if (assoc.event?.story_alias_id) {
-              const storyAlias = storyAliasMap.get(assoc.event.story_alias_id);
-              if (storyAlias && assoc.event) {
-                assoc.event.story_alias = storyAlias;
+            // Handle both array and single object cases
+            const event = Array.isArray(assoc.event) ? assoc.event[0] : assoc.event;
+            if (event?.story_alias_id) {
+              const storyAlias = storyAliasMap.get(event.story_alias_id);
+              if (storyAlias && event) {
+                // Update the event in the association
+                // Cast storyAlias to StoryAlias since we have the required fields for display
+                const fullStoryAlias = storyAlias as Partial<StoryAlias> as StoryAlias;
+                if (Array.isArray(assoc.event)) {
+                  if (assoc.event[0]) {
+                    (assoc.event[0] as TimelineEventType).story_alias = fullStoryAlias;
+                  }
+                } else if (assoc.event) {
+                  (assoc.event as TimelineEventType).story_alias = fullStoryAlias;
+                }
               }
             }
           });
