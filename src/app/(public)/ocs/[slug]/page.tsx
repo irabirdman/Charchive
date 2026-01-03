@@ -41,7 +41,7 @@ export async function generateMetadata({
 
   const { data: oc, error } = await supabase
     .from('ocs')
-    .select('name, slug, history_summary, image_url, world:worlds(name, slug)')
+    .select('name, slug, history_summary, image_url, icon_url, world:worlds(name, slug)')
     .eq('slug', resolvedParams.slug)
     .eq('is_public', true)
     .single();
@@ -87,8 +87,8 @@ export async function generateMetadata({
       'fictional character',
     ],
     entityName: oc.name,
-    entityImage: oc.image_url || null,
-    entityIconUrl: oc.image_url || null,
+    entityImage: oc.icon_url || null,
+    entityIconUrl: oc.icon_url || null,
     entityType: 'profile',
     imageUrl: ogImageUrl,
     imageAlt: oc.name,
