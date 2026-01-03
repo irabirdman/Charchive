@@ -144,7 +144,7 @@ export function StorySnippetsFormSection({ ocId }: StorySnippetsFormSectionProps
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-100 mb-1">{snippet.title}</h4>
-                    <p className="text-gray-300 text-sm line-clamp-3">{snippet.snippet_text}</p>
+                    <p className="text-gray-300 text-sm line-clamp-3 whitespace-pre-wrap">{snippet.snippet_text}</p>
                   </div>
                   <button
                     type="button"
@@ -174,7 +174,10 @@ export function StorySnippetsFormSection({ ocId }: StorySnippetsFormSectionProps
             placeholder="Snippet title..."
             className="mb-3"
           />
-          <FormLabel htmlFor="new-snippet-text">Snippet Text</FormLabel>
+          <FormLabel htmlFor="new-snippet-text">
+            Snippet Text
+            <span className="ml-2 text-xs text-gray-400 font-normal">(Markdown supported)</span>
+          </FormLabel>
           <FormTextarea
             id="new-snippet-text"
             value={newSnippet.snippet_text}
@@ -182,7 +185,7 @@ export function StorySnippetsFormSection({ ocId }: StorySnippetsFormSectionProps
               setNewSnippet({ ...newSnippet, snippet_text: e.target.value });
               setError(null); // Clear error when user types
             }}
-            placeholder="Enter story excerpt..."
+            placeholder="Enter story excerpt... (Markdown formatting supported)"
             rows={5}
             className="mb-3"
           />

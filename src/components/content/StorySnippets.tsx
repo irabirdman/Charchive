@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { Markdown } from '@/lib/utils/markdown';
 
 interface StorySnippet {
   id: string;
@@ -35,8 +36,8 @@ function SnippetItem({
       className="border-l-4 border-purple-400 pl-4 py-3 hover:bg-gray-800/30 transition-colors rounded-r-lg"
     >
       <h3 className="text-lg font-semibold text-gray-100 mb-2">{snippet.title}</h3>
-      <div className="text-gray-200 leading-relaxed whitespace-pre-wrap">
-        {displayText}
+      <div className="text-gray-200 leading-relaxed">
+        <Markdown content={displayText} className="prose-invert prose-purple" />
       </div>
       {shouldTruncate && (
         <button
