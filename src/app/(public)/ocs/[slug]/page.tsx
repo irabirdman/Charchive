@@ -72,8 +72,6 @@ export async function generateMetadata({
   const description = descriptionText
     ? descriptionText.substring(0, 155).replace(/\n/g, ' ').replace(/[#*`]/g, '').trim() + (descriptionText.length > 155 ? '...' : '')
     : `${oc.name}${world ? ` from ${world.name}` : ''} - Original Character on ${config.websiteName}`;
-  const ogImageUrl = getAbsoluteUrl(`/api/og/oc/${resolvedParams.slug}`, baseUrl);
-
   return generateDetailPageMetadata({
     title: oc.name,
     description,
@@ -90,7 +88,6 @@ export async function generateMetadata({
     entityImage: oc.icon_url || null,
     entityIconUrl: oc.icon_url || null,
     entityType: 'profile',
-    imageUrl: ogImageUrl,
     imageAlt: oc.name,
   });
 }
