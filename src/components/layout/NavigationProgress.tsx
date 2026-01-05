@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 export function NavigationProgress() {
@@ -82,6 +82,22 @@ export function NavigationProgress() {
     }
   }, [pathname])
 
+  // Helper function to complete loading
+  const completeLoading = useCallback(() => {
+    if (!isNavigatingRef.current) return
+    
+    isNavigatingRef.current = false
+    setProgress(100)
+    setTimeout(() => {
+      setIsLoading(false)
+      setProgress(0)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+        progressIntervalRef.current = null
+      }
+    }, 200)
+  }, [])
+
   // Initialize pathname ref on mount
   useEffect(() => {
     if (currentPathRef.current === '') {
@@ -95,38 +111,53 @@ export function NavigationProgress() {
       startLoadingRef.current?.()
     }
 
+    // Listen for when page finishes loading after navigation (including back/forward)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      // If this is a back/forward navigation (persisted from cache) or we're currently navigating
+      if (e.persisted || isNavigatingRef.current) {
+        // Give Next.js a moment to update the pathname, then complete loading
+        setTimeout(() => {
+          if (isNavigatingRef.current) {
+            completeLoading()
+          }
+        }, 150)
+      }
+    }
+
     window.addEventListener('popstate', handlePopState)
+    window.addEventListener('pageshow', handlePageShow)
     return () => {
       window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('pageshow', handlePageShow)
     }
-  }, [])
+  }, [completeLoading])
 
   // Track navigation completion
   useEffect(() => {
     // If pathname changed, navigation completed
     if (currentPathRef.current !== pathname && currentPathRef.current !== '') {
-      const wasNavigating = isNavigatingRef.current
       currentPathRef.current = pathname
-      
-      // Complete the progress bar
-      if (wasNavigating) {
-        isNavigatingRef.current = false
-        setProgress(100)
-        const timer = setTimeout(() => {
-          setIsLoading(false)
-          setProgress(0)
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current)
-            progressIntervalRef.current = null
-          }
-        }, 200)
-        return () => clearTimeout(timer)
-      }
+      completeLoading()
     } else if (currentPathRef.current === '') {
       // First render - initialize
       currentPathRef.current = pathname
     }
-  }, [pathname, searchParams])
+  }, [pathname, searchParams, completeLoading])
+
+  // Safety timeout: ensure loading always clears after a maximum time
+  // This handles edge cases where navigation completes but pathname doesn't change
+  useEffect(() => {
+    if (!isNavigatingRef.current) return
+
+    const safetyTimeout = setTimeout(() => {
+      if (isNavigatingRef.current) {
+        // Force complete if still loading after 2 seconds
+        completeLoading()
+      }
+    }, 2000)
+
+    return () => clearTimeout(safetyTimeout)
+  }, [isLoading, pathname, completeLoading])
 
   if (!isLoading) return null
 
