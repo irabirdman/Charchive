@@ -10,6 +10,7 @@ import { getSiteConfig } from '@/lib/config/site-config';
 import { getDaySeed, getRandomItems, seededShuffle } from '@/lib/utils/random';
 import { generateWebSiteSchema, generateOrganizationSchema, generatePersonSchema } from '@/lib/seo/structured-data';
 import { getAbsoluteIconUrl } from '@/lib/seo/metadata-helpers';
+import { getDateInEST, formatDateOfBirth } from '@/lib/utils/dateFormat';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig();
@@ -122,27 +123,46 @@ export default async function HomePage() {
 
   // Get today's date in EST timezone
   const today = new Date();
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York', // EST/EDT
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const todayParts = formatter.formatToParts(today);
-  const todayMonth = parseInt(todayParts.find(p => p.type === 'month')?.value || '0', 10) - 1; // Month is 0-indexed
-  const todayDay = parseInt(todayParts.find(p => p.type === 'day')?.value || '0', 10);
+  const todayEST = getDateInEST(today);
+  const todayMonth = todayEST.month; // 1-12
+  const todayDay = todayEST.day;
+  
+  // Format today's date for display
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const todayDateFormatted = `${monthNames[todayMonth - 1]} ${todayDay}`;
 
   const birthdayOCs = (allOCsWithBirthdays || []).filter((oc) => {
     if (!oc.date_of_birth) return false;
     try {
-      const birthDate = new Date(oc.date_of_birth);
-      if (isNaN(birthDate.getTime())) return false;
-      // Convert birth date to EST for comparison
-      const birthParts = formatter.formatToParts(birthDate);
-      const birthMonth = parseInt(birthParts.find(p => p.type === 'month')?.value || '0', 10) - 1; // Month is 0-indexed
-      const birthDay = parseInt(birthParts.find(p => p.type === 'day')?.value || '0', 10);
-      // Match month and day, ignore year
-      return birthMonth === todayMonth && birthDay === todayDay;
+      const dateStr = oc.date_of_birth.trim();
+      
+      // Parse YYYY-MM-DD format directly (most common format)
+      const isoMatch = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (isoMatch) {
+        const birthMonth = parseInt(isoMatch[2], 10); // 1-12
+        const birthDay = parseInt(isoMatch[3], 10);
+        return birthMonth === todayMonth && birthDay === todayDay;
+      }
+      
+      // Parse MM/DD or MM/DD/YYYY format
+      const mmddMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
+      if (mmddMatch) {
+        const birthMonth = parseInt(mmddMatch[1], 10); // 1-12
+        const birthDay = parseInt(mmddMatch[2], 10);
+        return birthMonth === todayMonth && birthDay === todayDay;
+      }
+      
+      // Fallback: try parsing as Date and convert to EST
+      const birthDate = new Date(dateStr);
+      if (!isNaN(birthDate.getTime())) {
+        const birthEST = getDateInEST(birthDate);
+        return birthEST.month === todayMonth && birthEST.day === todayDay;
+      }
+      
+      return false;
     } catch {
       return false;
     }
@@ -285,11 +305,11 @@ export default async function HomePage() {
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-100 mb-2">
                   {birthdayOCs.length === 1 ? (
                     <>
-                      It's <Link href={`/ocs/${birthdayOCs[0].slug}`} className="text-pink-400 hover:text-pink-300 underline transition-colors">{birthdayOCs[0].name}</Link>'s birthday!!
+                      It's {todayDateFormatted}! It's <Link href={`/ocs/${birthdayOCs[0].slug}`} className="text-pink-400 hover:text-pink-300 underline transition-colors">{birthdayOCs[0].name}</Link>'s birthday!!
                     </>
                   ) : (
                     <>
-                      It's {birthdayOCs.map((oc, index) => (
+                      It's {todayDateFormatted}! It's {birthdayOCs.map((oc, index) => (
                         <span key={oc.id}>
                           <Link href={`/ocs/${oc.slug}`} className="text-pink-400 hover:text-pink-300 underline transition-colors">
                             {oc.name}

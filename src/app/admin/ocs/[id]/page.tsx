@@ -129,7 +129,11 @@ export default async function EditOCPage({
   const supabase = await createClient();
 
   // Support both ID (UUID) and slug
-  // Use explicit foreign key constraint to avoid ambiguous relationship errors
+  // Try multiple approaches for story_aliases relationship to work in both environments
+  let oc: any = null;
+  let ocError: any = null;
+
+  // Try 1: Explicit FK syntax (for environments with ambiguous relationships)
   let baseQuery = supabase
     .from('ocs')
     .select(`
@@ -152,9 +156,107 @@ export default async function EditOCPage({
     ? baseQuery.eq('id', params.id)
     : baseQuery.eq('slug', params.id);
 
-  const { data: oc, error: ocError } = await query.single();
+  let result = await query.single();
+  oc = result.data;
+  ocError = result.error;
 
-  if (ocError) {
+  // If PGRST200 (relationship not found) with explicit FK, try implicit relationship
+  if (ocError && ocError.code === 'PGRST200' && 
+      ocError.message?.includes('story_aliases') &&
+      ocError.message?.includes('schema cache')) {
+    
+    logger.warn('Page', 'admin/ocs/[id]: Explicit FK syntax failed, trying implicit relationship', {
+      id: params.id,
+      error: ocError.message,
+      code: ocError.code,
+    });
+    
+    // Try 2: Implicit relationship syntax
+    baseQuery = supabase
+      .from('ocs')
+      .select(`
+        *,
+        world:worlds(*),
+        story_alias:story_aliases(id, name, slug, description),
+        identity:oc_identities(
+          *,
+          versions:ocs(
+            id,
+            name,
+            slug,
+            world_id,
+            world:worlds(id, name, slug)
+          )
+        )
+      `);
+
+    query = isUUID(params.id)
+      ? baseQuery.eq('id', params.id)
+      : baseQuery.eq('slug', params.id);
+
+    result = await query.single();
+    oc = result.data;
+    ocError = result.error;
+  }
+
+  // If still error, try without story_alias and fetch separately
+  if (ocError && (ocError.code === 'PGRST200' || ocError.code === 'PGRST201') && 
+      (ocError.message?.includes('story_aliases') || 
+       ocError.message?.includes('more than one relationship') ||
+       ocError.message?.includes('schema cache'))) {
+    
+    logger.warn('Page', 'admin/ocs/[id]: story_aliases relationship failed, fetching separately', {
+      id: params.id,
+      error: ocError.message,
+      code: ocError.code,
+    });
+    
+    // Try 3: No relationship, fetch separately
+    baseQuery = supabase
+      .from('ocs')
+      .select(`
+        *,
+        world:worlds(*),
+        identity:oc_identities(
+          *,
+          versions:ocs(
+            id,
+            name,
+            slug,
+            world_id,
+            world:worlds(id, name, slug)
+          )
+        )
+      `);
+
+    query = isUUID(params.id)
+      ? baseQuery.eq('id', params.id)
+      : baseQuery.eq('slug', params.id);
+
+    result = await query.single();
+    oc = result.data;
+    ocError = result.error;
+
+    // Fetch story_alias separately if we have story_alias_id
+    if (oc && oc.story_alias_id) {
+      try {
+        const { data: storyAlias } = await supabase
+          .from('story_aliases')
+          .select('id, name, slug, description')
+          .eq('id', oc.story_alias_id)
+          .single();
+        
+        if (storyAlias) {
+          oc.story_alias = storyAlias;
+        }
+      } catch (err) {
+        // Silently fail - story_alias is optional
+        logger.debug('Page', 'admin/ocs/[id]: Failed to fetch story_alias separately', { err });
+      }
+    }
+  }
+
+  if (ocError && !oc) {
     logger.error('Page', 'admin/ocs/[id]: Supabase OC query error', {
       id: params.id,
       error: ocError.message,

@@ -124,8 +124,12 @@ export async function PUT(
     }
 
     // Fetch the updated OC with relationships
-    // Use explicit foreign key constraint to avoid ambiguous relationship errors
-    const { data, error: selectError } = await supabase
+    // Try multiple approaches for story_aliases relationship to work in both environments
+    let data: any = null;
+    let selectError: any = null;
+
+    // Try 1: Explicit FK syntax
+    let result = await supabase
       .from('ocs')
       .select(`
         *,
@@ -144,6 +148,86 @@ export async function PUT(
       `)
       .eq('id', id)
       .single();
+
+    data = result.data;
+    selectError = result.error;
+
+    // If PGRST200 (relationship not found) with explicit FK, try implicit relationship
+    if (selectError && selectError.code === 'PGRST200' && 
+        selectError.message?.includes('story_aliases') &&
+        selectError.message?.includes('schema cache')) {
+      
+      // Try 2: Implicit relationship syntax
+      result = await supabase
+        .from('ocs')
+        .select(`
+          *,
+          world:worlds(*),
+          story_alias:story_aliases(id, name, slug, description),
+          identity:oc_identities(
+            *,
+            versions:ocs(
+              id,
+              name,
+              slug,
+              world_id,
+              world:worlds(id, name, slug)
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      data = result.data;
+      selectError = result.error;
+    }
+
+    // If still error, try without story_alias and fetch separately
+    if (selectError && (selectError.code === 'PGRST200' || selectError.code === 'PGRST201') && 
+        (selectError.message?.includes('story_aliases') || 
+         selectError.message?.includes('more than one relationship') ||
+         selectError.message?.includes('schema cache'))) {
+      
+      // Try 3: No relationship, fetch separately
+      result = await supabase
+        .from('ocs')
+        .select(`
+          *,
+          world:worlds(*),
+          identity:oc_identities(
+            *,
+            versions:ocs(
+              id,
+              name,
+              slug,
+              world_id,
+              world:worlds(id, name, slug)
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      data = result.data;
+      selectError = result.error;
+
+      // Fetch story_alias separately if we have story_alias_id
+      if (data && data.story_alias_id) {
+        try {
+          const { data: storyAlias } = await supabase
+            .from('story_aliases')
+            .select('id, name, slug, description')
+            .eq('id', data.story_alias_id)
+            .single();
+          
+          if (storyAlias) {
+            data.story_alias = storyAlias;
+          }
+        } catch (err) {
+          // Silently fail - story_alias is optional
+        }
+      }
+    }
 
     if (selectError) {
       logger.error('OC', 'Select error', selectError);
