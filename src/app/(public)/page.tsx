@@ -7,7 +7,7 @@ import { FeatureTile } from '@/components/admin/FeatureTile';
 import { QuoteOfTheDay } from '@/components/content/QuotesSection';
 import { generatePageMetadata } from '@/lib/seo/page-metadata';
 import { getSiteConfig } from '@/lib/config/site-config';
-import { getDaySeed, getRandomItems, seededShuffle } from '@/lib/utils/random';
+import { getDaySeed, getRandomItemsPerRequest, seededShuffle } from '@/lib/utils/random';
 import { generateWebSiteSchema, generateOrganizationSchema, generatePersonSchema } from '@/lib/seo/structured-data';
 import { getAbsoluteIconUrl } from '@/lib/seo/metadata-helpers';
 import { getDateInEST, formatDateOfBirth } from '@/lib/utils/dateFormat';
@@ -22,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export const revalidate = 60;
+export const revalidate = 0; // Disable caching so random items change on each page load
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -64,12 +65,13 @@ export default async function HomePage() {
   const { data: ocSample } = ocSampleResult;
 
   // Get random worlds and characters (always show 3, or all available if less than 3)
+  // Using per-request randomization so they change on each page load
   const totalWorlds = worldSample ? worldSample.length : 0;
   const totalOCs = ocSample ? ocSample.length : 0;
   const randomWorldCount = totalWorlds > 0 ? Math.min(3, totalWorlds) : 0;
   const randomOCCount = totalOCs > 0 ? Math.min(3, totalOCs) : 0;
-  const randomWorlds = worldSample ? getRandomItems(worldSample, randomWorldCount) : [];
-  const randomOCs = ocSample ? getRandomItems(ocSample, randomOCCount) : [];
+  const randomWorlds = worldSample ? getRandomItemsPerRequest(worldSample, randomWorldCount) : [];
+  const randomOCs = ocSample ? getRandomItemsPerRequest(ocSample, randomOCCount) : [];
 
   const worldCount = worldCountResult.count ?? 0;
   const ocCount = ocCountResult.count ?? 0;

@@ -68,3 +68,24 @@ export function getRandomItems<T>(array: T[], count: number): T[] {
   const shuffled = seededShuffle(array, seed);
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
+
+/**
+ * Generate a seed based on the current timestamp (changes on each call)
+ * This ensures different randomization on each page load
+ */
+export function getTimestampSeed(): number {
+  return Date.now();
+}
+
+/**
+ * Helper function to shuffle array and get random items using timestamp-based seed
+ * Returns a random subset of the array, shuffled differently on each page load
+ */
+export function getRandomItemsPerRequest<T>(array: T[], count: number): T[] {
+  if (array.length === 0) return [];
+  
+  // Use timestamp-based seed for different randomization on each request
+  const seed = getTimestampSeed();
+  const shuffled = seededShuffle(array, seed);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
