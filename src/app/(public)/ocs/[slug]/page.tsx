@@ -19,7 +19,7 @@ import { WritingPromptResponses } from '@/components/content/WritingPromptRespon
 import { getEffectiveFieldDefinitions, getFieldValue } from '@/lib/fields/worldFields';
 import type { WorldFieldDefinition, OC } from '@/types/oc';
 import { TagList } from '@/components/wiki/TagList';
-import { convertGoogleDriveUrl, getProxyUrl } from '@/lib/utils/googleDriveImage';
+import { convertGoogleDriveUrl, getProxyUrl, isAnimatedImage, isGoogleSitesUrl } from '@/lib/utils/googleDriveImage';
 import { extractColorHex, extractColorName } from '@/lib/utils/colorHexUtils';
 import { SpotifyEmbed } from '@/components/oc/SpotifyEmbed';
 import { formatHeightWithMetric, formatWeightWithMetric } from '@/lib/utils/unitConversion';
@@ -392,7 +392,7 @@ export default async function OCDetailPage({
                         fill
                         sizes="(max-width: 768px) 48px, 56px"
                         className="object-contain rounded-lg bg-gray-800/70 p-1.5 border-2 border-gray-600/50 shadow-lg group-hover:border-purple-500/50 transition-all duration-300"
-                        unoptimized={typedOc.world.icon_url?.includes('drive.google.com') || false}
+                        unoptimized={typedOc.world.icon_url?.includes('drive.google.com') || isGoogleSitesUrl(typedOc.world.icon_url) || isAnimatedImage(typedOc.world.icon_url)}
                       />
                     </div>
                   </div>

@@ -241,23 +241,30 @@ export async function GET(request: NextRequest) {
     /AbortError|TypeError/i.test(e.error)
   );
 
-  const logFn = shouldLogAsError ? logger.error : logger.warn;
-
-  logFn('ImageProxy', 'Failed to fetch Google Drive image after all attempts', {
-    fileId: driveFileId,
-    originalUrl: url,
-    totalAttempts: urls.length,
-    isPublicAccessIssue,
-    errors: errors.map(e => ({
-      url: e.url,
-      error: e.error,
-      status: e.status,
-      contentType: e.contentType,
-    })),
-    recommendation: isPublicAccessIssue 
-      ? 'File needs to be shared with "Anyone with the link" permission in Google Drive'
-      : 'Check if file exists and is accessible',
-  });
+  // For public access issues, use info level since it's a user configuration issue, not a code bug
+  // For actual errors (500s, network issues), use error level
+  // For other failures, use warn level
+  if (isPublicAccessIssue) {
+    logger.info('ImageProxy', 'Google Drive file not publicly accessible', {
+      fileId: driveFileId,
+      originalUrl: url,
+      recommendation: 'File needs to be shared with "Anyone with the link" permission in Google Drive',
+    });
+  } else {
+    const logFn = shouldLogAsError ? logger.error : logger.warn;
+    logFn('ImageProxy', 'Failed to fetch Google Drive image after all attempts', {
+      fileId: driveFileId,
+      originalUrl: url,
+      totalAttempts: urls.length,
+      errors: errors.map(e => ({
+        url: e.url,
+        error: e.error,
+        status: e.status,
+        contentType: e.contentType,
+      })),
+      recommendation: 'Check if file exists and is accessible',
+    });
+  }
 
   // Return a 1x1 transparent PNG as fallback instead of JSON
   // This prevents the img tag from showing broken image icon
