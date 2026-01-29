@@ -92,8 +92,13 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
             <label className="block text-sm font-medium text-gray-300 mb-1">Year *</label>
             <input
               type="number"
-              value={(value as ExactDate)?.year || ''}
-              onChange={(e) => updateValue({ year: parseInt(e.target.value) || 0 })}
+              value={(value as ExactDate)?.year ?? ''}
+              onChange={(e) => {
+                const numValue = e.target.value === '' ? 0 : parseInt(e.target.value);
+                if (!isNaN(numValue)) {
+                  updateValue({ year: numValue });
+                }
+              }}
               className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
               required
             />
@@ -105,8 +110,18 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                 type="number"
                 min="1"
                 max="12"
-                value={(value as ExactDate)?.month || ''}
-                onChange={(e) => updateValue({ month: e.target.value ? parseInt(e.target.value) : undefined })}
+                value={(value as ExactDate)?.month ?? ''}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    updateValue({ month: undefined });
+                  } else {
+                    const numValue = parseInt(inputValue, 10);
+                    if (!isNaN(numValue)) {
+                      updateValue({ month: numValue });
+                    }
+                  }
+                }}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
               />
             </div>
@@ -116,8 +131,18 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                 type="number"
                 min="1"
                 max="31"
-                value={(value as ExactDate)?.day || ''}
-                onChange={(e) => updateValue({ day: e.target.value ? parseInt(e.target.value) : undefined })}
+                value={(value as ExactDate)?.day ?? ''}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  if (inputValue === '') {
+                    updateValue({ day: undefined });
+                  } else {
+                    const numValue = parseInt(inputValue, 10);
+                    if (!isNaN(numValue)) {
+                      updateValue({ day: numValue });
+                    }
+                  }
+                }}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
               />
             </div>
@@ -154,8 +179,13 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
               <label className="block text-sm font-medium text-gray-300 mb-1">Approximate Year (optional)</label>
               <input
                 type="number"
-                value={(value as ApproximateDate)?.year || ''}
-                onChange={(e) => updateValue({ year: e.target.value ? parseInt(e.target.value) : undefined })}
+                value={(value as ApproximateDate)?.year ?? ''}
+                onChange={(e) => {
+                  const numValue = e.target.value === '' ? undefined : parseInt(e.target.value);
+                  if (e.target.value === '' || !isNaN(numValue!)) {
+                    updateValue({ year: numValue });
+                  }
+                }}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
               />
             </div>
@@ -164,20 +194,26 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
               <div className="flex gap-2">
                 <input
                   type="number"
-                  value={(value as ApproximateDate)?.year_range?.[0] || ''}
+                  value={(value as ApproximateDate)?.year_range?.[0] ?? ''}
                   onChange={(e) => {
                     const range = (value as ApproximateDate)?.year_range || [0, 0];
-                    updateValue({ year_range: [parseInt(e.target.value) || 0, range[1]] });
+                    const numValue = e.target.value === '' ? 0 : parseInt(e.target.value);
+                    if (!isNaN(numValue)) {
+                      updateValue({ year_range: [numValue, range[1]] });
+                    }
                   }}
                   placeholder="Start"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
                 />
                 <input
                   type="number"
-                  value={(value as ApproximateDate)?.year_range?.[1] || ''}
+                  value={(value as ApproximateDate)?.year_range?.[1] ?? ''}
                   onChange={(e) => {
                     const range = (value as ApproximateDate)?.year_range || [0, 0];
-                    updateValue({ year_range: [range[0], parseInt(e.target.value) || 0] });
+                    const numValue = e.target.value === '' ? 0 : parseInt(e.target.value);
+                    if (!isNaN(numValue)) {
+                      updateValue({ year_range: [range[0], numValue] });
+                    }
                   }}
                   placeholder="End"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -214,12 +250,15 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
               )}
               <input
                 type="number"
-                value={(value as DateRange)?.start?.year || ''}
+                value={(value as DateRange)?.start?.year ?? ''}
                 onChange={(e) => {
                   const range = value as DateRange;
-                  updateValue({
-                    start: { ...range?.start, year: parseInt(e.target.value) || 0 },
-                  });
+                  const numValue = e.target.value === '' ? 0 : parseInt(e.target.value);
+                  if (!isNaN(numValue)) {
+                    updateValue({
+                      start: { ...range?.start, year: numValue },
+                    });
+                  }
                 }}
                 placeholder="Year"
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -230,12 +269,22 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                   type="number"
                   min="1"
                   max="12"
-                  value={(value as DateRange)?.start?.month || ''}
+                  value={(value as DateRange)?.start?.month ?? ''}
                   onChange={(e) => {
                     const range = value as DateRange;
-                    updateValue({
-                      start: { ...range?.start, month: e.target.value ? parseInt(e.target.value) : undefined },
-                    });
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      updateValue({
+                        start: { ...range?.start, month: undefined },
+                      });
+                    } else {
+                      const numValue = parseInt(inputValue, 10);
+                      if (!isNaN(numValue)) {
+                        updateValue({
+                          start: { ...range?.start, month: numValue },
+                        });
+                      }
+                    }
                   }}
                   placeholder="Month (optional)"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -244,12 +293,22 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                   type="number"
                   min="1"
                   max="31"
-                  value={(value as DateRange)?.start?.day || ''}
+                  value={(value as DateRange)?.start?.day ?? ''}
                   onChange={(e) => {
                     const range = value as DateRange;
-                    updateValue({
-                      start: { ...range?.start, day: e.target.value ? parseInt(e.target.value) : undefined },
-                    });
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      updateValue({
+                        start: { ...range?.start, day: undefined },
+                      });
+                    } else {
+                      const numValue = parseInt(inputValue, 10);
+                      if (!isNaN(numValue)) {
+                        updateValue({
+                          start: { ...range?.start, day: numValue },
+                        });
+                      }
+                    }
                   }}
                   placeholder="Day (optional)"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -281,12 +340,15 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
               )}
               <input
                 type="number"
-                value={(value as DateRange)?.end?.year || ''}
+                value={(value as DateRange)?.end?.year ?? ''}
                 onChange={(e) => {
                   const range = value as DateRange;
-                  updateValue({
-                    end: { ...range?.end, year: parseInt(e.target.value) || 0 },
-                  });
+                  const numValue = e.target.value === '' ? 0 : parseInt(e.target.value);
+                  if (!isNaN(numValue)) {
+                    updateValue({
+                      end: { ...range?.end, year: numValue },
+                    });
+                  }
                 }}
                 placeholder="Year"
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -297,12 +359,22 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                   type="number"
                   min="1"
                   max="12"
-                  value={(value as DateRange)?.end?.month || ''}
+                  value={(value as DateRange)?.end?.month ?? ''}
                   onChange={(e) => {
                     const range = value as DateRange;
-                    updateValue({
-                      end: { ...range?.end, month: e.target.value ? parseInt(e.target.value) : undefined },
-                    });
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      updateValue({
+                        end: { ...range?.end, month: undefined },
+                      });
+                    } else {
+                      const numValue = parseInt(inputValue, 10);
+                      if (!isNaN(numValue)) {
+                        updateValue({
+                          end: { ...range?.end, month: numValue },
+                        });
+                      }
+                    }
                   }}
                   placeholder="Month (optional)"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
@@ -311,12 +383,22 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                   type="number"
                   min="1"
                   max="31"
-                  value={(value as DateRange)?.end?.day || ''}
+                  value={(value as DateRange)?.end?.day ?? ''}
                   onChange={(e) => {
                     const range = value as DateRange;
-                    updateValue({
-                      end: { ...range?.end, day: e.target.value ? parseInt(e.target.value) : undefined },
-                    });
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      updateValue({
+                        end: { ...range?.end, day: undefined },
+                      });
+                    } else {
+                      const numValue = parseInt(inputValue, 10);
+                      if (!isNaN(numValue)) {
+                        updateValue({
+                          end: { ...range?.end, day: numValue },
+                        });
+                      }
+                    }
                   }}
                   placeholder="Day (optional)"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
