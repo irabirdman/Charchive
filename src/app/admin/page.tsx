@@ -80,7 +80,12 @@ export default async function AdminDashboard() {
       .limit(2),
     supabase
       .from('timeline_events')
-      .select('id, title, updated_at')
+      .select(`
+        id, 
+        title, 
+        updated_at,
+        timelines:timeline_event_timelines(timeline_id)
+      `)
       .order('updated_at', { ascending: false })
       .limit(2),
   ]);
@@ -122,13 +127,19 @@ export default async function AdminDashboard() {
       updated_at: item.updated_at,
       href: `/admin/timelines/${item.id}`,
     })),
-    ...(recentEvents.data || []).map((item) => ({
-      id: item.id,
-      name: item.title,
-      type: 'timeline-event' as const,
-      updated_at: item.updated_at,
-      href: `/admin/timeline-events/${item.id}`,
-    })),
+    ...(recentEvents.data || []).map((item: any) => {
+      // Get the first timeline this event belongs to, or link to timelines list
+      const timelines = Array.isArray(item.timelines) ? item.timelines : (item.timelines ? [item.timelines] : []);
+      const firstTimeline = timelines[0];
+      const firstTimelineId = firstTimeline?.timeline_id;
+      return {
+        id: item.id,
+        name: item.title,
+        type: 'timeline-event' as const,
+        updated_at: item.updated_at,
+        href: firstTimelineId ? `/admin/timelines/${firstTimelineId}/events` : '/admin/timelines',
+      };
+    }),
   ]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 10);
@@ -191,7 +202,7 @@ export default async function AdminDashboard() {
           <StatsCard
             title="Timeline Events"
             count={timelineEventCount}
-            href="/admin/timeline-events"
+            href="/admin/timelines"
             color="#f97316"
             icon="fas fa-calendar"
           />
@@ -266,10 +277,10 @@ export default async function AdminDashboard() {
           <FeatureTile
             title="New Timeline Event"
             description="Create a new timeline event"
-            href="/admin/timeline-events/new"
+            href="/admin/timelines"
             icon="fas fa-calendar-plus"
             color="orange"
-            actionLabel="Create →"
+            actionLabel="Go to Timelines →"
           />
         </div>
       </div>
@@ -324,9 +335,9 @@ export default async function AdminDashboard() {
             actionLabel="Browse →"
           />
           <FeatureTile
-            title="Browse Timeline Events"
-            description="View and manage all timeline events"
-            href="/admin/timeline-events"
+            title="Browse Timelines"
+            description="View and manage all timelines and their events"
+            href="/admin/timelines"
             icon="fas fa-calendar-alt"
             color="orange"
             count={timelineEventCount}

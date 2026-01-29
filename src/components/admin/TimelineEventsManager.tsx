@@ -23,6 +23,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
   const [timelineStoryAliasId, setTimelineStoryAliasId] = useState<string | null>(null);
   const [showCreateEventForm, setShowCreateEventForm] = useState(false);
   const [showAddExistingEvent, setShowAddExistingEvent] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [availableEvents, setAvailableEvents] = useState<TimelineEvent[]>([]);
   const [isLoadingAvailableEvents, setIsLoadingAvailableEvents] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -168,6 +169,15 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
       }
       // Hide the form
       setShowCreateEventForm(false);
+    }
+  }
+
+  async function handleEventUpdated(responseData: any) {
+    if (responseData?.id) {
+      // Reload the events list to show updated event
+      await loadTimelineAndEvents();
+      // Hide the edit form
+      setEditingEventId(null);
     }
   }
 
@@ -422,6 +432,29 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
         </div>
       )}
 
+      {editingEventId && worldId && (() => {
+        const eventToEdit = timelineEvents.find(e => e.id === editingEventId);
+        if (!eventToEdit) return null;
+        return (
+          <div className="border border-gray-600/70 rounded-lg p-6 bg-gray-700/60 mb-4">
+            <h4 className="text-lg font-semibold text-gray-100 mb-4">Edit Event: {eventToEdit.title}</h4>
+            <TimelineEventForm
+              key={`edit-event-form-${editingEventId}`}
+              event={eventToEdit}
+              worldId={worldId}
+              lockWorld={true}
+              timelineEra={timelineEra}
+              timelineStoryAliasId={timelineStoryAliasId}
+              lockStoryAlias={true}
+              timelineId={timelineId}
+              onSuccess={handleEventUpdated}
+              onCancel={() => setEditingEventId(null)}
+              hideCancel={false}
+            />
+          </div>
+        );
+      })()}
+
       {timelineEvents.length === 0 ? (
         <div className="text-center py-8 text-gray-400">
           No events in this timeline yet. Create events to get started.
@@ -429,6 +462,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
       ) : (
         <div className="space-y-4">
           {timelineEvents.map((event, index) => (
+            editingEventId === event.id ? null : (
             <div
               key={event.id}
               className="border border-gray-600/70 rounded-lg p-6 bg-gray-700/60"
@@ -505,7 +539,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
                     ↓
                   </button>
                   <button
-                    onClick={() => router.push(`/admin/timeline-events/${event.id}`)}
+                    onClick={() => setEditingEventId(event.id)}
                     className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Edit
@@ -529,6 +563,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
                 </div>
               </div>
             </div>
+            )
           ))}
         </div>
       )}

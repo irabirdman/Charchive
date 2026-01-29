@@ -407,12 +407,12 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
     apiRoute: '/api/admin/timeline-events',
     entity: event,
     successRoute: (responseData, isUpdate) => {
-      // After successful creation, navigate to the main events list page
-      if (!isUpdate) {
-        return '/admin/timeline-events';
+      // If we're working within a timeline, navigate back to that timeline's events page
+      if (timelineId) {
+        return `/admin/timelines/${timelineId}/events`;
       }
-      // When updating, stay on the same page (event detail page)
-      return event ? `/admin/timeline-events/${event.id}` : '/admin/timeline-events';
+      // Otherwise, navigate to timelines list (since standalone events pages are being removed)
+      return '/admin/timelines';
     },
     shouldNavigateRef: shouldNavigateAfterSaveRef,
     onSuccess: async (responseData, isUpdate) => {
@@ -806,9 +806,13 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
     
     onSubmitRef.current = false;
     
-    // When creating a new event (not editing), set navigation ref to true so it navigates after save
-    if (!event) {
+    // When creating/editing within a timeline, don't navigate (let onSuccess handle it)
+    // When creating/editing standalone, navigate after save
+    if (!timelineId) {
       shouldNavigateAfterSaveRef.current = true;
+    } else {
+      // If we have a timelineId, navigation is handled by onSuccess callback
+      shouldNavigateAfterSaveRef.current = false;
     }
     
     // Ensure world_id is set when lockWorld is true
