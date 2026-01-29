@@ -78,13 +78,23 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
     if (associations) {
       const events = associations
-        .map((assoc: any) => ({
-          ...assoc.event,
-          position: assoc.position,
-        }))
-        .filter((e: any) => e.id); // Filter out any null events
+        .map((assoc: any) => {
+          // Handle both single object and array cases from Supabase
+          const event = Array.isArray(assoc.event) ? assoc.event[0] : assoc.event;
+          if (!event || !event.id) return null;
+          return {
+            ...event,
+            position: assoc.position,
+          };
+        })
+        .filter((e: any): e is TimelineEvent & { position: number } => e !== null);
       if (!cancelledRef.current) {
         setTimelineEvents(events);
+      }
+    } else {
+      // If no associations, clear the events list
+      if (!cancelledRef.current) {
+        setTimelineEvents([]);
       }
     }
 
@@ -133,8 +143,29 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
 
   async function handleEventCreated(responseData: any) {
     if (responseData?.id && worldId) {
-      // Automatically add the new event to the timeline
-      await addEventToTimeline(responseData.id);
+      // Check if the event was already added to this timeline via timeline_ids
+      // The event creation API should have already associated it if timelineId was in timeline_ids
+      // So we only need to add it if it wasn't already associated
+      try {
+        const supabase = createClient();
+        const { data: existing } = await supabase
+          .from('timeline_event_timelines')
+          .select('id')
+          .eq('timeline_id', timelineId)
+          .eq('timeline_event_id', responseData.id)
+          .single();
+
+        // Only add if not already associated
+        if (!existing) {
+          await addEventToTimeline(responseData.id);
+        } else {
+          // Event is already associated, just reload the list to show it
+          await loadTimelineAndEvents();
+        }
+      } catch (error) {
+        // If check fails, try to add anyway (will be handled gracefully by API)
+        await addEventToTimeline(responseData.id);
+      }
       // Hide the form
       setShowCreateEventForm(false);
     }
@@ -383,6 +414,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
             timelineEra={timelineEra}
             timelineStoryAliasId={timelineStoryAliasId}
             lockStoryAlias={true}
+            timelineId={timelineId}
             onSuccess={handleEventCreated}
             onCancel={() => setShowCreateEventForm(false)}
             hideCancel={false}

@@ -101,7 +101,7 @@ export default async function TimelinePage({
   }
 
   // Load events via junction table
-  // Try with story_alias first, fallback if relationship fails
+  // Fetch story_aliases separately to avoid ambiguous relationship errors
   let { data: associations, error: eventsError } = await supabase
     .from('timeline_event_timelines')
     .select(`
@@ -109,7 +109,6 @@ export default async function TimelinePage({
       event:timeline_events(
         *,
         world:worlds(id, name, slug),
-        story_alias:story_aliases!story_alias_id(id, name, slug, description),
         characters:timeline_event_characters(
           *,
           oc:ocs(id, name, slug, date_of_birth)
@@ -119,30 +118,8 @@ export default async function TimelinePage({
     .eq('timeline_id', timeline.id)
     .order('position', { ascending: true });
 
-  // If error is related to story_aliases relationship, retry without it
-  if (eventsError && eventsError.code === 'PGRST200' && 
-      (eventsError.message?.includes('story_aliases') || eventsError.details?.includes('story_alias'))) {
-    const retryResult = await supabase
-      .from('timeline_event_timelines')
-      .select(`
-        position,
-        event:timeline_events(
-          *,
-          world:worlds(id, name, slug),
-          characters:timeline_event_characters(
-            *,
-            oc:ocs(id, name, slug, date_of_birth)
-          )
-        )
-      `)
-      .eq('timeline_id', timeline.id)
-      .order('position', { ascending: true });
-    
-    associations = retryResult.data;
-    eventsError = retryResult.error;
-    
-    // Fetch story_aliases separately for events that need them
-    if (associations) {
+  // Fetch story_aliases separately for events that need them
+  if (associations && !eventsError) {
       // Flatten events (handle both single objects and arrays from Supabase)
       const events = associations
         .map(a => a.event)
@@ -193,7 +170,6 @@ export default async function TimelinePage({
           });
         }
       }
-    }
   }
 
   // Extract events from associations and sanitize date_data

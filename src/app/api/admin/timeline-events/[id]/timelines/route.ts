@@ -24,6 +24,28 @@ export async function POST(
     );
   }
 
+  // Check if association already exists
+  const { data: existingAssociation } = await supabase
+    .from('timeline_event_timelines')
+    .select('*')
+    .eq('timeline_id', timeline_id)
+    .eq('timeline_event_id', params.id)
+    .single();
+
+  // If already associated, return the existing association
+  if (existingAssociation) {
+    const { data: timeline } = await supabase
+      .from('timelines')
+      .select('id, name')
+      .eq('id', timeline_id)
+      .single();
+
+    return NextResponse.json({
+      ...existingAssociation,
+      timeline: timeline,
+    });
+  }
+
   // Get the highest position in the timeline
   const { data: existing } = await supabase
     .from('timeline_event_timelines')

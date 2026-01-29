@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TimelineEvent, OC, EventDateData } from '@/types/oc';
+import type { TimelineEvent, OC, EventDateData, Timeline } from '@/types/oc';
 import { useWorlds } from '@/lib/hooks/useWorlds';
 import { useOCsByWorld } from '@/lib/hooks/useOCsByWorld';
 import { useFormSubmission } from '@/lib/hooks/useFormSubmission';
@@ -22,6 +22,7 @@ import { StoryAliasSelector } from './StoryAliasSelector';
 import { optionalUuid, optionalUrl } from '@/lib/utils/zodSchemas';
 import { calculateAge } from '@/lib/utils/ageCalculation';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
 
 const eventSchema = z.object({
   world_id: z.string().uuid('Invalid world'),
@@ -45,6 +46,7 @@ const eventSchema = z.object({
     { message: "Either select a character or enter a custom name" }
   )).default([]),
   story_alias_id: optionalUuid,
+  timeline_ids: z.array(z.string().uuid()).default([]), // Array of timeline IDs this event belongs to
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -56,12 +58,13 @@ interface TimelineEventFormProps {
   timelineEra?: string | null; // Era system from timeline (comma-separated, e.g., "BE, SE")
   timelineStoryAliasId?: string | null; // Story alias from timeline - events inherit this
   lockStoryAlias?: boolean; // If true, hide story alias field and lock it to timelineStoryAliasId
+  timelineId?: string; // Pre-select a timeline (when creating from a timeline page)
   onSuccess?: (responseData: any) => void | Promise<void>; // Callback after successful creation
   onCancel?: () => void; // Callback when cancel is clicked
   hideCancel?: boolean; // Hide cancel button (useful for inline forms)
 }
 
-export function TimelineEventForm({ event, worldId, lockWorld = false, timelineEra, timelineStoryAliasId, lockStoryAlias = false, onSuccess, onCancel, hideCancel = false }: TimelineEventFormProps) {
+export function TimelineEventForm({ event, worldId, lockWorld = false, timelineEra, timelineStoryAliasId, lockStoryAlias = false, timelineId, onSuccess, onCancel, hideCancel = false }: TimelineEventFormProps) {
   const router = useRouter();
   const { worlds } = useWorlds();
   const shouldNavigateAfterSaveRef = useRef(false);
@@ -112,6 +115,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
         role: c.role || '',
       })) || [],
       story_alias_id: event.story_alias_id ?? null,
+      timeline_ids: [], // Will be populated from existing associations if editing
     } : {
       world_id: worldId || '',
       title: '',
@@ -127,6 +131,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
       image_url: '',
       characters: [],
       story_alias_id: lockStoryAlias ? (timelineStoryAliasId || null) : null,
+      timeline_ids: timelineId ? [timelineId] : [],
     },
   });
 
@@ -157,6 +162,70 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
   const watchedWorldId = watch('world_id');
   const watchedDateData = watch('date_data');
   const watchedCategories = watch('categories');
+  const watchedTimelineIds = watch('timeline_ids');
+
+  // Fetch timelines for the selected world
+  const [timelines, setTimelines] = useState<Timeline[]>([]);
+  const [isLoadingTimelines, setIsLoadingTimelines] = useState(false);
+
+  useEffect(() => {
+    async function loadTimelines() {
+      if (!watchedWorldId) {
+        setTimelines([]);
+        return;
+      }
+
+      setIsLoadingTimelines(true);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('timelines')
+          .select('id, name')
+          .eq('world_id', watchedWorldId)
+          .order('name', { ascending: true });
+
+        if (error) {
+          logger.error('Component', 'TimelineEventForm: Error loading timelines', error);
+          setTimelines([]);
+        } else {
+          setTimelines(data || []);
+        }
+      } catch (error) {
+        logger.error('Component', 'TimelineEventForm: Error loading timelines', error);
+        setTimelines([]);
+      } finally {
+        setIsLoadingTimelines(false);
+      }
+    }
+
+    loadTimelines();
+  }, [watchedWorldId]);
+
+  // Load existing timeline associations when editing
+  useEffect(() => {
+    async function loadExistingTimelineAssociations() {
+      if (!event?.id) return;
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('timeline_event_timelines')
+          .select('timeline_id')
+          .eq('timeline_event_id', event.id);
+
+        if (!error && data) {
+          const timelineIds = data.map(assoc => assoc.timeline_id);
+          setValue('timeline_ids', timelineIds);
+        }
+      } catch (error) {
+        logger.error('Component', 'TimelineEventForm: Error loading timeline associations', error);
+      }
+    }
+
+    if (event) {
+      loadExistingTimelineAssociations();
+    }
+  }, [event, setValue]);
 
   const { ocs: characters } = useOCsByWorld(watchedWorldId);
 
@@ -238,6 +307,56 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
           />
         </div>
       )}
+
+      <div>
+        <FormLabel htmlFor="timeline_ids" optional>
+          Timelines
+        </FormLabel>
+        {!watchedWorldId ? (
+          <div className="px-3 py-2 bg-gray-700/50 border border-gray-600/70 rounded-md text-gray-400 text-sm">
+            Select a world first to see available timelines
+          </div>
+        ) : isLoadingTimelines ? (
+          <div className="px-3 py-2 bg-gray-700/50 border border-gray-600/70 rounded-md text-gray-400 text-sm">
+            Loading timelines...
+          </div>
+        ) : timelines.length === 0 ? (
+          <div className="px-3 py-2 bg-gray-700/50 border border-gray-600/70 rounded-md text-gray-400 text-sm">
+            No timelines found for this world. Create a timeline first.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {timelines.map((timeline) => {
+              const isSelected = watchedTimelineIds?.includes(timeline.id) || false;
+              return (
+                <label
+                  key={timeline.id}
+                  className="flex items-center gap-2 p-2 bg-gray-800/50 border border-gray-700 rounded hover:bg-gray-800 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      const currentIds = watchedTimelineIds || [];
+                      if (e.target.checked) {
+                        setValue('timeline_ids', [...currentIds, timeline.id]);
+                      } else {
+                        setValue('timeline_ids', currentIds.filter(id => id !== timeline.id));
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-700 rounded focus:ring-purple-500"
+                  />
+                  <span className="text-gray-200">{timeline.name}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          Select which timeline(s) this event belongs to. You can select multiple timelines.
+        </p>
+      </div>
 
       {!lockStoryAlias && (
         <StoryAliasSelector

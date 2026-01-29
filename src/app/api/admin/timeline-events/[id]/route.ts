@@ -21,7 +21,6 @@ export async function GET(
       .select(`
         *,
         world:worlds(id, name, slug),
-        story_alias:story_aliases(id, name, slug, description),
         characters:timeline_event_characters(
           *,
           oc:ocs(id, name, slug, date_of_birth)
@@ -36,6 +35,19 @@ export async function GET(
 
     if (error) {
       return errorResponse(error.message);
+    }
+
+    // Fetch story_alias separately to avoid ambiguous relationship errors
+    if (data?.story_alias_id) {
+      const { data: storyAlias } = await supabase
+        .from('story_aliases')
+        .select('id, name, slug, description')
+        .eq('id', data.story_alias_id)
+        .single();
+      
+      if (storyAlias) {
+        data.story_alias = storyAlias;
+      }
     }
 
     return successResponse(data);
@@ -72,6 +84,7 @@ export async function PUT(
     image_url,
     characters, // Array of { oc_id, role } - will replace all existing
     story_alias_id,
+    timeline_ids, // Array of timeline IDs - will replace all existing associations
   } = body;
 
   // Get current event to validate story_alias_id
@@ -153,13 +166,88 @@ export async function PUT(
       }
     }
 
+    // Update timeline associations if provided
+    if (timeline_ids !== undefined) {
+      // Get current event world_id for validation
+      const eventWorldId = currentEvent?.world_id;
+
+      if (eventWorldId) {
+        // Delete existing timeline associations
+        await supabase
+          .from('timeline_event_timelines')
+          .delete()
+          .eq('timeline_event_id', params.id);
+
+        // Insert new associations if provided
+        if (Array.isArray(timeline_ids) && timeline_ids.length > 0) {
+          // Validate that all timelines belong to the same world
+          const { data: timelines, error: timelineCheckError } = await supabase
+            .from('timelines')
+            .select('id, world_id')
+            .in('id', timeline_ids);
+
+          if (timelineCheckError) {
+            logger.error('API', 'Failed to validate timelines', timelineCheckError);
+          } else if (timelines) {
+            // Filter to only timelines from the same world
+            const validTimelines = timelines.filter(t => t.world_id === eventWorldId);
+
+            // Get current positions for each timeline to preserve or append
+            const timelineInserts = await Promise.all(
+              validTimelines.map(async (timeline) => {
+                // Check if event was already in this timeline (to preserve position)
+                const { data: existingAssoc } = await supabase
+                  .from('timeline_event_timelines')
+                  .select('position')
+                  .eq('timeline_id', timeline.id)
+                  .eq('timeline_event_id', params.id)
+                  .single();
+
+                if (existingAssoc?.position !== undefined) {
+                return {
+                  timeline_id: timeline.id,
+                  timeline_event_id: params.id,
+                  position: existingAssoc.position,
+                };
+                }
+
+                // Get max position for this timeline
+                const { data: maxPosData } = await supabase
+                  .from('timeline_event_timelines')
+                  .select('position')
+                  .eq('timeline_id', timeline.id)
+                  .order('position', { ascending: false })
+                  .limit(1)
+                  .single();
+
+                const nextPosition = maxPosData?.position !== undefined ? maxPosData.position + 1 : 0;
+
+                return {
+                  timeline_id: timeline.id,
+                  timeline_event_id: params.id,
+                  position: nextPosition,
+                };
+              })
+            );
+
+            const { error: timelineError } = await supabase
+              .from('timeline_event_timelines')
+              .insert(timelineInserts);
+
+            if (timelineError) {
+              logger.error('API', 'Failed to update timeline associations', timelineError);
+            }
+          }
+        }
+      }
+    }
+
     // Fetch the complete updated event
     const { data: updatedEvent, error: fetchError } = await supabase
       .from('timeline_events')
       .select(`
         *,
         world:worlds(id, name, slug),
-        story_alias:story_aliases!story_alias_id(id, name, slug, description),
         characters:timeline_event_characters(
           *,
           oc:ocs(id, name, slug, date_of_birth)
@@ -174,6 +262,19 @@ export async function PUT(
 
     if (fetchError) {
       return errorResponse(fetchError.message);
+    }
+
+    // Fetch story_alias separately to avoid ambiguous relationship errors
+    if (updatedEvent?.story_alias_id) {
+      const { data: storyAlias } = await supabase
+        .from('story_aliases')
+        .select('id, name, slug, description')
+        .eq('id', updatedEvent.story_alias_id)
+        .single();
+      
+      if (storyAlias) {
+        updatedEvent.story_alias = storyAlias;
+      }
     }
 
     return successResponse(updatedEvent);

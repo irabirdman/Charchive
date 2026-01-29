@@ -26,7 +26,6 @@ export async function GET(request: Request) {
       .select(`
         *,
         world:worlds(id, name, slug),
-        story_alias:story_aliases!story_alias_id(id, name, slug, description),
         characters:timeline_event_characters(
           *,
           oc:ocs(id, name, slug, date_of_birth)
@@ -62,7 +61,25 @@ export async function GET(request: Request) {
       return errorResponse(error.message);
     }
 
-    return successResponse(data || []);
+    // Fetch story_aliases separately to avoid ambiguous relationship errors
+    const eventsWithStoryAliases = await Promise.all(
+      (data || []).map(async (event) => {
+        if (event.story_alias_id) {
+          const { data: storyAlias } = await supabase
+            .from('story_aliases')
+            .select('id, name, slug, description')
+            .eq('id', event.story_alias_id)
+            .single();
+          
+          if (storyAlias) {
+            return { ...event, story_alias: storyAlias };
+          }
+        }
+        return event;
+      })
+    );
+
+    return successResponse(eventsWithStoryAliases);
   } catch (error) {
     return handleError(error, 'Failed to fetch timeline events');
   }
@@ -94,6 +111,7 @@ export async function POST(request: Request) {
       image_url,
       characters, // Array of { oc_id, role }
       story_alias_id,
+      timeline_ids, // Array of timeline IDs this event belongs to
     } = body;
 
     // Validate required fields
@@ -169,13 +187,63 @@ export async function POST(request: Request) {
       }
     }
 
+    // Associate event with timelines if provided
+    if (timeline_ids && Array.isArray(timeline_ids) && timeline_ids.length > 0) {
+      // Validate that all timelines belong to the same world
+      const { data: timelines, error: timelineCheckError } = await supabase
+        .from('timelines')
+        .select('id, world_id')
+        .in('id', timeline_ids);
+
+      if (timelineCheckError) {
+        logger.error('API', 'Failed to validate timelines', timelineCheckError);
+      } else if (timelines) {
+        // Check all timelines belong to the same world
+        const invalidTimelines = timelines.filter(t => t.world_id !== world_id);
+        if (invalidTimelines.length > 0) {
+          logger.warn('API', 'Some timelines do not belong to the event world', invalidTimelines);
+        }
+
+        // Get the maximum position for each timeline to append new events at the end
+        const timelineInserts = await Promise.all(
+          timelines.map(async (timeline) => {
+            // Get current max position for this timeline
+            const { data: maxPosData } = await supabase
+              .from('timeline_event_timelines')
+              .select('position')
+              .eq('timeline_id', timeline.id)
+              .order('position', { ascending: false })
+              .limit(1)
+              .single();
+
+            const nextPosition = maxPosData?.position !== undefined ? maxPosData.position + 1 : 0;
+
+            return {
+              timeline_id: timeline.id,
+              timeline_event_id: event.id,
+              position: nextPosition,
+            };
+          })
+        );
+
+        const { error: timelineError } = await supabase
+          .from('timeline_event_timelines')
+          .insert(timelineInserts);
+
+        if (timelineError) {
+          // Event was created, but timeline associations failed
+          // We'll still return the event, but log the error
+          logger.error('API', 'Failed to associate timelines', timelineError);
+        }
+      }
+    }
+
     // Fetch the complete event with relationships
     const { data: completeEvent, error: fetchError } = await supabase
       .from('timeline_events')
       .select(`
         *,
         world:worlds(id, name, slug),
-        story_alias:story_aliases!story_alias_id(id, name, slug, description),
         characters:timeline_event_characters(
           *,
           oc:ocs(id, name, slug, date_of_birth)
@@ -186,6 +254,19 @@ export async function POST(request: Request) {
 
     if (fetchError) {
       return errorResponse(fetchError.message);
+    }
+
+    // Fetch story_alias separately to avoid ambiguous relationship errors
+    if (completeEvent?.story_alias_id) {
+      const { data: storyAlias } = await supabase
+        .from('story_aliases')
+        .select('id, name, slug, description')
+        .eq('id', completeEvent.story_alias_id)
+        .single();
+      
+      if (storyAlias) {
+        completeEvent.story_alias = storyAlias;
+      }
     }
 
     return successResponse(completeEvent);
