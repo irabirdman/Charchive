@@ -24,7 +24,6 @@ import { calculateAge } from '@/lib/utils/ageCalculation';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/client';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
-import type { OC } from '@/types/oc';
 
 const eventSchema = z.object({
   world_id: z.string().uuid('Invalid world'),
@@ -54,6 +53,13 @@ const eventSchema = z.object({
 
 type EventFormData = z.infer<typeof eventSchema>;
 
+// Minimal OC type for autocomplete (needs id, name, and date_of_birth for age calculation)
+type MinimalOC = {
+  id: string;
+  name: string;
+  date_of_birth?: string | null;
+};
+
 // Character Autocomplete Component
 function CharacterAutocompleteInput({
   value,
@@ -61,12 +67,16 @@ function CharacterAutocompleteInput({
   onSelect,
   placeholder,
   disabled,
+  onInputChange,
+  onInputValueChange,
 }: {
   value: string;
-  characters: OC[];
+  characters: MinimalOC[];
   onSelect: (ocId: string | null, customName: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  onInputChange?: (value: string) => void; // Callback for when input value changes
+  onInputValueChange?: (value: string) => void; // Callback to track current input value
 }) {
   const [inputValue, setInputValue] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -75,6 +85,7 @@ function CharacterAutocompleteInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
   const blurTimeoutRef = useRef<number | null>(null);
+  const saveTimeoutRef = useRef<number | null>(null);
 
   // Filter characters based on input
   const filteredCharacters = useMemo(() => {
@@ -113,13 +124,49 @@ function CharacterAutocompleteInput({
     setInputValue(newValue);
     setShowSuggestions(true);
     setHighlightedIndex(-1);
+    
+    // Notify parent of input value change
+    if (onInputValueChange) {
+      onInputValueChange(newValue);
+    }
+    
+    // Clear any pending save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    
+    // If user is typing a custom name (doesn't match any character), save it after a delay
+    if (newValue.trim()) {
+      const exactMatch = characters.find(c => c.name.toLowerCase() === newValue.toLowerCase());
+      if (!exactMatch) {
+        // Debounce saving custom name
+        saveTimeoutRef.current = window.setTimeout(() => {
+          // Only save if value hasn't changed and no character was selected
+          if (inputValue.trim() === newValue.trim()) {
+            onSelect(null, newValue.trim());
+          }
+          saveTimeoutRef.current = null;
+        }, 300);
+      }
+    }
   };
 
   // Handle suggestion selection
-  const handleSelectCharacter = (character: OC) => {
+  const handleSelectCharacter = (character: MinimalOC) => {
+    // Clear any pending timeouts
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
     setInputValue(character.name);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
+    // Immediately update form state
     onSelect(character.id, null);
   };
 
@@ -127,28 +174,48 @@ function CharacterAutocompleteInput({
   const handleCustomName = () => {
     const customName = inputValue.trim();
     if (customName) {
+      // Clear any pending timeouts
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
       setShowSuggestions(false);
       setHighlightedIndex(-1);
+      // Immediately update form state
       onSelect(null, customName);
     }
   };
 
   // Handle blur - if no exact match, treat as custom name
   const handleBlur = () => {
+    // Clear any pending save timeout and save immediately
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
     }
     blurTimeoutRef.current = window.setTimeout(() => {
       setShowSuggestions(false);
-      // If input doesn't match any character, treat as custom name
-      if (inputValue.trim() && !exactMatch) {
-        handleCustomName();
-      } else if (exactMatch) {
-        // If it matches, select that character
-        handleSelectCharacter(exactMatch);
+      // Always save the current input value when blurring
+      if (inputValue.trim()) {
+        const exactMatch = characters.find(c => c.name.toLowerCase() === inputValue.toLowerCase());
+        if (exactMatch) {
+          // If it matches exactly, select that character
+          handleSelectCharacter(exactMatch);
+        } else {
+          // If it doesn't match, treat as custom name
+          handleCustomName();
+        }
       }
       blurTimeoutRef.current = null;
-    }, 200);
+    }, 150);
   };
 
   // Handle keyboard navigation
@@ -189,12 +256,16 @@ function CharacterAutocompleteInput({
     }
   };
 
-  // Prevent blur timers from firing after unmount
+  // Prevent timers from firing after unmount
   useEffect(() => {
     return () => {
       if (blurTimeoutRef.current) {
         clearTimeout(blurTimeoutRef.current);
         blurTimeoutRef.current = null;
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
       }
     };
   }, []);
@@ -399,6 +470,10 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
   const watchedDateData = watch('date_data');
   const watchedCategories = watch('categories');
   const watchedTimelineIds = watch('timeline_ids');
+  const watchedCharacters = watch('characters');
+  
+  // Refs to store current input values for each character autocomplete
+  const characterInputRefs = useRef<Map<number, string>>(new Map());
 
   // Fetch timelines for the selected world
   const [timelines, setTimelines] = useState<Timeline[]>([]);
@@ -416,7 +491,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
         const supabase = createClient();
         const { data, error } = await supabase
           .from('timelines')
-          .select('id, name')
+          .select('id, name, world_id, created_at, updated_at')
           .eq('world_id', watchedWorldId)
           .order('name', { ascending: true });
 
@@ -424,7 +499,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
           logger.error('Component', 'TimelineEventForm: Error loading timelines', error);
           setTimelines([]);
         } else {
-          setTimelines(data || []);
+          setTimelines((data || []) as Timeline[]);
         }
       } catch (error) {
         logger.error('Component', 'TimelineEventForm: Error loading timelines', error);
@@ -525,8 +600,49 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
     }
   }, [watchedDateData, characters, watch, setValue]);
 
+  const onSubmitRef = useRef(false); // Prevent infinite loop
+  
   const onSubmit = async (data: EventFormData) => {
     logger.debug('Component', 'TimelineEventForm: Form submitted', data);
+    
+    // Before submitting, ensure any pending custom names from input refs are saved
+    if (!onSubmitRef.current) {
+      const currentCharacters = watch('characters') || [];
+      let needsUpdate = false;
+      const updatedCharacters = currentCharacters.map((char, index) => {
+        // If character has neither oc_id nor custom_name, check if there's a pending input value
+        if (!char.oc_id && !char.custom_name) {
+          const pendingInput = characterInputRefs.current.get(index);
+          if (pendingInput && pendingInput.trim()) {
+            // Check if it matches a character
+            const exactMatch = characters.find(c => c.name.toLowerCase() === pendingInput.toLowerCase());
+            if (exactMatch) {
+              needsUpdate = true;
+              return { ...char, oc_id: exactMatch.id, custom_name: null };
+            } else {
+              // Save as custom name
+              needsUpdate = true;
+              return { ...char, custom_name: pendingInput.trim() };
+            }
+          }
+        }
+        return char;
+      });
+      
+      // Update form state if needed before validation
+      if (needsUpdate) {
+        onSubmitRef.current = true;
+        setValue('characters', updatedCharacters, { shouldValidate: true, shouldDirty: true });
+        // Re-trigger validation and submission
+        setTimeout(() => {
+          onSubmitRef.current = false;
+          handleSubmit(onSubmit, onError)();
+        }, 0);
+        return;
+      }
+    }
+    
+    onSubmitRef.current = false;
     
     // Ensure world_id is set when lockWorld is true
     if (lockWorld && worldId && !data.world_id) {
@@ -849,15 +965,29 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
                         characters={characters}
                         onSelect={(ocId, customName) => {
                           if (ocId) {
-                            // Selected an OC
-                            relatedCharacters.updateItemField(index, 'oc_id', ocId);
-                            relatedCharacters.updateItemField(index, 'custom_name', null);
-                            relatedCharacters.updateItemField(index, 'age', null); // Reset to trigger auto-calculation
+                            // Selected an OC - update all fields at once
+                            characterInputRefs.current.delete(index);
+                            relatedCharacters.updateItem(index, {
+                              oc_id: ocId,
+                              custom_name: null,
+                              age: null, // Reset to trigger auto-calculation
+                            });
                           } else if (customName) {
-                            // Typed custom name
-                            relatedCharacters.updateItemField(index, 'oc_id', null);
-                            relatedCharacters.updateItemField(index, 'custom_name', customName);
-                            relatedCharacters.updateItemField(index, 'age', null);
+                            // Typed custom name - update all fields at once
+                            characterInputRefs.current.delete(index);
+                            relatedCharacters.updateItem(index, {
+                              oc_id: null,
+                              custom_name: customName,
+                              age: null,
+                            });
+                          }
+                        }}
+                        onInputValueChange={(inputValue) => {
+                          // Track current input value for this character
+                          if (inputValue.trim()) {
+                            characterInputRefs.current.set(index, inputValue.trim());
+                          } else {
+                            characterInputRefs.current.delete(index);
                           }
                         }}
                         placeholder="Select character or type custom name..."

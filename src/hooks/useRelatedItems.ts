@@ -30,13 +30,13 @@ export function useRelatedItems<T extends Record<string, any>>(
   const updateItem = (index: number, updates: Partial<T>) => {
     const updated = [...items];
     updated[index] = { ...updated[index], ...updates };
-    setValue(fieldName, updated);
+    setValue(fieldName, updated, { shouldValidate: true, shouldDirty: true });
   };
 
   const updateItemField = <K extends keyof T>(index: number, field: K, value: T[K]) => {
     const updated = [...items];
     updated[index] = { ...updated[index], [field]: value };
-    setValue(fieldName, updated);
+    setValue(fieldName, updated, { shouldValidate: true, shouldDirty: true });
   };
 
   return {

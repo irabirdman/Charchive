@@ -35,7 +35,7 @@ function formatDateData(dateData: EventDateData | null | undefined): string {
       }
       return `${eraPrefix}${yearStr}${approximateSuffix}`;
     case 'approximate':
-      return dateData.text;
+      return dateData.text || '';
     case 'range':
       const range = dateData as any;
       const startEra = range.start?.era ? `${range.start.era} ` : '';
@@ -49,9 +49,9 @@ function formatDateData(dateData: EventDateData | null | undefined): string {
       const separator = range.start?.era && range.end?.era && range.start.era === range.end.era ? '–' : ' to ';
       return `${startEra}${startParts.join('-')}${separator}${endEra}${endParts.join('-')}${range.text ? ` (${range.text})` : ''}`;
     case 'relative':
-      return dateData.text;
+      return (dateData as any).text || '';
     case 'unknown':
-      return dateData.text || 'Date unknown';
+      return (dateData as any).text || 'Date unknown';
     default:
       return '';
   }
