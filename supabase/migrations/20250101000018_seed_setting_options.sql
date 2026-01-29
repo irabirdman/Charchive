@@ -1,6 +1,4 @@
 -- Seed setting/location options to dropdown_options table
--- These represent various locations and settings for character generation
-
 INSERT INTO dropdown_options (field, option) VALUES
 ('setting', 'A Villa'),
 ('setting', 'Abattoir (Slaughterhouse)'),

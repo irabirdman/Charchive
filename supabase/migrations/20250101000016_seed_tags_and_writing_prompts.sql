@@ -1,7 +1,130 @@
--- Seed writing prompts with the existing templates
--- Two-character prompts
+-- Seed tags (character + fanfic) and writing prompts
+
+-- Character tags (default category 'character')
+INSERT INTO tags (name, description, color) VALUES
+  ('Protagonist', 'Main character or hero', '#3B82F6'),
+  ('Antagonist', 'Villain or opposing force', '#EF4444'),
+  ('Supporting Character', 'Secondary character', '#8B5CF6'),
+  ('Side Character', 'Minor character', '#6B7280'),
+  ('Cameo', 'Brief appearance', '#9CA3AF'),
+  ('Heroic', 'Displays heroic qualities', '#10B981'),
+  ('Villainous', 'Displays villainous qualities', '#DC2626'),
+  ('Anti-Hero', 'Morally ambiguous hero', '#F59E0B'),
+  ('Comic Relief', 'Provides humor', '#F97316'),
+  ('Tragic', 'Tragic backstory or fate', '#7C3AED'),
+  ('Optimistic', 'Positive outlook', '#FBBF24'),
+  ('Pessimistic', 'Negative outlook', '#6B7280'),
+  ('Sarcastic', 'Uses sarcasm', '#8B5CF6'),
+  ('Serious', 'Serious demeanor', '#4B5563'),
+  ('Playful', 'Playful personality', '#EC4899'),
+  ('Mentor', 'Guides others', '#6366F1'),
+  ('Student', 'Learns from others', '#14B8A6'),
+  ('Leader', 'Takes charge', '#F59E0B'),
+  ('Follower', 'Follows others', '#6B7280'),
+  ('Loner', 'Prefers solitude', '#4B5563'),
+  ('Team Player', 'Works well in groups', '#10B981'),
+  ('Rebel', 'Challenges authority', '#EF4444'),
+  ('Loyal', 'Shows loyalty', '#3B82F6'),
+  ('Betrayer', 'Betrays others', '#DC2626'),
+  ('Love Interest', 'Romantic interest', '#EC4899'),
+  ('Best Friend', 'Close friend', '#8B5CF6'),
+  ('Rival', 'Competes with others', '#F59E0B'),
+  ('Enemy', 'Hostile relationship', '#EF4444'),
+  ('Family', 'Family member', '#10B981'),
+  ('Ally', 'Supports others', '#3B82F6'),
+  ('Powerful', 'Has significant power', '#F59E0B'),
+  ('Weak', 'Lacks power', '#6B7280'),
+  ('Magical', 'Uses magic', '#8B5CF6'),
+  ('Non-Magical', 'No magic abilities', '#4B5563'),
+  ('Supernatural', 'Supernatural abilities', '#7C3AED'),
+  ('Human', 'Regular human', '#6B7280'),
+  ('Character Growth', 'Shows development', '#10B981'),
+  ('Static Character', 'Little to no change', '#6B7280'),
+  ('Complex', 'Multi-dimensional', '#6366F1'),
+  ('Simple', 'Straightforward character', '#9CA3AF'),
+  ('Main Character', 'Central to story', '#3B82F6'),
+  ('Plot Device', 'Drives plot forward', '#8B5CF6'),
+  ('Red Herring', 'Misleading character', '#F59E0B'),
+  ('Sacrifice', 'Sacrifices for others', '#EF4444'),
+  ('Survivor', 'Survives hardships', '#10B981'),
+  ('Emotional', 'Shows strong emotions', '#EC4899'),
+  ('Stoic', 'Shows little emotion', '#4B5563'),
+  ('Vulnerable', 'Shows vulnerability', '#8B5CF6'),
+  ('Strong', 'Emotionally strong', '#10B981'),
+  ('Orphan', 'Lost parents', '#7C3AED'),
+  ('Noble', 'High social status', '#F59E0B'),
+  ('Commoner', 'Low social status', '#6B7280'),
+  ('Outcast', 'Rejected by society', '#EF4444'),
+  ('Chosen One', 'Destined for greatness', '#3B82F6'),
+  ('Warrior', 'Fights in combat', '#EF4444'),
+  ('Pacifist', 'Avoids violence', '#10B981'),
+  ('Strategist', 'Plans ahead', '#6366F1'),
+  ('Berserker', 'Fights recklessly', '#DC2626'),
+  ('Genius', 'Highly intelligent', '#3B82F6'),
+  ('Average', 'Normal intelligence', '#6B7280'),
+  ('Naive', 'Lacks experience', '#FBBF24'),
+  ('Wise', 'Shows wisdom', '#8B5CF6'),
+  ('Good', 'Moral character', '#10B981'),
+  ('Evil', 'Immoral character', '#DC2626'),
+  ('Neutral', 'Moral ambiguity', '#6B7280'),
+  ('Redeemed', 'Changed for better', '#3B82F6'),
+  ('Corrupted', 'Changed for worse', '#EF4444')
+ON CONFLICT (name) DO NOTHING;
+
+-- Fanfic tags
+INSERT INTO tags (name, category, description) VALUES
+  ('Angst', 'fanfic', 'Stories with emotional pain and suffering'),
+  ('Fluff', 'fanfic', 'Light, sweet, happy stories'),
+  ('Hurt/Comfort', 'fanfic', 'Stories involving physical or emotional hurt followed by comfort'),
+  ('Smut', 'fanfic', 'Explicit sexual content'),
+  ('Slice of Life', 'fanfic', 'Everyday life stories'),
+  ('Action', 'fanfic', 'Stories with lots of action and adventure'),
+  ('Drama', 'fanfic', 'Serious, plot-driven stories'),
+  ('Comedy', 'fanfic', 'Humorous stories'),
+  ('Romance', 'fanfic', 'Love stories'),
+  ('Friendship', 'fanfic', 'Stories focusing on friendships'),
+  ('Family', 'fanfic', 'Stories about family relationships'),
+  ('AU (Alternate Universe)', 'fanfic', 'Stories set in alternate universes'),
+  ('Canon Divergent', 'fanfic', 'Stories that diverge from canon'),
+  ('Fix-It', 'fanfic', 'Stories that fix canon events'),
+  ('Time Travel', 'fanfic', 'Stories involving time travel'),
+  ('Slow Burn', 'fanfic', 'Stories with slow-developing relationships'),
+  ('Established Relationship', 'fanfic', 'Stories with already-established relationships'),
+  ('First Time', 'fanfic', 'First time experiences'),
+  ('Friends to Lovers', 'fanfic', 'Friendship developing into romance'),
+  ('Enemies to Lovers', 'fanfic', 'Enemies developing into romance'),
+  ('Mutual Pining', 'fanfic', 'Both characters pining for each other'),
+  ('Unrequited Love', 'fanfic', 'One-sided love'),
+  ('Love Triangle', 'fanfic', 'Romantic triangle situations'),
+  ('Polyamory', 'fanfic', 'Multiple romantic relationships'),
+  ('Coming of Age', 'fanfic', 'Stories about growing up'),
+  ('Dark', 'fanfic', 'Dark themes and content'),
+  ('Tragedy', 'fanfic', 'Tragic stories'),
+  ('Major Character Death', 'fanfic', 'Stories with major character deaths'),
+  ('Minor Character Death', 'fanfic', 'Stories with minor character deaths'),
+  ('No Archive Warnings Apply', 'fanfic', 'No major warnings needed'),
+  ('Creator Chose Not To Use Archive Warnings', 'fanfic', 'Creator chose not to warn'),
+  ('Graphic Depictions Of Violence', 'fanfic', 'Contains graphic violence'),
+  ('Rape/Non-Con', 'fanfic', 'Contains non-consensual content'),
+  ('Underage', 'fanfic', 'Contains underage content'),
+  ('Plot What Plot', 'fanfic', 'Porn without plot'),
+  ('Crack', 'fanfic', 'Silly, absurd stories'),
+  ('Crack Treated Seriously', 'fanfic', 'Absurd premise treated seriously'),
+  ('Crossover', 'fanfic', 'Stories combining multiple fandoms'),
+  ('Fusion', 'fanfic', 'Stories fusing elements from multiple fandoms'),
+  ('Podfic', 'fanfic', 'Audio recording of a story'),
+  ('Podfic Available', 'fanfic', 'Has audio version available'),
+  ('Series', 'fanfic', 'Part of a series'),
+  ('One Shot', 'fanfic', 'Single chapter story'),
+  ('Multi-Chapter', 'fanfic', 'Story with multiple chapters'),
+  ('Complete', 'fanfic', 'Finished story'),
+  ('Incomplete', 'fanfic', 'Unfinished story'),
+  ('Abandoned', 'fanfic', 'Story abandoned by author'),
+  ('Oneshot', 'fanfic', 'Single chapter story (alternate spelling)')
+ON CONFLICT (name) DO NOTHING;
+
+-- Writing prompts (two-character)
 INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_active) VALUES
--- First Meeting
 ('First Meeting', 'What happens when {character1} and {character2} meet for the first time?', true, true),
 ('First Meeting', 'Describe {character1}''s first impression of {character2}.', true, true),
 ('First Meeting', 'How does {character2} misjudge {character1} at first?', true, true),
@@ -17,8 +140,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('First Meeting', 'How does {character2} deliberately control the first impression they give?', true, true),
 ('First Meeting', 'Write a brief but charged first interaction that lingers afterward.', true, true),
 ('First Meeting', 'What emotion dominates their first meeting, and why?', true, true),
-
--- Trust & Reliance
 ('Trust & Reliance', 'Write a scene where {character1} must ask {character2} for help.', true, true),
 ('Trust & Reliance', 'What makes {character1} finally trust {character2}?', true, true),
 ('Trust & Reliance', 'Create a moment where {character2} helps {character1} without being asked.', true, true),
@@ -33,8 +154,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Trust & Reliance', 'Write a scene where trust is tested but not broken.', true, true),
 ('Trust & Reliance', 'What unspoken agreement forms between them?', true, true),
 ('Trust & Reliance', 'How does reliance complicate their independence?', true, true),
-
--- Conflict & Betrayal
 ('Conflict & Betrayal', 'How would {character1} react if {character2} betrayed them?', true, true),
 ('Conflict & Betrayal', 'Write a confrontation where {character1} accuses {character2} of lying.', true, true),
 ('Conflict & Betrayal', 'What secret causes a rift between {character1} and {character2}?', true, true),
@@ -48,8 +167,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Conflict & Betrayal', 'What truth makes forgiveness difficult?', true, true),
 ('Conflict & Betrayal', 'Write a confrontation where neither character is entirely wrong.', true, true),
 ('Conflict & Betrayal', 'How does betrayal change how they see themselves?', true, true),
-
--- Forced Proximity
 ('Forced Proximity', 'Create a story where {character1} and {character2} are forced to work together.', true, true),
 ('Forced Proximity', 'Write about a day in the life of {character1} and {character2} as roommates.', true, true),
 ('Forced Proximity', 'What happens when {character1} and {character2} are stuck together overnight?', true, true),
@@ -61,8 +178,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Forced Proximity', 'What boundary is crossed simply due to closeness?', true, true),
 ('Forced Proximity', 'How does being trapped together change their priorities?', true, true),
 ('Forced Proximity', 'Write a scene where silence becomes uncomfortable.', true, true),
-
--- Secrets & Revelations
 ('Secrets & Revelations', 'What if {character1} discovered a secret about {character2}?', true, true),
 ('Secrets & Revelations', 'Write the moment {character2} reveals something they''ve hidden.', true, true),
 ('Secrets & Revelations', 'How does {character1} react to learning the truth too late?', true, true),
@@ -72,8 +187,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Secrets & Revelations', 'How does secrecy shape their relationship?', true, true),
 ('Secrets & Revelations', 'What truth is hardest to say aloud?', true, true),
 ('Secrets & Revelations', 'Write a revelation that shifts the power dynamic.', true, true),
-
--- Emotional Moments
 ('Emotional Moments', 'How would {character1} comfort {character2} after a loss?', true, true),
 ('Emotional Moments', 'Write a quiet scene where neither character says what they really mean.', true, true),
 ('Emotional Moments', 'Describe a moment of unexpected tenderness between {character1} and {character2}.', true, true),
@@ -82,8 +195,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Emotional Moments', 'How does {character1} show care in a way that surprises {character2}?', true, true),
 ('Emotional Moments', 'What shared silence becomes meaningful?', true, true),
 ('Emotional Moments', 'Write a moment of emotional honesty that changes everything.', true, true),
-
--- Competition
 ('Competition', 'What happens when {character1} and {character2} compete in a challenge?', true, true),
 ('Competition', 'Write a rivalry that slowly turns into respect.', true, true),
 ('Competition', 'How does {character2} react to losing against {character1}?', true, true),
@@ -91,8 +202,6 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Competition', 'What happens when winning costs one of them something important?', true, true),
 ('Competition', 'Write about a challenge neither of them expected to win.', true, true),
 ('Competition', 'How does competition strain their relationship?', true, true),
-
--- Growth & Change
 ('Growth & Change', 'Create a scene where {character1} teaches {character2} something important.', true, true),
 ('Growth & Change', 'What lesson does {character2} unintentionally teach {character1}?', true, true),
 ('Growth & Change', 'Write about a mistake that leads to growth for both characters.', true, true),
@@ -100,15 +209,11 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Growth & Change', 'Describe a moment where one character outgrows the other.', true, true),
 ('Growth & Change', 'What belief does {character2} force {character1} to question?', true, true),
 ('Growth & Change', 'How do they evolve together rather than apart?', true, true),
-
--- Identity & Role Reversal
 ('Identity & Role Reversal', 'What if {character1} and {character2} switched places for a day?', true, true),
 ('Identity & Role Reversal', 'Write a scene where {character1} must live with {character2}''s responsibilities.', true, true),
 ('Identity & Role Reversal', 'How does role reversal change how they see each other?', true, true),
 ('Identity & Role Reversal', 'What does {character2} struggle with most when taking on {character1}''s role?', true, true),
 ('Identity & Role Reversal', 'What empathy is gained through reversal?', true, true),
-
--- Choices & Endings
 ('Choices & Endings', 'Write a scene where {character1} must choose between {character2} and something else.', true, true),
 ('Choices & Endings', 'What happens when {character2} leaves without saying goodbye?', true, true),
 ('Choices & Endings', 'Describe their final conversation before everything changes.', true, true),
@@ -116,7 +221,7 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Choices & Endings', 'What if they never met at all?', true, true),
 ('Choices & Endings', 'What ending neither of them wanted but accepted?', true, true);
 
--- Single-character prompts (Character Reflection category)
+-- Writing prompts (single-character)
 INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_active) VALUES
 ('Character Reflection', 'What is {character1}''s greatest fear, and how do they cope with it?', false, true),
 ('Character Reflection', 'Describe a day in {character1}''s life when everything goes wrong.', false, true),
@@ -133,4 +238,3 @@ INSERT INTO writing_prompts (category, prompt_text, requires_two_characters, is_
 ('Character Reflection', 'How does {character1} react to a sudden, drastic change in their environment?', false, true),
 ('Character Reflection', 'Write a scene where {character1} receives unexpected news.', false, true),
 ('Character Reflection', 'What is {character1}''s philosophy on life, and how did they develop it?', false, true);
-

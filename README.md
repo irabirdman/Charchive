@@ -55,30 +55,34 @@ Don't worry if you don't know what these are - we'll explain each one and show y
 
 Follow these steps in order. Take your time - there's no rush!
 
-### Step 1: Download the Project Files
+### Step 1: Get the Project (Your Own Repo)
 
-**What you're doing**: Getting all the website files onto your computer.
+**What you're doing**: Getting the website files onto your computer from your own repository.
 
-1. Open a program called "Command Prompt" (Windows) or "Terminal" (Mac)
-   - **Windows**: Press the Windows key, type "cmd", and press Enter
-   - **Mac**: Press Cmd+Space, type "terminal", and press Enter
+1. **Fork or clone the repo**
+   - **Option A (recommended)**: On GitHub, click **Fork** to create your own copy, then clone your fork.
+   - **Option B**: Clone the original repo directly (you won’t be able to push changes unless you have access).
 
-2. Navigate to where you want to save the project (like your Desktop):
+2. Open Command Prompt (Windows) or Terminal (Mac):
+   - **Windows**: Windows key → type "cmd" → Enter
+   - **Mac**: Cmd+Space → type "terminal" → Enter
+
+3. Go to where you want the project (e.g. Desktop):
    ```bash
    cd Desktop
    ```
 
-3. Download the project (replace `<your-repo-url>` with the actual link to this project):
+4. Clone the repo (use **your fork’s URL** or the template repo URL):
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
    ```
 
-4. Move into the project folder:
+5. Go into the project folder (use the folder name Git created; it’s usually the repo name):
    ```bash
-   cd oc-wiki
+   cd YOUR_REPO_NAME
    ```
 
-**What you should see**: A new folder on your computer called "oc-wiki" with lots of files inside.
+**What you should see**: A folder with the project files (e.g. `package.json`, `src/`, `supabase/`).
 
 ---
 
@@ -99,50 +103,11 @@ Follow these steps in order. Take your time - there's no rush!
 
 ---
 
-### Step 3: Set Up Your Site Information
-
-**What you're doing**: Telling the website what to call itself and how to look.
-
-1. In your project folder, find the file called `site-config.json.example`
-2. Copy this file and name the copy `site-config.json` (remove the `.example` part)
-   - **Windows**: Right-click, Copy, then Paste, then rename
-   - **Mac**: Right-click, Duplicate, then rename
-
-3. Open the `site-config.json` file in a text editor (like Notepad on Windows or TextEdit on Mac)
-
-4. You'll see something like this:
-   ```json
-   {
-     "websiteName": "My OC Wiki",
-     "websiteDescription": "A place to store and organize information on original characters, worlds, lore, and timelines.",
-     "iconUrl": "/icon.png",
-     "siteUrl": "https://your-domain.com",
-     "authorName": "Your Name",
-     "shortName": "OC Wiki"
-   }
-   ```
-
-5. Change the values to match your information:
-   - `websiteName`: What you want your site to be called (e.g., "Sarah's Character Wiki")
-   - `websiteDescription`: A short description of your site
-   - `authorName`: Your name
-   - `shortName`: A shorter version of your site name (for menus)
-   - `siteUrl`: Leave this for now - you'll fill it in later when you deploy
-   - `iconUrl`: Leave this as is unless you have a custom icon
-
-6. Save the file
-
-**Don't worry**: You can change all of this later through the website's admin panel!
-
-**Important**: Your `site-config.json` file is protected and won't be overwritten when you get updates (see the "Getting Updates" section below).
-
----
-
-### Step 4: Set Up Supabase (Your Database)
+### Step 3: Set Up Supabase (Your Database)
 
 **What you're doing**: Creating an online storage space for all your character data.
 
-#### 4a. Create a Supabase Account and Project
+#### 3a. Create a Supabase Account and Project
 
 1. Go to [supabase.com](https://supabase.com) and click "Start your project"
 2. Sign up (you can use your email or GitHub account)
@@ -154,91 +119,93 @@ Follow these steps in order. Take your time - there's no rush!
 5. Click "Create new project"
 6. Wait 1-2 minutes while it sets up (you'll see a loading screen)
 
-#### 4b. Get Your Connection Keys
+#### 3b. Get Your Connection Keys
 
-**What these are**: Special codes that let your website talk to your database. Think of them like passwords.
+**What these are**: Codes that let your website talk to your database. Supabase offers two kinds of keys; the app supports both.
 
-1. In your Supabase dashboard, click on **Settings** (the gear icon on the left)
-2. Click **API** in the settings menu
-3. You'll see three important things:
-   - **Project URL**: A long web address (starts with `https://`)
-   - **anon public key**: A long string of letters and numbers
-   - **service_role key**: Another long string (this one is secret - don't share it!)
+1. In your Supabase dashboard, go to **Settings** (gear icon) → **API** (or **Project Settings** → **API**).
+2. Note your **Project URL** (starts with `https://`).
+3. Choose one of these:
 
-4. **Write these down** or keep this page open - you'll need them in the next step!
+   **Option A – New keys (recommended)**  
+   In the **API Keys** tab:
+   - **Publishable key** (`sb_publishable_...`) – for the browser and public pages. Use this for `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   - **Secret key** (`sb_secret_...`) – for server/admin only. Use this for `SUPABASE_SECRET_KEY`. Never expose it.
 
-#### 4c. Set Up Your Database Tables
+   **Option B – Legacy keys**  
+   In the **Legacy API Keys** tab:
+   - **anon public** – use for `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   - **service_role** – use for `SUPABASE_SERVICE_ROLE_KEY`. Never expose it.
 
-**What you're doing**: Creating the "folders" where your data will be stored.
+4. Keep this page open or copy the values; you’ll need them for the `.env` file.
 
-1. In your Supabase dashboard, click **SQL Editor** on the left sidebar
-2. Click **New query**
-3. You need to run **all** migration files in order. Here's the complete list:
-   - `20250101000000_create_site_settings.sql`
-   - `20250101000001_create_admin_credentials.sql`
-   - `20250101000002_create_worlds.sql`
-   - `20250101000003_create_oc_identities.sql`
+#### 3c. Set Up Your Database Tables
+
+**What you're doing**: Creating the database structure (tables, etc.) for your data.
+
+1. In your Supabase dashboard, open **SQL Editor** in the left sidebar.
+2. Click **New query**.
+3. Run **every** migration file from the `supabase/migrations/` folder **in order by filename** (oldest first). Full list (run in this order):
+   - `20250101000000_create_core.sql`
+   - `20250101000001_create_worlds.sql`
+   - `20250101000002_create_oc_identities.sql`
+   - `20250101000003_create_story_aliases.sql`
    - `20250101000004_create_ocs.sql`
-   - `20250101000005_create_story_aliases.sql`
-   - `20250101000006_create_world_story_data.sql`
-   - `20250101000007_create_world_races.sql`
-   - `20250101000008_create_timelines.sql`
-   - `20250101000009_create_timeline_events.sql`
-   - `20250101000010_create_timeline_event_timelines.sql`
-   - `20250101000011_create_timeline_event_characters.sql`
-   - `20250101000012_create_world_lore.sql`
-   - `20250101000013_create_world_lore_ocs.sql`
-   - `20250101000014_create_world_lore_timeline_events.sql`
-   - `20250101000015_create_dropdown_options.sql`
-   - `20250101000016_create_current_projects.sql`
-   - `20250101000017_add_story_alias_fk_to_ocs.sql`
+   - `20250101000005_create_world_story_data.sql`
+   - `20250101000006_create_world_races.sql`
+   - `20250101000007_create_timelines.sql`
+   - `20250101000008_create_timeline_events.sql`
+   - `20250101000009_create_timeline_junction_tables.sql`
+   - `20250101000010_create_world_lore.sql`
+   - `20250101000011_create_dropdown_options.sql`
+   - `20250101000012_create_current_projects.sql`
+   - `20250101000013_create_oc_auxiliary_tables.sql`
+   - `20250101000014_create_writing_prompts.sql`
+   - `20250101000015_create_fanfics.sql`
+   - `20250101000016_seed_tags_and_writing_prompts.sql`
+   - `20250101000017_seed_dropdown_options.sql`
+   - `20250101000018_seed_setting_options.sql`
+   - `20250101000019_seed_trope_options.sql`
+4. For each file:
+   - Open the file from `supabase/migrations/` on your computer (Notepad, TextEdit, or any editor).
+   - Copy **all** the text.
+   - Paste into the Supabase SQL Editor.
+   - Click **Run** (or Ctrl+Enter / Cmd+Enter).
+   - Wait for success, then do the next file.
 
-4. For each migration file (in order):
-   - Open the file from the `supabase/migrations/` folder on your computer (you can open it in Notepad/TextEdit)
-   - Copy ALL the text from that file
-   - Paste it into the SQL Editor in Supabase
-   - Click the **Run** button (or press Ctrl+Enter / Cmd+Enter)
-   - Wait for a green success message
-   - Then move to the next file
+**Important**: Run them in filename order. Each migration depends on earlier ones.
 
-**Important**: Run them in the exact order listed above! Each migration builds on the previous ones.
-
-**If you see an error**: Make sure you copied the entire file, including all the text from top to bottom. Also verify you're running them in the correct order.
-
----
-
-### Step 5: Set Up Your Environment Variables
-
-**What you're doing**: Giving your website the secret codes it needs to connect to your database.
-
-**What is an environment variable?**: It's like a secret note your website reads to know how to connect to things. We store these in a special file called `.env`.
-
-1. In your project folder, find a file called `.env.example`
-2. Copy this file and name the copy `.env` (remove the `.example` part)
-   - **Windows**: Right-click, Copy, then Paste, then rename
-   - **Mac**: Right-click, Duplicate, then rename
-
-3. Open the `.env` file in a text editor
-
-4. You'll see something like this:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
-   ```
-
-5. Replace each value with the ones you copied from Supabase:
-   - Replace `your_supabase_project_url_here` with your **Project URL** from Step 4b
-   - Replace `your_supabase_anon_key_here` with your **anon public key** from Step 4b
-   - Replace `your_supabase_service_role_key_here` with your **service_role key** from Step 4b
-
-6. Save the file
-
-**Important**: Never share your `.env` file with anyone! It contains secret keys.
+**If you see an error**: Check that you copied the whole file and that you’re running them in the correct order.
 
 ---
 
-### Step 6: Test It Locally (On Your Computer)
+### Step 4: Set Up Your Environment Variables
+
+**What you're doing**: Giving your website the keys and settings it needs (database, optional admin login, etc.).
+
+Environment variables are stored in a file named `.env` in the project root. Your app reads them at runtime.
+
+1. In your project folder, copy `.env.example` to a new file named `.env` (remove the `.example` part).
+2. Open `.env` in a text editor.
+3. Fill in the required values:
+
+   **Required (Supabase):**
+   - `NEXT_PUBLIC_SUPABASE_URL` – Your Supabase **Project URL** from Step 3b.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Your **Publishable key** (recommended) or **anon public** key from Step 3b.
+   - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` – Your **Secret key** (recommended) or **service_role** key from Step 3b. Use only one; the app checks both.
+
+   **Optional:**
+   - `USERNAME` / `PASSWORD` – Admin login. If you leave these blank, you set admin credentials at `/admin/setup` instead.
+   - `NEXT_PUBLIC_SITE_URL` – Full site URL (e.g. `https://your-app.railway.app`). Used for metadata and links; you can set it after deploy.
+   - `NODE_ENV` – Use `development` locally; set to `production` on Railway.
+
+4. Save the file.
+
+**Important**: Never commit or share `.env`; it contains secrets.
+
+---
+
+### Step 5: Test It Locally (On Your Computer)
 
 **What you're doing**: Making sure everything works before putting it online.
 
@@ -257,24 +224,22 @@ Follow these steps in order. Take your time - there's no rush!
 
 ---
 
-### Step 7: Complete the Initial Setup
+### Step 6: Complete the Initial Setup
 
-**What you're doing**: Setting up your admin account so you can log in and add content.
+**What you're doing**: Setting up your admin account and site information (name, description, etc.) so you can log in and add content.
 
 1. In your browser, go to: `http://localhost:3000/admin/setup`
 
-2. You'll see a setup form. Fill it out with:
-   - Your site name and description
-   - An admin username (this is what you'll use to log in)
-   - An admin password (make it strong!)
+2. Fill out the setup form with:
+   - **Site name and description** – This is how your site is identified (you can change it later in **Admin → Site Settings**).
+   - **Admin username** – What you’ll use to log in.
+   - **Admin password** – Use a strong password.
 
-3. Click "Complete Setup"
+3. Click **Complete Setup**.
 
-4. You'll be taken to a login page at `/admin/login`
+4. You’ll be taken to `/admin/login`. Log in with the username and password you just created.
 
-5. Log in with the username and password you just created
-
-**Congratulations!** Your website is now set up and running on your computer!
+**Congratulations!** Your site is set up. Site name, colors, and other settings can be changed anytime under **Admin → Site Settings**.
 
 ---
 
@@ -297,80 +262,113 @@ Follow these steps in order. Take your time - there's no rush!
 4. Find and select your OC Wiki repository
 5. Railway will automatically detect that it's a Next.js project (this is good!)
 
-### Step 3: Add Your Secret Keys to Railway
+### Step 3: Add Your Environment Variables to Railway
 
-**What you're doing**: Giving Railway the same secret codes you put in your `.env` file.
+**What you're doing**: Giving Railway the same values you use in your local `.env` file.
 
-1. In your Railway project, click the **Variables** tab
-2. Click **"New Variable"** for each of these:
+1. In your Railway project, open the **Variables** tab.
+2. Add these variables (same names and values as in your `.env` where applicable):
 
-   - **Variable name**: `NEXT_PUBLIC_SUPABASE_URL`
-     **Value**: Your Supabase Project URL (from earlier)
+   **Required:**
+   - `NEXT_PUBLIC_SUPABASE_URL` – Your Supabase Project URL.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` – Your **Publishable key** or **anon** key (the one you use for the public client).
+   - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` – Your **Secret key** or **service_role** key (server-only). Use one; the app supports both.
 
-   - **Variable name**: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-     **Value**: Your Supabase anon key (from earlier)
+   **Optional but recommended:**
+   - `NEXT_PUBLIC_SITE_URL` – Leave blank at first; after the first deploy, set it to your Railway URL (e.g. `https://your-app.railway.app`).
+   - `NODE_ENV` – Set to `production`.
+   - `USERNAME` and `PASSWORD` – Admin login for the deployed site. If you don’t set these, you’ll need to complete **Setup** on the live site: go to `https://your-app.railway.app/admin/setup` after the first deploy and create your admin account there (credentials are then stored in the database).
 
-   - **Variable name**: `SUPABASE_SERVICE_ROLE_KEY`
-     **Value**: Your Supabase service_role key (from earlier)
-
-   - **Variable name**: `NEXT_PUBLIC_SITE_URL`
-     **Value**: Leave this blank for now - Railway will give you a URL later
-
-   - **Variable name**: `NODE_ENV`
-     **Value**: `production`
-
-3. Save all the variables
+3. Save the variables.
 
 ### Step 4: Deploy Your Website
 
 1. Railway will automatically start building your website
 2. Wait for the build to finish (you'll see a progress bar)
 3. Once it's done, Railway will give you a web address (like `your-site.railway.app`)
-4. Copy that address and update the `NEXT_PUBLIC_SITE_URL` variable in Railway with the full address (include `https://`)
+4. Copy that address and set the `NEXT_PUBLIC_SITE_URL` variable in Railway to the full URL (including `https://`).
+5. If you didn’t set `USERNAME` and `PASSWORD` in Railway, open `https://your-app.railway.app/admin/setup` (use your actual Railway URL) and complete the setup form to create your admin account.
 
-**Your website is now live!** Share the Railway URL with anyone you want to see it.
+**Your site is now live.** Share the Railway URL with anyone you want.
 
 ---
 
 ## 📥 Getting the Latest Updates
 
-**What this section is for**: If the project has been updated and you want to get the newest version with bug fixes and new features.
-
-**What you're doing**: Downloading the latest changes from GitHub to your computer.
+**What this section is for**: The project (or the repo you forked from) has been updated and you want the latest code with bug fixes and new features. If you have your own fork, see **“If you have your own fork”** below for how to pull updates from the original repo.
 
 ### ✅ Your Settings Are Safe!
 
-**Don't worry** - when you get updates, your personal settings will NOT be overwritten:
-- ✅ Your `site-config.json` file (with your site name, colors, etc.) is protected
+**Don't worry** – when you get updates, your personal settings will NOT be overwritten:
+- ✅ Your site name, colors, and settings live in the database and in the admin panel
 - ✅ Your `.env` file (with your database keys) is protected
-- ✅ Your database and all your content stays the same
+- ✅ Your database and all your content stay the same
 - ✅ Only code files will be updated
 
 You can safely pull updates without losing any of your customizations!
+
+### If you have your own fork (getting updates from the original project)
+
+When you **forked** the repo, your fork is a separate copy. Updates made to the **original** repo don’t appear in your fork until you pull them in. Do this when you want to get the latest changes from the original project into your fork.
+
+**One-time setup – add the original repo as “upstream”:**
+
+1. Open a terminal in your project folder.
+2. Add the original repo as a remote named `upstream` (use the original project’s clone URL, not your fork’s):
+   ```bash
+   git remote add upstream https://github.com/ORIGINAL_OWNER/ORIGINAL_REPO.git
+   ```
+   Replace `ORIGINAL_OWNER` and `ORIGINAL_REPO` with the original repo’s owner and repo name. You can copy the URL from the original project’s GitHub page (Code → HTTPS).
+
+**Each time you want to pull in updates from the original project:**
+
+1. In your project folder, make sure you’re on your main branch:
+   ```bash
+   git checkout main
+   ```
+   (Use `master` if that’s what your branch is called.)
+
+2. Fetch the latest from the original repo:
+   ```bash
+   git fetch upstream
+   ```
+
+3. Merge those updates into your branch:
+   ```bash
+   git merge upstream/main
+   ```
+   (Use `upstream/master` if the original repo uses `master`.)
+
+4. If you want your fork on GitHub to match your local copy, push:
+   ```bash
+   git push origin main
+   ```
+
+5. Then install any new packages and restart your dev server (see “How to Get Updates” below).
+
+**If merge says there are conflicts:** Git will list the conflicting files. You have to edit those files to resolve the conflicts, then `git add` them and run `git commit`. If you’re unsure, you can back up your changes first (`git stash` before step 2, then `git stash pop` after and fix conflicts).
 
 ### How to Get Updates
 
 #### Step 1: Open Your Project Folder
 
-1. Open Command Prompt (Windows) or Terminal (Mac)
-2. Navigate to your project folder:
+1. Open Command Prompt (Windows) or Terminal (Mac).
+2. Go to your project folder (use the path where you cloned your repo):
    ```bash
-   cd path/to/oc-wiki
+   cd path/to/your-repo
    ```
-   (Replace `path/to/oc-wiki` with the actual path to your project folder)
 
-#### Step 2: Download the Latest Updates
+#### Step 2: Get the Latest Code
 
-**What you're doing**: Getting all the new changes from GitHub.
-
-1. Download the updates:
+- **If you have a fork** and want updates from the **original project**: use the steps in **“If you have your own fork”** above (fetch upstream, merge, then continue with Step 3 below).
+- **If you’re only syncing your own repo** (e.g. you pushed from another machine, or you already merged from upstream): run:
    ```bash
    git pull
    ```
 
 **What you should see**: Messages showing files being downloaded and updated. This is normal!
 
-**If you get an error**: Make sure you haven't made any changes to the code files. If you have, see the "If You've Made Changes" section below.
+**If you get an error**: Make sure you haven’t made uncommitted changes to the code, or see the “If You’ve Made Changes” section below.
 
 #### Step 3: Install Any New Packages
 
@@ -463,16 +461,12 @@ You can safely pull updates without losing any of your customizations!
 
 ## ⚙️ Understanding the Configuration Files
 
-Don't worry - you don't need to understand code to use these! Here's what each file does in simple terms:
+You don't need to edit code to use these. Here's what matters:
 
-### `site-config.json`
-**What it is**: A file that stores your site's basic information (name, colors, etc.)
+### Site settings (name, colors, description)
+**What it is**: Your site’s name, description, colors, and similar options.
 
-**When to edit it**: When you want to change how your site looks or what it's called
-
-**How to edit**: Open it in any text editor, change the values, save it
-
-**Protected**: This file won't be overwritten when you get updates - your settings are safe!
+**Where it lives**: In the database. You set it at **Admin → Site Settings** (or during initial setup at `/admin/setup`). There is no `site-config.json` file to edit.
 
 ### `.env` file
 **What it is**: A file with secret connection codes (like passwords)
@@ -486,7 +480,7 @@ Don't worry - you don't need to understand code to use these! Here's what each f
 ### `supabase/migrations/` folder
 **What it is**: Files that set up your database structure
 
-**When to use it**: Only once, when first setting up (you already did this in Step 4c)
+**When to use it**: Only once, when first setting up (you already did this in Step 3c)
 
 ---
 
@@ -509,12 +503,12 @@ Everything is done through easy-to-use forms - no coding required!
 
 ### Problem: "Failed to connect to Supabase"
 
-**What this means**: Your website can't talk to your database.
+**What this means**: The app can’t reach your database.
 
 **How to fix**:
-1. Check that your `.env` file has the correct Supabase URL and keys
-2. Make sure you copied the entire keys (they're very long!)
-3. Check that your Supabase project is still active (log into Supabase to check)
+1. Check that `.env` (or Railway variables) has the correct `NEXT_PUBLIC_SUPABASE_URL` and keys.
+2. Use the **Publishable** (or anon) key for `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the **Secret** (or service_role) key for `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY`. Copy the full values (they’re long).
+3. Confirm your Supabase project is active in the dashboard.
 
 ### Problem: Can't log in to admin
 
@@ -528,12 +522,12 @@ Everything is done through easy-to-use forms - no coding required!
 
 ### Problem: Website shows default/blank content
 
-**What this means**: Your site settings aren't loading.
+**What this means**: Site settings aren’t loading (e.g. no site name).
 
 **How to fix**:
-1. Make sure you ran the database setup files (Step 4c)
-2. Check that your `site-config.json` file is saved correctly
-3. Try refreshing the page (Ctrl+F5 or Cmd+Shift+R to hard refresh)
+1. Make sure you ran all database migrations (Step 3c).
+2. Complete the initial setup at `/admin/setup` so site name and description are saved in the database.
+3. Try a hard refresh (Ctrl+F5 or Cmd+Shift+R).
 
 ### Problem: Railway deployment fails
 
@@ -549,9 +543,9 @@ Everything is done through easy-to-use forms - no coding required!
 **What this means**: The `world_races` table (or another database table) hasn't been created yet. This happens when migrations haven't been run or were run in the wrong order.
 
 **How to fix**:
-1. Go back to **Step 4c** in the setup guide (Set Up Your Database Tables)
+1. Go back to **Step 3c** in the setup guide (Set Up Your Database Tables)
 2. Make sure you've run **all** migration files in the correct order
-3. Specifically check that `20250101000007_create_world_races.sql` has been executed
+3. Specifically check that `20250101000006_create_world_races.sql` has been executed
 4. If you're using Supabase CLI, you can run `supabase migration up` to apply any pending migrations
 5. If you're using the Supabase dashboard SQL Editor, copy and run the migration file content there
 6. Make sure all previous migrations (especially those that create `worlds` and `story_aliases` tables) have been run first, as `world_races` depends on them

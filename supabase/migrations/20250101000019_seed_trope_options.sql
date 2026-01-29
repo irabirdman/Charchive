@@ -1,6 +1,4 @@
 -- Seed trope options to dropdown_options table
--- These represent various character tropes for character generation
-
 INSERT INTO dropdown_options (field, option) VALUES
 ('trope', 'Absent Father'),
 ('trope', 'Absent-Minded Professor'),
@@ -310,4 +308,3 @@ INSERT INTO dropdown_options (field, option) VALUES
 ('trope', 'Workaholic'),
 ('trope', 'Youngest Child')
 ON CONFLICT (field, option) DO NOTHING;
-
