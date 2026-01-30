@@ -35,7 +35,7 @@ const nextConfig = {
       exclude: ['error', 'warn'],
     } : false,
   },
-  // Enable SWC minification for faster builds
+  // Enable SWC minification for faster builds (default in Next.js 13+, but explicit is good)
   swcMinify: true,
   webpack: (config, { webpack, isServer }) => {
     // Exclude VR-related modules from react-force-graph that require A-Frame
