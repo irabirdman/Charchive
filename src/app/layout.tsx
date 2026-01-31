@@ -44,6 +44,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log('[RootLayout] Rendering with MemoryMonitor');
+  
   return (
     <html lang="en" className="dark">
       <body className="bg-gray-900">

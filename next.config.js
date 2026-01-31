@@ -19,20 +19,13 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-  experimental: {
-    // Limit client-side router cache retention to reduce memory growth
-    staleTimes: {
-      dynamic: 30,   // 30s for on-demand navigations (default 0 in newer Next)
-      static: 60,    // 1 min for prefetched/static (default 5 min)
-    },
-  },
   // Disable automatic trailing slash redirects to prevent redirect loops
   trailingSlash: false,
   // Optimize compiler for better performance
   compiler: {
-    // Remove console logs in production
+    // Remove console logs in production, but keep error/warn/log for memory monitoring
     removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
+      exclude: ['error', 'warn', 'log'], // Keep log for memory monitoring
     } : false,
   },
   // Enable SWC minification for faster builds (default in Next.js 13+, but explicit is good)
