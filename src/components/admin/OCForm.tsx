@@ -11,6 +11,7 @@ import { RELATIONSHIP_TYPES } from '@/lib/relationships/relationshipTypes';
 import { getTemplates, type TemplateField, type TemplateDefinition } from '@/lib/templates/ocTemplates';
 import { createClient } from '@/lib/supabase/client';
 import { getTemplateTypeFromWorldSlug } from '@/lib/templates/worldTemplateMap';
+import { normalizeTemplateType } from '@/lib/templates/normalizeTemplateType';
 import { getEffectiveFieldDefinitions, getWorldFieldDefinitions } from '@/lib/fields/worldFields';
 import { WorldFieldsSection } from './WorldFieldsSection';
 import { FormProvider } from 'react-hook-form';
@@ -1095,18 +1096,24 @@ const ocSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   world_id: optionalUuid,
   series_type: z.enum(['canon', 'original']).optional(),
-  template_type: z.enum([
-    'naruto',
-    'ff7',
-    'inuyasha',
-    'shaman-king',
-    'zelda',
-    'dragonball',
-    'pokemon',
-    'nier',
-    'original',
-    'none',
-  ]),
+  template_type: z.preprocess(
+    (val) => (typeof val === 'string' ? normalizeTemplateType(val) : val),
+    z.union([
+      z.enum([
+        'naruto',
+        'ff7',
+        'inuyasha',
+        'shaman-king',
+        'zelda',
+        'dragonball',
+        'pokemon',
+        'nier',
+        'original',
+        'none',
+      ]),
+      z.string().min(1),
+    ])
+  ),
   status: z.enum(['alive', 'deceased', 'missing', 'unknown', 'au-only']),
   is_public: z.boolean(),
   extra_fields: z.record(z.any()).default({}),
@@ -1379,7 +1386,7 @@ const ocSchema = z.object({
   stat_notes: z.string().optional().nullable(),
 });
 
-type OCFormData = z.infer<typeof ocSchema>;
+type OCFormData = Omit<z.infer<typeof ocSchema>, 'template_type'> & { template_type: TemplateType | string };
 
 interface ReverseRelationships {
   family: Array<{ name: string; relationship?: string; description?: string; oc_id?: string; oc_slug?: string; relationship_type?: RelationshipType; image_url?: string }>;
@@ -1626,11 +1633,10 @@ function getDefaultValues(oc?: OC, reverseRelationships?: ReverseRelationships):
     }
   }
 
-  // Determine template_type from world if available, otherwise use stored value
-  let templateType = oc.template_type;
-  if (oc.world && typeof oc.world === 'object' && 'slug' in oc.world) {
-    templateType = getTemplateTypeFromWorldSlug(oc.world.slug as string, oc.world as World) as TemplateType;
-  }
+  // Determine template_type from world if available, otherwise use stored value (normalized or DB key)
+  let templateType: TemplateType | string = oc.world && typeof oc.world === 'object' && 'slug' in oc.world
+    ? getTemplateTypeFromWorldSlug(oc.world.slug as string, oc.world as World)
+    : normalizeTemplateType(oc.template_type);
 
   return {
     name: oc.name,
@@ -2243,15 +2249,15 @@ export function OCForm({ oc, identityId, reverseRelationships }: OCFormProps) {
         }
       }
 
-      // Ensure template_type is set based on the current world
-      let finalTemplateType = data.template_type;
+      // Ensure template_type is set based on the current world; normalize known variations, preserve DB keys
+      let finalTemplateType: TemplateType | string = normalizeTemplateType(data.template_type);
       if (data.world_id) {
         // Use selectedWorld state if available and matches, otherwise try worlds array
         const worldToUse = selectedWorld?.id === data.world_id 
           ? selectedWorld 
           : worlds.find(w => w.id === data.world_id);
         if (worldToUse) {
-          finalTemplateType = getTemplateTypeFromWorldSlug(worldToUse.slug, worldToUse as Partial<World>) as TemplateType;
+          finalTemplateType = getTemplateTypeFromWorldSlug(worldToUse.slug, worldToUse as Partial<World>);
         }
       }
 

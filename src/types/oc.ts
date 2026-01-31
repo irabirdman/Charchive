@@ -311,7 +311,7 @@ export interface OC {
   world_name?: string | null; // Denormalized world name for easier querying
   identity_id?: string | null;
   series_type?: SeriesType | null;
-  template_type: TemplateType;
+  template_type: TemplateType | string; // string allows DB-originated template keys (e.g. from world.oc_templates)
   status: OCStatus;
   is_public: boolean;
   created_at: string;
