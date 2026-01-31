@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { FanficsList } from '@/components/admin/FanficsList';
+import { logger } from '@/lib/logger';
 
 export const metadata: Metadata = {
   title: 'Fanfics',
 };
 
 export default async function AdminFanficsPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
-  const { data: fanfics } = await supabase
+  const { data: fanfics, error } = await supabase
     .from('fanfics')
     .select(`
       id,
@@ -23,6 +24,10 @@ export default async function AdminFanficsPage() {
       tags:fanfic_tags(id)
     `)
     .order('updated_at', { ascending: false });
+
+  if (error) {
+    logger.error('AdminFanficsPage', 'Error fetching fanfics', { error });
+  }
 
   // Transform the data to include counts
   const fanficsWithCounts = fanfics?.map((fanfic) => ({
@@ -48,6 +53,13 @@ export default async function AdminFanficsPage() {
           Create Fanfic
         </Link>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-900/20 border border-red-700 rounded-md">
+          <p className="text-red-400 font-medium">Error loading fanfics</p>
+          <p className="text-red-300 text-sm mt-1">{error.message}</p>
+        </div>
+      )}
 
       <FanficsList fanfics={fanficsWithCounts} />
     </div>

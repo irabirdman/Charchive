@@ -100,6 +100,7 @@ const fanficSchema = z.object({
   world_id: z.string().uuid('Invalid world'),
   story_alias_id: optionalUuid,
   image_url: optionalUrl,
+  external_link: optionalUrl,
   is_public: z.boolean(),
   characters: z.array(z.object({
     oc_id: z.string().uuid().optional().nullable(),
@@ -205,6 +206,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
     world_id: fanfic.world_id,
     story_alias_id: fanfic.story_alias_id || null,
     image_url: fanfic.image_url || '',
+    external_link: fanfic.external_link || '',
     is_public: fanfic.is_public,
     characters: fanfic.characters?.map(c => ({
       oc_id: c.oc_id ?? null,
@@ -225,6 +227,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
     world_id: '',
     story_alias_id: null,
     image_url: '',
+    external_link: '',
     is_public: false,
     characters: [],
     relationships: [],
@@ -350,6 +353,7 @@ export function FanficForm({ fanfic }: FanficFormProps) {
       world_id: data.world_id,
       story_alias_id: data.story_alias_id || null,
       image_url: data.image_url || null,
+      external_link: data.external_link || null,
       is_public: data.is_public,
       characters: data.characters || [],
       relationships: data.relationships || [],
@@ -509,6 +513,19 @@ export function FanficForm({ fanfic }: FanficFormProps) {
             {watch('image_url') && (
               <ImagePreview url={watch('image_url') || ''} maxHeight="300px" />
             )}
+          </div>
+
+          <div>
+            <FormLabel htmlFor="external_link">
+              External Link
+            </FormLabel>
+            <FormInput
+              {...register('external_link')}
+              placeholder="https://example.com/fanfic"
+              error={errors.external_link?.message}
+              disabled={isSubmitting}
+              helpText="Optional: Link to this fanfic on an external site (e.g., AO3, FF.net, etc.)"
+            />
           </div>
 
           <div className="flex items-center gap-2">
