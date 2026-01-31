@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { FanficForm } from '@/components/admin/FanficForm';
 import type { Fanfic } from '@/types/oc';
@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const resolvedParams = await params;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Support both ID (UUID) and slug
   const query = isUUID(resolvedParams.id)
@@ -41,7 +41,7 @@ export default async function AdminFanficDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = await params;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Support both ID (UUID) and slug
   const query = isUUID(resolvedParams.id)
