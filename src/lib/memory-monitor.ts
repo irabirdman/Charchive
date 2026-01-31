@@ -15,10 +15,9 @@ console.error('[MemoryMonitor] NODE_ENV:', process.env.NODE_ENV);
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// Configuration
+// Configuration - Enable by default, can be disabled with ENABLE_MEMORY_LOGGING=false
 const ENABLE_MEMORY_LOGGING = 
-  process.env.ENABLE_MEMORY_LOGGING !== 'false' && 
-  (process.env.NODE_ENV === 'development' || process.env.ENABLE_MEMORY_LOGGING === 'true');
+  process.env.ENABLE_MEMORY_LOGGING !== 'false';
 
 const MEMORY_LOG_INTERVAL_MS = parseInt(
   process.env.MEMORY_LOG_INTERVAL_MS || '30000',
@@ -206,10 +205,13 @@ export function logMemoryUsage(
   const memoryStr = formatMemoryStats(stats);
   
   // Always log to console directly for visibility (use error/warn so they're not stripped)
-  // Use error for high memory, warn for medium, log for low
-  if (stats.heapUsed > 500) {
+  // Use error for high memory/RSS, warn for medium, log for low
+  const isHighMemory = stats.heapUsed > 500 || (stats.rss && stats.rss > 300);
+  const isMediumMemory = stats.heapUsed > 200 || (stats.rss && stats.rss > 200);
+  
+  if (isHighMemory) {
     console.error(`[Memory] ${category}: ${message} ${memoryStr}${contextStr}`);
-  } else if (stats.heapUsed > 200) {
+  } else if (isMediumMemory) {
     console.warn(`[Memory] ${category}: ${message} ${memoryStr}${contextStr}`);
   } else {
     console.log(`[Memory] ${category}: ${message} ${memoryStr}${contextStr}`);
@@ -237,6 +239,22 @@ export function logMemoryUsage(
   // Warn if memory exceeds 500MB (potential leak indicator)
   if (stats.heapUsed > 500) {
     logger.warn('Memory', `⚠️ HIGH MEMORY: ${stats.heapUsed}MB used - potential memory leak?`, {
+      ...stats,
+      ...context,
+    });
+  }
+
+  // Warn if RSS (total process memory) is growing significantly
+  if (stats.rss && stats.rss > 300) {
+    logger.warn('Memory', `⚠️ HIGH RSS: ${stats.rss}MB total process memory - potential leak?`, {
+      ...stats,
+      ...context,
+    });
+  }
+
+  // Warn if external memory is high (buffers, images, etc.)
+  if (stats.external && stats.external > 30) {
+    logger.warn('Memory', `⚠️ HIGH EXTERNAL: ${stats.external}MB external memory - buffers/images may not be released`, {
       ...stats,
       ...context,
     });
