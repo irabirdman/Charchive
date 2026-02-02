@@ -32,7 +32,9 @@ export function getDateSortValue(dateData: EventDateData | null | undefined, era
     
     if (eraDate && eraOrder && eraOrder.length > 0) {
       // Use era order from timeline
-      const eraIndex = eraOrder.indexOf(eraDate.era);
+      // Normalize era strings for comparison (trim whitespace)
+      const normalizedEra = eraDate.era.trim();
+      const eraIndex = eraOrder.findIndex(era => era.trim() === normalizedEra);
       if (eraIndex >= 0) {
         // Era found in order - use index * 1000000 to ensure eras sort correctly
         // Then add year/month/day for fine sorting within era
@@ -64,7 +66,8 @@ export function getDateSortValue(dateData: EventDateData | null | undefined, era
   
   if (dateData.type === 'approximate' && (dateData as any).year) {
     const approx = dateData as any;
-    return getDateSortValue({ type: 'exact', era: null, year: approx.year } as ExactDate, eraOrder);
+    // Preserve era from approximate date for proper sorting
+    return getDateSortValue({ type: 'exact', era: approx.era || null, year: approx.year, month: approx.month || null, day: approx.day || null } as ExactDate, eraOrder);
   }
   
   // For other types, return a high value so they sort last
