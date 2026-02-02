@@ -514,6 +514,7 @@ export const PREDEFINED_EVENT_CATEGORIES = [
   'War',
   'Battle',
   'Discovery',
+  'Education',
   'Celebration',
   'Political',
   'Disaster',
