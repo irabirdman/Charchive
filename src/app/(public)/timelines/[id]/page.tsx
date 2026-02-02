@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { getSiteConfig } from '@/lib/config/site-config';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { TimelineEvent } from '@/components/timeline/TimelineEvent';
+import { TimelineEventsWithSearch } from '@/components/timeline/TimelineEventsWithSearch';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
@@ -275,39 +275,7 @@ export default async function TimelinePage({
           <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
         </div>
         
-        {events && events.length > 0 ? (
-          <div className="relative">
-            {/* Continuous timeline line - spans full height, centered on dot columns */}
-            {/* Mobile: w-12 = 3rem, center = 1.5rem, line width = 0.25rem (w-1), so left = 1.5rem - 0.125rem = 1.375rem */}
-            <div 
-              className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)] z-10 md:hidden"
-              style={{
-                left: '1.375rem', // Center of w-12 column (1.5rem) minus half line width (0.125rem)
-              }}
-            />
-            {/* Desktop: w-16 = 4rem, center = 2rem, line width = 0.25rem, so left = 2rem - 0.125rem = 1.875rem */}
-            <div 
-              className="hidden md:block absolute top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)] z-10"
-              style={{
-                left: '1.875rem', // Center of w-16 column (2rem) minus half line width (0.125rem)
-              }}
-            />
-            {events.map((event, index) => (
-              <TimelineEvent 
-                key={event.id} 
-                event={event} 
-                isLast={index === events.length - 1}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="wiki-card p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <i className="fas fa-calendar-times text-4xl text-gray-600" aria-hidden="true"></i>
-              <p className="text-gray-400 text-lg">No events in this timeline yet.</p>
-            </div>
-          </div>
-        )}
+        <TimelineEventsWithSearch events={events} />
       </div>
     </div>
   );

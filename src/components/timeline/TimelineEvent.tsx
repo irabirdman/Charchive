@@ -8,74 +8,39 @@ interface TimelineEventProps {
   isLast?: boolean;
 }
 
-function formatDateData(dateData: EventDateData | null | undefined): string {
-  if (!dateData) return '';
-  
-  // Handle case where dateData might be a string (invalid JSON from DB)
-  if (typeof dateData === 'string') {
-    return dateData;
+/** Extract year-only string for display in top-right (e.g. "2024", "2020–2022", or from date_text). */
+function getYearFromDateData(
+  dateData: EventDateData | null | undefined,
+  dateText: string | null | undefined
+): string {
+  if (dateData && typeof dateData === 'object' && 'type' in dateData) {
+    const d = dateData as any;
+    switch (d.type) {
+      case 'exact':
+        return d.year != null ? d.year.toString().padStart(4, '0') : '';
+      case 'approximate':
+        if (d.year != null) return d.year.toString().padStart(4, '0');
+        if (d.year_range && Array.isArray(d.year_range) && d.year_range.length === 2) {
+          return `${d.year_range[0].toString().padStart(4, '0')}–${d.year_range[1].toString().padStart(4, '0')}`;
+        }
+        return '';
+      case 'range':
+        const start = d.start?.year != null ? d.start.year.toString().padStart(4, '0') : '';
+        const end = d.end?.year != null ? d.end.year.toString().padStart(4, '0') : '';
+        return start && end ? `${start}–${end}` : start || end;
+      default:
+        return '';
+    }
   }
-  
-  // Ensure dateData has a type property
-  if (typeof dateData !== 'object' || !('type' in dateData)) {
-    return '';
+  if (dateText && typeof dateText === 'string') {
+    const fourDigit = /\b(1\d{3}|2\d{3})\b/.exec(dateText);
+    return fourDigit ? fourDigit[1] : '';
   }
-  
-  switch (dateData.type) {
-    case 'exact':
-      const exact = dateData as any;
-      const eraPrefix = exact.era ? `${exact.era} ` : '';
-      const yearStr = exact.year.toString().padStart(4, '0');
-      const approximateSuffix = exact.approximate ? ' ~' : '';
-      
-      if (exact.month && exact.day) {
-        const monthStr = exact.month.toString().padStart(2, '0');
-        const dayStr = exact.day.toString().padStart(2, '0');
-        return `${eraPrefix}${yearStr}-${monthStr}-${dayStr}${approximateSuffix}`;
-      }
-      return `${eraPrefix}${yearStr}${approximateSuffix}`;
-    case 'approximate':
-      const approx = dateData as any;
-      // Format period prefix
-      const periodPrefix = approx.period ? `${approx.period} ` : '';
-      // If there's a year or year_range, format it
-      if (approx.year !== undefined) {
-        const eraPrefix = approx.era ? `${approx.era} ` : '';
-        const yearStr = approx.year.toString().padStart(4, '0');
-        return `~${periodPrefix}${eraPrefix}${yearStr}`;
-      }
-      if (approx.year_range && Array.isArray(approx.year_range) && approx.year_range.length === 2) {
-        const eraPrefix = approx.era ? `${approx.era} ` : '';
-        const startYear = approx.year_range[0].toString().padStart(4, '0');
-        const endYear = approx.year_range[1].toString().padStart(4, '0');
-        return `~${periodPrefix}${eraPrefix}${startYear}-${endYear}`;
-      }
-      // Fallback for old data that might have text field
-      return approx.text || 'Approximate date';
-    case 'range':
-      const range = dateData as any;
-      const startEra = range.start?.era ? `${range.start.era} ` : '';
-      const endEra = range.end?.era ? `${range.end.era} ` : '';
-      const startParts = [range.start.year.toString().padStart(4, '0')];
-      if (range.start.month) startParts.push(range.start.month.toString().padStart(2, '0'));
-      if (range.start.day) startParts.push(range.start.day.toString().padStart(2, '0'));
-      const endParts = [range.end.year.toString().padStart(4, '0')];
-      if (range.end.month) endParts.push(range.end.month.toString().padStart(2, '0'));
-      if (range.end.day) endParts.push(range.end.day.toString().padStart(2, '0'));
-      const separator = range.start?.era && range.end?.era && range.start.era === range.end.era ? '–' : ' to ';
-      return `${startEra}${startParts.join('-')}${separator}${endEra}${endParts.join('-')}${range.text ? ` (${range.text})` : ''}`;
-    case 'relative':
-      const relative = dateData as any;
-      return relative.text || 'Relative date';
-    case 'unknown':
-      return (dateData as any).text || 'Date unknown';
-    default:
-      return '';
-  }
+  return '';
 }
 
 export function TimelineEvent({ event, isLast }: TimelineEventProps) {
-  const displayDate = event.date_data ? formatDateData(event.date_data) : event.date_text;
+  const displayYear = getYearFromDateData(event.date_data, event.date_text ?? undefined);
 
   return (
     <div className="relative flex items-center gap-6 pb-12 last:pb-0">
@@ -96,23 +61,22 @@ export function TimelineEvent({ event, isLast }: TimelineEventProps) {
       {/* Event content */}
       <div className="flex-1 min-w-0">
         <div className="wiki-card p-5 md:p-6 hover:border-purple-500/50 transition-all duration-300">
-          {/* Date badge - prominent at top */}
-          {displayDate && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 border border-purple-500/30 rounded-lg text-sm font-semibold text-purple-200">
-              <i className="fas fa-calendar-alt text-xs" aria-hidden="true"></i>
-              <span>{displayDate}</span>
-            </div>
-          )}
-
-          {/* Title and key event badge */}
+          {/* Title row: title + key event on left, year in top-right */}
           <div className="mb-4">
-            <div className="flex items-start gap-3 flex-wrap mb-2">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight flex-1">
-                {event.title}
-              </h3>
-              {event.is_key_event && (
-                <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-600/40 to-yellow-500/30 text-yellow-300 rounded-lg text-xs font-bold uppercase tracking-wide border border-yellow-500/30 shadow-sm whitespace-nowrap">
-                  ⭐ Key Event
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+              <div className="flex items-start gap-3 flex-wrap min-w-0 flex-1">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight">
+                  {event.title}
+                </h3>
+                {event.is_key_event && (
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-600/40 to-yellow-500/30 text-yellow-300 rounded-lg text-xs font-bold uppercase tracking-wide border border-yellow-500/30 shadow-sm whitespace-nowrap">
+                    ⭐ Key Event
+                  </span>
+                )}
+              </div>
+              {displayYear && (
+                <span className="flex-shrink-0 text-sm font-semibold text-purple-300 tabular-nums">
+                  {displayYear}
                 </span>
               )}
             </div>
