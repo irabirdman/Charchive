@@ -174,36 +174,32 @@ export default async function TimelinePage({
       }
   }
 
-  // Extract events from associations and sanitize date_data
-  let events = (associations as TimelineEventAssociation[] | null)
+  // Extract events from associations (keep position for tiebreaker), sanitize date_data
+  const withPosition = (associations as TimelineEventAssociation[] | null)
     ?.map((assoc) => {
       const event = assoc.event;
       if (!event?.id) return null;
-      
-      // Sanitize date_data if it's invalid
       if (event.date_data && typeof event.date_data === 'string') {
         try {
-          // Try to parse if it's a JSON string
           event.date_data = JSON.parse(event.date_data);
         } catch {
-          // If parsing fails, set to null and use date_text instead
           event.date_data = null;
         }
       }
-      
-      return event as TimelineEventType;
+      return { event: event as TimelineEventType, position: assoc.position };
     })
-    .filter((e): e is TimelineEventType => e !== null && e.id !== undefined) || [];
+    .filter((x): x is { event: TimelineEventType; position: number } => x !== null && x.event.id !== undefined) || [];
 
-  // Apply timeline sort preference: chronological by date or by position (already from DB)
-  if (timeline.sort_chronologically && events.length > 0) {
-    const eraOrder = timeline.era
-      ? timeline.era.split(',').map((s: string) => s.trim()).filter(Boolean)
-      : undefined;
-    events = [...events].sort((a, b) =>
-      compareEventDates(a.date_data ?? null, b.date_data ?? null, eraOrder)
-    );
-  }
+  // Always chronological; position is tiebreaker for same-date (admin can move to reorder)
+  const eraOrder = timeline.era
+    ? timeline.era.split(',').map((s: string) => s.trim()).filter(Boolean)
+    : undefined;
+  withPosition.sort((a, b) => {
+    const dateCmp = compareEventDates(a.event.date_data ?? null, b.event.date_data ?? null, eraOrder);
+    if (dateCmp !== 0) return dateCmp;
+    return a.position - b.position;
+  });
+  const events = withPosition.map((x) => x.event);
 
   return (
     <div>

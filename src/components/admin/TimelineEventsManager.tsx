@@ -90,7 +90,6 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [availableEvents, setAvailableEvents] = useState<TimelineEvent[]>([]);
   const [isLoadingAvailableEvents, setIsLoadingAvailableEvents] = useState(false);
-  const [sortChronologically, setSortChronologically] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   
   // Scroll to top when editing an event
@@ -108,10 +107,10 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
     setIsLoading(true);
     const supabase = createClient();
     
-    // Get timeline to find world_id, era, story_alias_id, and sort preference
+    // Get timeline to find world_id, era, story_alias_id
     const { data: timeline } = await supabase
       .from('timelines')
-      .select('world_id, era, story_alias_id, sort_chronologically')
+      .select('world_id, era, story_alias_id')
       .eq('id', timelineId)
       .single();
     
@@ -128,7 +127,6 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
       setWorldId(timeline.world_id);
       setTimelineEra(timeline.era);
       setTimelineStoryAliasId(timeline.story_alias_id);
-      setSortChronologically(timeline.sort_chronologically ?? true);
     }
 
     // Load events associated with this timeline via junction table
@@ -330,15 +328,14 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
     }
   }
 
-  function moveEvent(index: number, direction: 'up' | 'down') {
-    const newEvents = [...timelineEvents];
+  function moveEvent(sortedList: Array<TimelineEvent & { position: number }>, index: number, direction: 'up' | 'down') {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= newEvents.length) return;
+    if (newIndex < 0 || newIndex >= sortedList.length) return;
 
-    const event = newEvents[index];
-    const targetEvent = newEvents[newIndex];
+    const event = sortedList[index];
+    const targetEvent = sortedList[newIndex];
 
-    // Swap positions
+    // Swap positions so display order (chronological + tiebreaker) is preserved
     updateEventPosition(event.id, targetEvent.position);
     updateEventPosition(targetEvent.id, event.position);
   }
@@ -466,9 +463,8 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
     };
   }
 
-  // Sort events chronologically
-  const sortedEvents = sortChronologically
-    ? [...timelineEvents].sort((a, b) => {
+  // Always sort chronologically; position is tiebreaker for same-date events (user can move to reorder)
+  const sortedEvents = [...timelineEvents].sort((a, b) => {
         const dateA = getEventSortDate(a);
         const dateB = getEventSortDate(b);
         
@@ -560,10 +556,9 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
           return dateA.day - dateB.day;
         }
         
-        // Same date, maintain original order
+        // Same date, use position so user can reorder (move up/down)
         return a.position - b.position;
-      })
-    : timelineEvents;
+      });
 
   if (isLoading) {
     return <div className="text-center py-8 text-gray-300">Loading events...</div>;
@@ -574,26 +569,6 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold text-gray-100">Timeline Events</h3>
         <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              const next = !sortChronologically;
-              setSortChronologically(next);
-              try {
-                await createClient().from('timelines').update({ sort_chronologically: next }).eq('id', timelineId);
-              } catch (err) {
-                logger.error('Component', 'TimelineEventsManager: Failed to save sort preference', err);
-                setSortChronologically(sortChronologically);
-              }
-            }}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              sortChronologically
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-600 text-gray-200 hover:bg-gray-700'
-            }`}
-            title={sortChronologically ? 'Click to sort by timeline position (order added)' : 'Click to sort chronologically by date'}
-          >
-            {sortChronologically ? '📅 By Date (Chronological)' : '📅 By Position'}
-          </button>
           <button
             onClick={() => {
               setShowAddExistingEvent(!showAddExistingEvent);
@@ -772,18 +747,18 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => moveEvent(index, 'up')}
+                    onClick={() => moveEvent(sortedEvents, index, 'up')}
                     disabled={index === 0 || isSaving}
                     className="px-3 py-1 bg-gray-700 text-gray-200 rounded hover:bg-gray-600 disabled:opacity-50"
-                    title="Move up"
+                    title="Move earlier (e.g. same-day order)"
                   >
                     ↑
                   </button>
                   <button
-                    onClick={() => moveEvent(index, 'down')}
-                    disabled={index === timelineEvents.length - 1 || isSaving}
+                    onClick={() => moveEvent(sortedEvents, index, 'down')}
+                    disabled={index === sortedEvents.length - 1 || isSaving}
                     className="px-3 py-1 bg-gray-700 text-gray-200 rounded hover:bg-gray-600 disabled:opacity-50"
-                    title="Move down"
+                    title="Move later (e.g. same-day order)"
                   >
                     ↓
                   </button>
