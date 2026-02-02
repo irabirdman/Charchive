@@ -28,7 +28,7 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
         onChange({ type: 'exact', era: null, year: new Date().getFullYear(), approximate: false });
         break;
       case 'approximate':
-        onChange({ type: 'approximate', era: null, period: null });
+        onChange({ type: 'approximate', era: null, period: null, month: null });
         break;
       case 'range':
         onChange({
@@ -72,6 +72,7 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
               type: 'approximate' as const,
               era: existing?.era ?? null,
               year: existing?.year,
+              month: existing?.month ?? null,
               year_range: existing?.year_range,
               period: existing?.period ?? null,
             };
@@ -278,7 +279,34 @@ export function DateInput({ value, onChange, availableEras }: DateInputProps) {
                 <option value="mid">Mid</option>
                 <option value="late">Late</option>
               </select>
-              <p className="text-xs text-gray-400 mt-1">Used for chronological sorting within the same year</p>
+              <p className="text-xs text-gray-400 mt-1">Year-only (e.g. Mid 1977) or pair with Month for Early/Mid/Late March</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Month (optional)</label>
+              <select
+                value={(value as ApproximateDate)?.month ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const monthValue = v === '' ? null : Number(v);
+                  updateValue({ month: monthValue === 0 || Number.isNaN(monthValue) ? null : monthValue });
+                }}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-gray-100"
+              >
+                <option value="">No month</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Use with period for &quot;Early March&quot;, &quot;Mid March 1977&quot;, etc.</p>
             </div>
           </div>
           <div>

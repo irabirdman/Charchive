@@ -481,9 +481,10 @@ export interface ApproximateDate {
   type: 'approximate';
   era?: string | null; // Era identifier (e.g., "BE", "SE", "CE")
   year?: number;
+  month?: number | null; // 1–12 for "Early March", "Mid March", etc.
   year_range?: [number, number];
   text?: string; // e.g., "circa 500 BCE", "early 3rd century" (optional)
-  period?: 'early' | 'mid' | 'late' | null; // Time period within the year for chronological sorting
+  period?: 'early' | 'mid' | 'late' | null; // Time period: year-only ("Mid 1977") or with month ("Mid March 1977")
 }
 
 export interface DateRange {

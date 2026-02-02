@@ -27,16 +27,23 @@ function getFullDateLabel(
         return `${era}${y}${d.approximate ? ' ~' : ''}`;
       }
       case 'approximate': {
-        const period = d.period ? `${d.period.charAt(0).toUpperCase() + d.period.slice(1)} ` : '';
+        const periodLabel = d.period ? d.period.charAt(0).toUpperCase() + d.period.slice(1) : '';
         const era = d.era ? `${d.era} ` : '';
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = d.month != null && d.month >= 1 && d.month <= 12 ? monthNames[d.month - 1] : null;
+        // "Early March 1977" or "Early March" or "Mid 1977" (year-only period)
+        if (periodLabel && monthName) {
+          const yearPart = d.year != null ? ` ${d.year}` : '';
+          return `${periodLabel} ${monthName}${yearPart}`;
+        }
         if (d.year != null) {
           const y = d.year.toString().padStart(4, '0');
-          return period ? `${period}${y}` : `~${era}${y}`;
+          return periodLabel ? `${periodLabel} ${y}` : `~${era}${y}`;
         }
         if (d.year_range && Array.isArray(d.year_range) && d.year_range.length === 2) {
           const a = d.year_range[0].toString().padStart(4, '0');
           const b = d.year_range[1].toString().padStart(4, '0');
-          return period ? `${period}${a}–${b}` : `~${era}${a}–${b}`;
+          return periodLabel ? `${periodLabel} ${a}–${b}` : `~${era}${a}–${b}`;
         }
         return d.text || 'Approximate date';
       }
