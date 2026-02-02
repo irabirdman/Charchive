@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { TimelineEventsWithSearch } from '@/components/timeline/TimelineEventsWithSearch';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
+import { compareEventDates } from '@/lib/utils/dateSorting';
 import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
 import type { World, TimelineEvent as TimelineEventType, StoryAlias } from '@/types/oc';
 import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
@@ -174,7 +175,7 @@ export default async function TimelinePage({
   }
 
   // Extract events from associations and sanitize date_data
-  const events = (associations as TimelineEventAssociation[] | null)
+  let events = (associations as TimelineEventAssociation[] | null)
     ?.map((assoc) => {
       const event = assoc.event;
       if (!event?.id) return null;
@@ -193,6 +194,16 @@ export default async function TimelinePage({
       return event as TimelineEventType;
     })
     .filter((e): e is TimelineEventType => e !== null && e.id !== undefined) || [];
+
+  // Apply timeline sort preference: chronological by date or by position (already from DB)
+  if (timeline.sort_chronologically && events.length > 0) {
+    const eraOrder = timeline.era
+      ? timeline.era.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : undefined;
+    events = [...events].sort((a, b) =>
+      compareEventDates(a.date_data ?? null, b.date_data ?? null, eraOrder)
+    );
+  }
 
   return (
     <div>

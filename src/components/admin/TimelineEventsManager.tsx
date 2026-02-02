@@ -108,10 +108,10 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
     setIsLoading(true);
     const supabase = createClient();
     
-    // Get timeline to find world_id, era, and story_alias_id
+    // Get timeline to find world_id, era, story_alias_id, and sort preference
     const { data: timeline } = await supabase
       .from('timelines')
-      .select('world_id, era, story_alias_id')
+      .select('world_id, era, story_alias_id, sort_chronologically')
       .eq('id', timelineId)
       .single();
     
@@ -128,6 +128,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
       setWorldId(timeline.world_id);
       setTimelineEra(timeline.era);
       setTimelineStoryAliasId(timeline.story_alias_id);
+      setSortChronologically(timeline.sort_chronologically ?? false);
     }
 
     // Load events associated with this timeline via junction table
@@ -574,7 +575,16 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
         <h3 className="text-xl font-semibold text-gray-100">Timeline Events</h3>
         <div className="flex gap-2">
           <button
-            onClick={() => setSortChronologically(!sortChronologically)}
+            onClick={async () => {
+              const next = !sortChronologically;
+              setSortChronologically(next);
+              try {
+                await createClient().from('timelines').update({ sort_chronologically: next }).eq('id', timelineId);
+              } catch (err) {
+                logger.error('Component', 'TimelineEventsManager: Failed to save sort preference', err);
+                setSortChronologically(sortChronologically);
+              }
+            }}
             className={`px-4 py-2 rounded-md transition-colors ${
               sortChronologically
                 ? 'bg-blue-600 text-white hover:bg-blue-700'

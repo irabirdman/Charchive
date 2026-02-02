@@ -457,6 +457,7 @@ export interface Timeline {
   date_format?: string | null; // Custom date format notation (e.g., "[ μ ] – εγλ 1977")
   era?: string | null; // Era system for dates (e.g., "BE", "SE", "CE", etc.)
   story_alias_id?: string | null;
+  sort_chronologically?: boolean | null; // When true, public view orders events by date
   created_at: string;
   updated_at: string;
   // Joined data
