@@ -154,7 +154,7 @@ export async function PUT(
             oc_id: char.oc_id || null,
             custom_name: char.custom_name ? char.custom_name.trim() : null, // Normalize custom names by trimming
             role: char.role || null,
-            age: char.age || null,
+            age: char.age ?? null,
           }));
 
         logger.debug('API', 'Updating characters for timeline event', {

@@ -574,7 +574,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
               setShowAddExistingEvent(!showAddExistingEvent);
               setShowCreateEventForm(false);
             }}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             {showAddExistingEvent ? 'Cancel' : 'Add Existing Event'}
           </button>
@@ -583,7 +583,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
               setShowCreateEventForm(!showCreateEventForm);
               setShowAddExistingEvent(false);
             }}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
           >
             {showCreateEventForm ? 'Cancel' : 'Create New Event'}
           </button>

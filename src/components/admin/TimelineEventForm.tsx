@@ -875,9 +875,11 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
 
     const updatedCharacters = currentCharacters.map((char) => {
       // Auto-calculate if character has oc_id (not custom name)
+      // Only auto-calculate if character has a birth date - skip for characters without birth dates
       // Recalculate even if age was previously set, so it updates when date changes
       if (char.oc_id) {
         const character = characters.find(c => c.id === char.oc_id);
+        // Only auto-calculate if character has a birth date
         if (character?.date_of_birth) {
           // Try exact date calculation first
           let calculatedAge = calculateAge(character.date_of_birth, watchedDateData);
@@ -892,6 +894,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
             return { ...char, age: calculatedAge };
           }
         }
+        // If character doesn't have date_of_birth, skip auto-calculation (age remains manual)
       }
       return char;
     });
@@ -1249,7 +1252,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
             <button
               type="button"
               onClick={relatedCharacters.addItem}
-              className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-sm"
+              className="px-4 py-2 text-sm bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-medium shadow-sm"
             >
               <i className="fas fa-plus mr-1.5" aria-hidden="true"></i>
               Add Character
@@ -1442,7 +1445,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
             <button
               type="button"
               onClick={relatedCharacters.addItem}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium mb-3"
+              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-medium mb-3"
             >
               <i className="fas fa-plus mr-1.5" aria-hidden="true"></i>
               Add Character
