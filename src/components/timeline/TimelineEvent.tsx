@@ -8,6 +8,63 @@ interface TimelineEventProps {
   isLast?: boolean;
 }
 
+/** Format full date for top-left: exact date, "Mid 1977", range, or date_text fallback. */
+function getFullDateLabel(
+  dateData: EventDateData | null | undefined,
+  dateText: string | null | undefined
+): string {
+  if (dateData && typeof dateData === 'object' && 'type' in dateData) {
+    const d = dateData as any;
+    switch (d.type) {
+      case 'exact': {
+        const era = d.era ? `${d.era} ` : '';
+        const y = d.year != null ? d.year.toString().padStart(4, '0') : '';
+        if (d.month != null && d.day != null) {
+          const m = d.month.toString().padStart(2, '0');
+          const day = d.day.toString().padStart(2, '0');
+          return `${era}${y}-${m}-${day}${d.approximate ? ' ~' : ''}`;
+        }
+        return `${era}${y}${d.approximate ? ' ~' : ''}`;
+      }
+      case 'approximate': {
+        const period = d.period ? `${d.period.charAt(0).toUpperCase() + d.period.slice(1)} ` : '';
+        const era = d.era ? `${d.era} ` : '';
+        if (d.year != null) {
+          const y = d.year.toString().padStart(4, '0');
+          return period ? `${period}${y}` : `~${era}${y}`;
+        }
+        if (d.year_range && Array.isArray(d.year_range) && d.year_range.length === 2) {
+          const a = d.year_range[0].toString().padStart(4, '0');
+          const b = d.year_range[1].toString().padStart(4, '0');
+          return period ? `${period}${a}–${b}` : `~${era}${a}–${b}`;
+        }
+        return d.text || 'Approximate date';
+      }
+      case 'range': {
+        const startEra = d.start?.era ? `${d.start.era} ` : '';
+        const endEra = d.end?.era ? `${d.end.era} ` : '';
+        const startParts = [d.start?.year != null ? d.start.year.toString().padStart(4, '0') : ''];
+        if (d.start?.month) startParts.push(d.start.month.toString().padStart(2, '0'));
+        if (d.start?.day) startParts.push(d.start.day.toString().padStart(2, '0'));
+        const endParts = [d.end?.year != null ? d.end.year.toString().padStart(4, '0') : ''];
+        if (d.end?.month) endParts.push(d.end.month.toString().padStart(2, '0'));
+        if (d.end?.day) endParts.push(d.end.day.toString().padStart(2, '0'));
+        const start = startEra + startParts.join('-');
+        const end = endEra + endParts.join('-');
+        return start && end ? `${start} – ${end}` : start || end;
+      }
+      case 'relative':
+        return d.text || 'Relative date';
+      case 'unknown':
+        return d.text || 'Date unknown';
+      default:
+        return '';
+    }
+  }
+  if (dateText && typeof dateText === 'string') return dateText.trim();
+  return '';
+}
+
 /** Extract year-only string for display in top-right (e.g. "2024", "2020–2022", or from date_text). */
 function getYearFromDateData(
   dateData: EventDateData | null | undefined,
@@ -40,6 +97,7 @@ function getYearFromDateData(
 }
 
 export function TimelineEvent({ event, isLast }: TimelineEventProps) {
+  const fullDateLabel = getFullDateLabel(event.date_data, event.date_text ?? undefined);
   const displayYear = getYearFromDateData(event.date_data, event.date_text ?? undefined);
   const cardAccent = event.categories?.[0]
     ? getCategoryCardAccentClasses(event.categories[0])
@@ -64,22 +122,30 @@ export function TimelineEvent({ event, isLast }: TimelineEventProps) {
       {/* Event content - color-coded by category (or stable fallback by id) */}
       <div className="flex-1 min-w-0">
         <div className={`wiki-card p-5 md:p-6 transition-all duration-300 ${cardAccent}`}>
-          {/* Title row: title + key event on left, year in top-right */}
-          <div className="mb-4">
-            <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
-              <div className="flex items-start gap-3 flex-wrap min-w-0 flex-1">
-                <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight">
-                  {event.title}
-                </h3>
-                {event.is_key_event && (
-                  <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-600/40 to-yellow-500/30 text-yellow-300 rounded-lg text-xs font-bold uppercase tracking-wide border border-yellow-500/30 shadow-sm whitespace-nowrap">
-                    ⭐ Key Event
-                  </span>
-                )}
-              </div>
+          {/* Top row: full date (exact / Mid 1977 / range) on left, year on right */}
+          {(fullDateLabel || displayYear) && (
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+              {fullDateLabel && (
+                <span className="text-sm font-medium text-purple-200/90">
+                  {fullDateLabel}
+                </span>
+              )}
               {displayYear && (
                 <span className="flex-shrink-0 text-sm font-semibold text-purple-300 tabular-nums">
                   {displayYear}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Title row: title + key event badge */}
+          <div className="mb-4">
+            <div className="flex items-start gap-3 flex-wrap mb-2">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight">
+                {event.title}
+              </h3>
+              {event.is_key_event && (
+                <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-600/40 to-yellow-500/30 text-yellow-300 rounded-lg text-xs font-bold uppercase tracking-wide border border-yellow-500/30 shadow-sm whitespace-nowrap">
+                  ⭐ Key Event
                 </span>
               )}
             </div>
