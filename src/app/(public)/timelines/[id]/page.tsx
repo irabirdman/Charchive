@@ -9,6 +9,7 @@ import { TimelineEventsWithSearch } from '@/components/timeline/TimelineEventsWi
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
 import { compareEventDates } from '@/lib/utils/dateSorting';
+import { parseEraConfig } from '@/lib/utils/ageCalculation';
 import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
 import type { World, TimelineEvent as TimelineEventType, StoryAlias } from '@/types/oc';
 import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
@@ -191,8 +192,9 @@ export default async function TimelinePage({
     .filter((x): x is { event: TimelineEventType; position: number } => x !== null && x.event.id !== undefined) || [];
 
   // Always chronological; position is tiebreaker for same-date (admin can move to reorder)
+  // Parse era names for sorting (handles both JSON and comma-separated format)
   const eraOrder = timeline.era
-    ? timeline.era.split(',').map((s: string) => s.trim()).filter(Boolean)
+    ? parseEraConfig(timeline.era).map((c) => c.name).filter(Boolean)
     : undefined;
   withPosition.sort((a, b) => {
     const dateCmp = compareEventDates(a.event.date_data ?? null, b.event.date_data ?? null, eraOrder);

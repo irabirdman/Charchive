@@ -1,7 +1,9 @@
+import Image from 'next/image';
 import type { TimelineEvent as TimelineEventType, EventDateData } from '@/types/oc';
 import { Markdown } from '@/lib/utils/markdown';
 import { getCategoryColorClasses, getCategoryCardAccentClasses, getFallbackCardAccentClasses } from '@/lib/utils/categoryColors';
 import { calculateAge } from '@/lib/utils/ageCalculation';
+import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
 
 interface TimelineEventProps {
   event: TimelineEventType;
@@ -129,6 +131,19 @@ export function TimelineEvent({ event, isLast }: TimelineEventProps) {
       {/* Event content - color-coded by category (or stable fallback by id) */}
       <div className="flex-1 min-w-0">
         <div className={`wiki-card p-5 md:p-6 transition-all duration-300 ${cardAccent}`}>
+          {/* Event image */}
+          {event.image_url && event.image_url.trim() && (
+            <div className="relative w-full aspect-video max-h-64 rounded-lg overflow-hidden mb-4 bg-gray-800/50">
+              <Image
+                src={event.image_url.includes('drive.google.com') ? getProxyUrl(event.image_url) : convertGoogleDriveUrl(event.image_url)}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 672px"
+                className="object-cover"
+                unoptimized={event.image_url.includes('drive.google.com') || isGoogleSitesUrl(event.image_url) || isAnimatedImage(event.image_url)}
+              />
+            </div>
+          )}
           {/* Top row: full date (exact / Mid 1977 / range) on left, year on right */}
           {(fullDateLabel || displayYear) && (
             <div className="flex items-center justify-between gap-3 flex-wrap mb-3">

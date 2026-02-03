@@ -1352,8 +1352,9 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
   };
 
   // Always sort chronologically using era order if available; position is tiebreaker for same-date events (user can move to reorder)
+  // Parse era names for sorting (handles both JSON and comma-separated format)
   const eraOrder = timelineEra
-    ? timelineEra.split(',').map((s: string) => s.trim()).filter(Boolean)
+    ? parseEraConfig(timelineEra).map((c) => c.name).filter(Boolean)
     : undefined;
   
   // Parse era config for age calculation
@@ -1849,7 +1850,7 @@ export function TimelineEventsManager({ timelineId }: TimelineEventsManagerProps
                                   }
                                 }
                               }}
-                              availableEras={timelineEra ? timelineEra.split(',').map(e => e.trim()).filter(Boolean) : undefined}
+                              availableEras={timelineEra ? parseEraConfig(timelineEra).map((e) => e.name).filter(Boolean) : undefined}
                             />
                             <div className="mt-4 flex gap-2">
                               <button

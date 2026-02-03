@@ -20,7 +20,7 @@ import { FormTextarea } from './forms/FormTextarea';
 import { FormButton } from './forms/FormButton';
 import { StoryAliasSelector } from './StoryAliasSelector';
 import { optionalUuid, optionalUrl } from '@/lib/utils/zodSchemas';
-import { calculateAge } from '@/lib/utils/ageCalculation';
+import { calculateAge, parseEraConfig } from '@/lib/utils/ageCalculation';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/client';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
@@ -1198,7 +1198,7 @@ export function TimelineEventForm({ event, worldId, lockWorld = false, timelineE
         <DateInput
           value={watchedDateData}
           onChange={(value) => setValue('date_data', value)}
-          availableEras={timelineEra ? timelineEra.split(',').map(e => e.trim()).filter(Boolean) : undefined}
+          availableEras={timelineEra ? parseEraConfig(timelineEra).map((e) => e.name).filter(Boolean) : undefined}
         />
       </div>
 
