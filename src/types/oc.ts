@@ -457,6 +457,7 @@ export interface Timeline {
   date_format?: string | null; // Custom date format notation (e.g., "[ μ ] – εγλ 1977")
   era?: string | null; // Era system for dates (e.g., "BE", "SE", "CE", etc.)
   story_alias_id?: string | null;
+  sort_chronologically?: boolean | null; // When true, public view orders events by date
   created_at: string;
   updated_at: string;
   // Joined data
@@ -480,9 +481,10 @@ export interface ApproximateDate {
   type: 'approximate';
   era?: string | null; // Era identifier (e.g., "BE", "SE", "CE")
   year?: number;
+  month?: number | null; // 1–12 for "Early March", "Mid March", etc.
   year_range?: [number, number];
   text?: string; // e.g., "circa 500 BCE", "early 3rd century" (optional)
-  period?: 'early' | 'mid' | 'late' | null; // Time period within the year for chronological sorting
+  period?: 'early' | 'mid' | 'late' | null; // Time period: year-only ("Mid 1977") or with month ("Mid March 1977")
 }
 
 export interface DateRange {
@@ -512,6 +514,7 @@ export const PREDEFINED_EVENT_CATEGORIES = [
   'War',
   'Battle',
   'Discovery',
+  'Education',
   'Celebration',
   'Political',
   'Disaster',

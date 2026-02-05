@@ -39,6 +39,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const showMemoryMonitor =
+  process.env.NODE_ENV === 'development' || process.env.ENABLE_MEMORY_LOGGING === 'true';
+
 export default function RootLayout({
   children,
 }: {
@@ -52,7 +55,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-        <MemoryMonitor />
+        {showMemoryMonitor && <MemoryMonitor />}
         {children}
       </body>
     </html>

@@ -5,9 +5,11 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { getSiteConfig } from '@/lib/config/site-config';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { TimelineEvent } from '@/components/timeline/TimelineEvent';
+import { TimelineEventsWithSearch } from '@/components/timeline/TimelineEventsWithSearch';
 import { Markdown } from '@/lib/utils/markdown';
 import { formatLastUpdated } from '@/lib/utils/dateFormat';
+import { compareEventDates } from '@/lib/utils/dateSorting';
+import { parseEraConfig } from '@/lib/utils/ageCalculation';
 import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
 import type { World, TimelineEvent as TimelineEventType, StoryAlias } from '@/types/oc';
 import { generateDetailPageMetadata } from '@/lib/seo/page-metadata';
@@ -173,26 +175,32 @@ export default async function TimelinePage({
       }
   }
 
-  // Extract events from associations and sanitize date_data
-  const events = (associations as TimelineEventAssociation[] | null)
+  // Extract events from associations (keep position for tiebreaker), sanitize date_data
+  const withPosition = (associations as TimelineEventAssociation[] | null)
     ?.map((assoc) => {
       const event = assoc.event;
       if (!event?.id) return null;
-      
-      // Sanitize date_data if it's invalid
       if (event.date_data && typeof event.date_data === 'string') {
         try {
-          // Try to parse if it's a JSON string
           event.date_data = JSON.parse(event.date_data);
         } catch {
-          // If parsing fails, set to null and use date_text instead
           event.date_data = null;
         }
       }
-      
-      return event as TimelineEventType;
+      return { event: event as TimelineEventType, position: assoc.position };
     })
-    .filter((e): e is TimelineEventType => e !== null && e.id !== undefined) || [];
+    .filter((x): x is { event: TimelineEventType; position: number } => x !== null && x.event.id !== undefined) || [];
+
+  // Sort chronologically for public view; position is tiebreaker for same-date
+  const eraOrder = timeline.era
+    ? parseEraConfig(timeline.era).map((c) => c.name).filter(Boolean)
+    : undefined;
+  withPosition.sort((a, b) => {
+    const dateCmp = compareEventDates(a.event.date_data ?? null, b.event.date_data ?? null, eraOrder);
+    if (dateCmp !== 0) return dateCmp;
+    return a.position - b.position;
+  });
+  const events = withPosition.map((x) => x.event);
 
   return (
     <div>
@@ -275,39 +283,7 @@ export default async function TimelinePage({
           <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
         </div>
         
-        {events && events.length > 0 ? (
-          <div className="relative">
-            {/* Continuous timeline line - spans full height, centered on dot columns */}
-            {/* Mobile: w-12 = 3rem, center = 1.5rem, line width = 0.25rem (w-1), so left = 1.5rem - 0.125rem = 1.375rem */}
-            <div 
-              className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)] z-10 md:hidden"
-              style={{
-                left: '1.375rem', // Center of w-12 column (1.5rem) minus half line width (0.125rem)
-              }}
-            />
-            {/* Desktop: w-16 = 4rem, center = 2rem, line width = 0.25rem, so left = 2rem - 0.125rem = 1.875rem */}
-            <div 
-              className="hidden md:block absolute top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)] z-10"
-              style={{
-                left: '1.875rem', // Center of w-16 column (2rem) minus half line width (0.125rem)
-              }}
-            />
-            {events.map((event, index) => (
-              <TimelineEvent 
-                key={event.id} 
-                event={event} 
-                isLast={index === events.length - 1}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="wiki-card p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <i className="fas fa-calendar-times text-4xl text-gray-600" aria-hidden="true"></i>
-              <p className="text-gray-400 text-lg">No events in this timeline yet.</p>
-            </div>
-          </div>
-        )}
+        <TimelineEventsWithSearch events={events} />
       </div>
     </div>
   );

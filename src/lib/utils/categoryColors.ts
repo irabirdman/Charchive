@@ -12,6 +12,7 @@ function getCategoryColor(category: string): string {
     'War': 'bg-orange-600/30 text-orange-300 border-orange-500/50',
     'Battle': 'bg-amber-600/30 text-amber-300 border-amber-500/50',
     'Discovery': 'bg-blue-600/30 text-blue-300 border-blue-500/50',
+    'Education': 'bg-slate-600/30 text-slate-300 border-slate-500/50',
     'Celebration': 'bg-yellow-600/30 text-yellow-300 border-yellow-500/50',
     'Political': 'bg-purple-600/30 text-purple-300 border-purple-500/50',
     'Disaster': 'bg-rose-600/30 text-rose-300 border-rose-500/50',
@@ -65,6 +66,66 @@ export function getCategoryColorClasses(category: string): string {
 }
 
 /**
+ * Card container accent: left border + subtle background tint for timeline event cards.
+ * Use first category when present; otherwise pass empty and use getFallbackCardAccentClasses(id).
+ */
+export function getCategoryCardAccentClasses(category: string): string {
+  const accents: Record<string, string> = {
+    Death: 'border-l-4 border-red-500/50 bg-gradient-to-r from-red-600/10 to-transparent',
+    Birth: 'border-l-4 border-green-500/50 bg-gradient-to-r from-green-600/10 to-transparent',
+    War: 'border-l-4 border-orange-500/50 bg-gradient-to-r from-orange-600/10 to-transparent',
+    Battle: 'border-l-4 border-amber-500/50 bg-gradient-to-r from-amber-600/10 to-transparent',
+    Discovery: 'border-l-4 border-blue-500/50 bg-gradient-to-r from-blue-600/10 to-transparent',
+    Education: 'border-l-4 border-slate-500/50 bg-gradient-to-r from-slate-600/10 to-transparent',
+    Celebration: 'border-l-4 border-yellow-500/50 bg-gradient-to-r from-yellow-600/10 to-transparent',
+    Political: 'border-l-4 border-purple-500/50 bg-gradient-to-r from-purple-600/10 to-transparent',
+    Disaster: 'border-l-4 border-rose-500/50 bg-gradient-to-r from-rose-600/10 to-transparent',
+    Marriage: 'border-l-4 border-pink-500/50 bg-gradient-to-r from-pink-600/10 to-transparent',
+    Coronation: 'border-l-4 border-indigo-500/50 bg-gradient-to-r from-indigo-600/10 to-transparent',
+    Treaty: 'border-l-4 border-cyan-500/50 bg-gradient-to-r from-cyan-600/10 to-transparent',
+    Rebellion: 'border-l-4 border-red-600/50 bg-gradient-to-r from-red-700/10 to-transparent',
+    Founding: 'border-l-4 border-emerald-500/50 bg-gradient-to-r from-emerald-600/10 to-transparent',
+    Destruction: 'border-l-4 border-gray-500/50 bg-gradient-to-r from-gray-600/10 to-transparent',
+    Revelation: 'border-l-4 border-violet-500/50 bg-gradient-to-r from-violet-600/10 to-transparent',
+    Transformation: 'border-l-4 border-teal-500/50 bg-gradient-to-r from-teal-600/10 to-transparent',
+  };
+  if (accents[category]) return accents[category];
+  const fallbacks = [
+    'border-l-4 border-sky-500/50 bg-gradient-to-r from-sky-600/10 to-transparent',
+    'border-l-4 border-fuchsia-500/50 bg-gradient-to-r from-fuchsia-600/10 to-transparent',
+    'border-l-4 border-lime-500/50 bg-gradient-to-r from-lime-600/10 to-transparent',
+    'border-l-4 border-violet-500/50 bg-gradient-to-r from-violet-600/10 to-transparent',
+  ];
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = ((hash << 5) - hash) + category.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return fallbacks[Math.abs(hash) % fallbacks.length];
+}
+
+const FALLBACK_CARD_ACCENTS = [
+  'border-l-4 border-purple-500/50 bg-gradient-to-r from-purple-600/10 to-transparent',
+  'border-l-4 border-blue-500/50 bg-gradient-to-r from-blue-600/10 to-transparent',
+  'border-l-4 border-teal-500/50 bg-gradient-to-r from-teal-600/10 to-transparent',
+  'border-l-4 border-amber-500/50 bg-gradient-to-r from-amber-600/10 to-transparent',
+  'border-l-4 border-rose-500/50 bg-gradient-to-r from-rose-600/10 to-transparent',
+  'border-l-4 border-cyan-500/50 bg-gradient-to-r from-cyan-600/10 to-transparent',
+  'border-l-4 border-indigo-500/50 bg-gradient-to-r from-indigo-600/10 to-transparent',
+  'border-l-4 border-pink-500/50 bg-gradient-to-r from-pink-600/10 to-transparent',
+];
+
+/** Fallback accent for events with no category (based on event id so it’s stable). */
+export function getFallbackCardAccentClasses(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return FALLBACK_CARD_ACCENTS[Math.abs(hash) % FALLBACK_CARD_ACCENTS.length];
+}
+
+/**
  * Get color classes for category selector buttons (selected and unselected states)
  */
 export function getCategoryButtonColorClasses(category: string, isSelected: boolean): string {
@@ -74,6 +135,7 @@ export function getCategoryButtonColorClasses(category: string, isSelected: bool
     'War': 'bg-orange-700/40 text-orange-200 hover:bg-orange-700/60 border border-orange-600/30',
     'Battle': 'bg-amber-700/40 text-amber-200 hover:bg-amber-700/60 border border-amber-600/30',
     'Discovery': 'bg-blue-700/40 text-blue-200 hover:bg-blue-700/60 border border-blue-600/30',
+    'Education': 'bg-slate-700/40 text-slate-200 hover:bg-slate-700/60 border border-slate-600/30',
     'Celebration': 'bg-yellow-700/40 text-yellow-200 hover:bg-yellow-700/60 border border-yellow-600/30',
     'Political': 'bg-purple-700/40 text-purple-200 hover:bg-purple-700/60 border border-purple-600/30',
     'Disaster': 'bg-rose-700/40 text-rose-200 hover:bg-rose-700/60 border border-rose-600/30',
@@ -93,6 +155,7 @@ export function getCategoryButtonColorClasses(category: string, isSelected: bool
     'War': 'bg-orange-600 text-white border border-orange-500',
     'Battle': 'bg-amber-600 text-white border border-amber-500',
     'Discovery': 'bg-blue-600 text-white border border-blue-500',
+    'Education': 'bg-slate-600 text-white border border-slate-500',
     'Celebration': 'bg-yellow-600 text-white border border-yellow-500',
     'Political': 'bg-purple-600 text-white border border-purple-500',
     'Disaster': 'bg-rose-600 text-white border border-rose-500',

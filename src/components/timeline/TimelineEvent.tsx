@@ -1,81 +1,116 @@
+import Image from 'next/image';
 import type { TimelineEvent as TimelineEventType, EventDateData } from '@/types/oc';
 import { Markdown } from '@/lib/utils/markdown';
-import { getCategoryColorClasses } from '@/lib/utils/categoryColors';
+import { getCategoryColorClasses, getCategoryCardAccentClasses, getFallbackCardAccentClasses } from '@/lib/utils/categoryColors';
 import { calculateAge } from '@/lib/utils/ageCalculation';
+import { convertGoogleDriveUrl, getProxyUrl, isGoogleSitesUrl, isAnimatedImage } from '@/lib/utils/googleDriveImage';
 
 interface TimelineEventProps {
   event: TimelineEventType;
   isLast?: boolean;
 }
 
-function formatDateData(dateData: EventDateData | null | undefined): string {
-  if (!dateData) return '';
-  
-  // Handle case where dateData might be a string (invalid JSON from DB)
-  if (typeof dateData === 'string') {
-    return dateData;
-  }
-  
-  // Ensure dateData has a type property
-  if (typeof dateData !== 'object' || !('type' in dateData)) {
-    return '';
-  }
-  
-  switch (dateData.type) {
-    case 'exact':
-      const exact = dateData as any;
-      const eraPrefix = exact.era ? `${exact.era} ` : '';
-      const yearStr = exact.year.toString().padStart(4, '0');
-      const approximateSuffix = exact.approximate ? ' ~' : '';
-      
-      if (exact.month && exact.day) {
-        const monthStr = exact.month.toString().padStart(2, '0');
-        const dayStr = exact.day.toString().padStart(2, '0');
-        return `${eraPrefix}${yearStr}-${monthStr}-${dayStr}${approximateSuffix}`;
+/** Format full date for top-left: exact date, "Mid 1977", range, or date_text fallback. */
+function getFullDateLabel(
+  dateData: EventDateData | null | undefined,
+  dateText: string | null | undefined
+): string {
+  if (dateData && typeof dateData === 'object' && 'type' in dateData) {
+    const d = dateData as any;
+    switch (d.type) {
+      case 'exact': {
+        const era = d.era ? `${d.era} ` : '';
+        const y = d.year != null ? d.year.toString().padStart(4, '0') : '';
+        if (d.month != null && d.day != null) {
+          const m = d.month.toString().padStart(2, '0');
+          const day = d.day.toString().padStart(2, '0');
+          return `${era}${y}-${m}-${day}${d.approximate ? ' ~' : ''}`;
+        }
+        return `${era}${y}${d.approximate ? ' ~' : ''}`;
       }
-      return `${eraPrefix}${yearStr}${approximateSuffix}`;
-    case 'approximate':
-      const approx = dateData as any;
-      // Format period prefix
-      const periodPrefix = approx.period ? `${approx.period} ` : '';
-      // If there's a year or year_range, format it
-      if (approx.year !== undefined) {
-        const eraPrefix = approx.era ? `${approx.era} ` : '';
-        const yearStr = approx.year.toString().padStart(4, '0');
-        return `~${periodPrefix}${eraPrefix}${yearStr}`;
+      case 'approximate': {
+        const periodLabel = d.period ? d.period.charAt(0).toUpperCase() + d.period.slice(1) : '';
+        const era = d.era ? `${d.era} ` : '';
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = d.month != null && d.month >= 1 && d.month <= 12 ? monthNames[d.month - 1] : null;
+        // "Early March 1977" or "Early March" or "Mid 1977" (year-only period)
+        if (periodLabel && monthName) {
+          const yearPart = d.year != null ? ` ${d.year}` : '';
+          return `${periodLabel} ${monthName}${yearPart}`;
+        }
+        if (d.year != null) {
+          const y = d.year.toString().padStart(4, '0');
+          return periodLabel ? `${periodLabel} ${y}` : `~${era}${y}`;
+        }
+        if (d.year_range && Array.isArray(d.year_range) && d.year_range.length === 2) {
+          const a = d.year_range[0].toString().padStart(4, '0');
+          const b = d.year_range[1].toString().padStart(4, '0');
+          return periodLabel ? `${periodLabel} ${a}–${b}` : `~${era}${a}–${b}`;
+        }
+        return d.text || 'Approximate date';
       }
-      if (approx.year_range && Array.isArray(approx.year_range) && approx.year_range.length === 2) {
-        const eraPrefix = approx.era ? `${approx.era} ` : '';
-        const startYear = approx.year_range[0].toString().padStart(4, '0');
-        const endYear = approx.year_range[1].toString().padStart(4, '0');
-        return `~${periodPrefix}${eraPrefix}${startYear}-${endYear}`;
+      case 'range': {
+        const startEra = d.start?.era ? `${d.start.era} ` : '';
+        const endEra = d.end?.era ? `${d.end.era} ` : '';
+        const startParts = [d.start?.year != null ? d.start.year.toString().padStart(4, '0') : ''];
+        if (d.start?.month) startParts.push(d.start.month.toString().padStart(2, '0'));
+        if (d.start?.day) startParts.push(d.start.day.toString().padStart(2, '0'));
+        const endParts = [d.end?.year != null ? d.end.year.toString().padStart(4, '0') : ''];
+        if (d.end?.month) endParts.push(d.end.month.toString().padStart(2, '0'));
+        if (d.end?.day) endParts.push(d.end.day.toString().padStart(2, '0'));
+        const start = startEra + startParts.join('-');
+        const end = endEra + endParts.join('-');
+        return start && end ? `${start} – ${end}` : start || end;
       }
-      // Fallback for old data that might have text field
-      return approx.text || 'Approximate date';
-    case 'range':
-      const range = dateData as any;
-      const startEra = range.start?.era ? `${range.start.era} ` : '';
-      const endEra = range.end?.era ? `${range.end.era} ` : '';
-      const startParts = [range.start.year.toString().padStart(4, '0')];
-      if (range.start.month) startParts.push(range.start.month.toString().padStart(2, '0'));
-      if (range.start.day) startParts.push(range.start.day.toString().padStart(2, '0'));
-      const endParts = [range.end.year.toString().padStart(4, '0')];
-      if (range.end.month) endParts.push(range.end.month.toString().padStart(2, '0'));
-      if (range.end.day) endParts.push(range.end.day.toString().padStart(2, '0'));
-      const separator = range.start?.era && range.end?.era && range.start.era === range.end.era ? '–' : ' to ';
-      return `${startEra}${startParts.join('-')}${separator}${endEra}${endParts.join('-')}${range.text ? ` (${range.text})` : ''}`;
-    case 'relative':
-      const relative = dateData as any;
-      return relative.text || 'Relative date';
-    case 'unknown':
-      return (dateData as any).text || 'Date unknown';
-    default:
-      return '';
+      case 'relative':
+        return d.text || 'Relative date';
+      case 'unknown':
+        return d.text || 'Date unknown';
+      default:
+        return '';
+    }
   }
+  if (dateText && typeof dateText === 'string') return dateText.trim();
+  return '';
+}
+
+/** Extract year-only string for display in top-right (e.g. "2024", "2020–2022", or from date_text). */
+function getYearFromDateData(
+  dateData: EventDateData | null | undefined,
+  dateText: string | null | undefined
+): string {
+  if (dateData && typeof dateData === 'object' && 'type' in dateData) {
+    const d = dateData as any;
+    switch (d.type) {
+      case 'exact':
+        return d.year != null ? d.year.toString().padStart(4, '0') : '';
+      case 'approximate':
+        if (d.year != null) return d.year.toString().padStart(4, '0');
+        if (d.year_range && Array.isArray(d.year_range) && d.year_range.length === 2) {
+          return `${d.year_range[0].toString().padStart(4, '0')}–${d.year_range[1].toString().padStart(4, '0')}`;
+        }
+        return '';
+      case 'range':
+        const start = d.start?.year != null ? d.start.year.toString().padStart(4, '0') : '';
+        const end = d.end?.year != null ? d.end.year.toString().padStart(4, '0') : '';
+        return start && end ? `${start}–${end}` : start || end;
+      default:
+        return '';
+    }
+  }
+  if (dateText && typeof dateText === 'string') {
+    const fourDigit = /\b(1\d{3}|2\d{3})\b/.exec(dateText);
+    return fourDigit ? fourDigit[1] : '';
+  }
+  return '';
 }
 
 export function TimelineEvent({ event, isLast }: TimelineEventProps) {
-  const displayDate = event.date_data ? formatDateData(event.date_data) : event.date_text;
+  const fullDateLabel = getFullDateLabel(event.date_data, event.date_text ?? undefined);
+  const displayYear = getYearFromDateData(event.date_data, event.date_text ?? undefined);
+  const cardAccent = event.categories?.[0]
+    ? getCategoryCardAccentClasses(event.categories[0])
+    : getFallbackCardAccentClasses(event.id);
 
   return (
     <div className="relative flex items-center gap-6 pb-12 last:pb-0">
@@ -93,21 +128,41 @@ export function TimelineEvent({ event, isLast }: TimelineEventProps) {
         </div>
       </div>
 
-      {/* Event content */}
+      {/* Event content - color-coded by category (or stable fallback by id) */}
       <div className="flex-1 min-w-0">
-        <div className="wiki-card p-5 md:p-6 hover:border-purple-500/50 transition-all duration-300">
-          {/* Date badge - prominent at top */}
-          {displayDate && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 bg-gradient-to-r from-purple-600/20 to-purple-500/10 border border-purple-500/30 rounded-lg text-sm font-semibold text-purple-200">
-              <i className="fas fa-calendar-alt text-xs" aria-hidden="true"></i>
-              <span>{displayDate}</span>
+        <div className={`wiki-card p-5 md:p-6 transition-all duration-300 ${cardAccent}`}>
+          {/* Event image */}
+          {event.image_url && event.image_url.trim() && (
+            <div className="relative w-full aspect-video max-h-64 rounded-lg overflow-hidden mb-4 bg-gray-800/50">
+              <Image
+                src={event.image_url.includes('drive.google.com') ? getProxyUrl(event.image_url) : convertGoogleDriveUrl(event.image_url)}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 672px"
+                className="object-cover"
+                unoptimized={event.image_url.includes('drive.google.com') || isGoogleSitesUrl(event.image_url) || isAnimatedImage(event.image_url)}
+              />
             </div>
           )}
-
-          {/* Title and key event badge */}
+          {/* Top row: full date (exact / Mid 1977 / range) on left, year on right */}
+          {(fullDateLabel || displayYear) && (
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+              {fullDateLabel && (
+                <span className="text-sm font-medium text-purple-200/90">
+                  {fullDateLabel}
+                </span>
+              )}
+              {displayYear && (
+                <span className="flex-shrink-0 text-sm font-semibold text-purple-300 tabular-nums">
+                  {displayYear}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Title row: title + key event badge */}
           <div className="mb-4">
             <div className="flex items-start gap-3 flex-wrap mb-2">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight flex-1">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-100 leading-tight">
                 {event.title}
               </h3>
               {event.is_key_event && (

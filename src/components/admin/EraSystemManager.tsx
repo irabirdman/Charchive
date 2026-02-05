@@ -9,6 +9,9 @@ import { logger } from '@/lib/logger';
 export interface EraDefinition {
   name: string;
   label?: string; // Optional label like "Past Era", "Current Era", "Future Era"
+  /** Stored as string so "0001" is preserved (not converted to 1) */
+  startYear?: string | null; // Year this era starts at (e.g. "0", "0001")
+  endYear?: string | null;   // Year previous era ended (e.g. "2000")
 }
 
 interface EraSystemManagerProps {
@@ -38,9 +41,14 @@ function parseEras(value: string | undefined | null): EraDefinition[] {
             return { name: item.trim() };
           }
           if (item && typeof item === 'object') {
+            // Preserve string format ("0001"); accept number from old data and convert to string
+            const startYear = item.startYear == null ? undefined : (typeof item.startYear === 'string' ? item.startYear : String(item.startYear));
+            const endYear = item.endYear == null ? undefined : (typeof item.endYear === 'string' ? item.endYear : String(item.endYear));
             return { 
               name: item.name?.trim() || '', 
-              label: item.label?.trim() || undefined 
+              label: item.label?.trim() || undefined,
+              startYear: startYear ?? undefined,
+              endYear: endYear ?? undefined,
             };
           }
           return null;
@@ -60,10 +68,21 @@ function parseEras(value: string | undefined | null): EraDefinition[] {
 }
 
 /**
- * Format EraDefinition array to comma-separated string
+ * Format EraDefinition array to JSON string (to preserve startYear/endYear)
  */
 function formatEras(eras: EraDefinition[]): string {
-  return eras.map(e => e.name).join(', ');
+  // If all eras have only name (no labels or year info), use comma-separated for backward compatibility
+  const hasExtraData = eras.some(e => e.label || e.startYear !== undefined || e.endYear !== undefined);
+  if (!hasExtraData) {
+    return eras.map(e => e.name).join(', ');
+  }
+  // Otherwise use JSON to preserve all data (startYear/endYear stored as strings e.g. "0001")
+  return JSON.stringify(eras.map(e => ({
+    name: e.name,
+    ...(e.label && { label: e.label }),
+    ...(e.startYear !== undefined && e.startYear !== null && { startYear: e.startYear }),
+    ...(e.endYear !== undefined && e.endYear !== null && { endYear: e.endYear }),
+  })));
 }
 
 export function EraSystemManager({ value, onChange, disabled }: EraSystemManagerProps) {
@@ -75,7 +94,7 @@ export function EraSystemManager({ value, onChange, disabled }: EraSystemManager
       return [];
     }
   });
-
+  
   useEffect(() => {
     try {
       const parsed = parseEras(value);
@@ -149,7 +168,7 @@ export function EraSystemManager({ value, onChange, disabled }: EraSystemManager
                 {index + 1}
               </div>
               
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 <div>
                   <FormLabel htmlFor={`era-name-${index}`} className="text-xs">
                     Era Name
@@ -190,6 +209,54 @@ export function EraSystemManager({ value, onChange, disabled }: EraSystemManager
                       </FormButton>
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <FormLabel htmlFor={`era-start-year-${index}`} className="text-xs" optional>
+                    Start Year (Optional)
+                  </FormLabel>
+                  <FormInput
+                    id={`era-start-year-${index}`}
+                    type="text"
+                    value={era.startYear ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        updateEra(index, { startYear: undefined });
+                      } else if (/^-?\d+$/.test(val)) {
+                        // Store as string so "0001" stays "0001"
+                        updateEra(index, { startYear: val });
+                      }
+                    }}
+                    placeholder="e.g., 0000 or 0001"
+                    disabled={disabled}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-0.5">Year this era starts (format preserved)</p>
+                </div>
+
+                <div>
+                  <FormLabel htmlFor={`era-end-year-${index}`} className="text-xs" optional>
+                    End Year (Optional)
+                  </FormLabel>
+                  <FormInput
+                    id={`era-end-year-${index}`}
+                    type="text"
+                    value={era.endYear ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        updateEra(index, { endYear: undefined });
+                      } else if (/^-?\d+$/.test(val)) {
+                        // Store as string so "2000" etc. preserved
+                        updateEra(index, { endYear: val });
+                      }
+                    }}
+                    placeholder="e.g., 2000"
+                    disabled={disabled}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-0.5">Year previous era ended</p>
                 </div>
               </div>
 
